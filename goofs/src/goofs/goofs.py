@@ -35,7 +35,26 @@ HOME = None
 GOOFS_CACHE = None
 PHOTOS = None
 PHOTOS_DIR = None
+PUB_PHOTOS_DIR = None
+PRIV_PHOTOS_DIR = None
 GDOCS_DIRS = None
+
+def remove_dir_and_metadata(path):
+    for root, dirs, files in os.walk(path, topdown=False):
+        for file in files:
+            os.remove(os.path.join(root, file))
+        for d in dirs:
+            os.rmdir(os.path.join(root, d))
+    for ext in ['.self', '.edit']:
+        if os.path.exists(path + ext):
+            os.remove(path + ext)
+    os.rmdir(path)
+
+def remove_file_and_metadata(path):
+    os.remove(path)
+    for ext in ['.self', '.edit']:
+        if os.path.exists(path + ext):
+            os.remove(path + ext)
 
 def write(path, content):
     try:
@@ -57,13 +76,15 @@ def read(path):
 
 def init(user):
 	
-    global HOME, GOOFS_CACHE, PHOTOS, PHOTOS_DIR, GDOCS_DIRS
+    global HOME, GOOFS_CACHE, PHOTOS, PHOTOS_DIR, GDOCS_DIRS, PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR
 
     HOME = os.path.expanduser("~")
     GOOFS_CACHE = HOME + '/.goofs-cache/' + user.split('@')[0]
     PHOTOS = 'photos'
     PHOTOS_DIR = GOOFS_CACHE + '/' + PHOTOS
-    GDOCS_DIRS = [PHOTOS_DIR]
+    PUB_PHOTOS_DIR = PHOTOS_DIR + '/public'
+    PRIV_PHOTOS_DIR = PHOTOS_DIR + '/private'
+    GDOCS_DIRS = [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR]
     
     try:
         for root, dirs, files in os.walk(GOOFS_CACHE, topdown=False):
@@ -167,35 +188,37 @@ class GTaskThread(TaskThread):
         self.client = client
             
     def task(self):
-        for dir in GDOCS_DIRS:
-            if dir == PHOTOS_DIR:
-                album_feed = self.client.albums_feed()
-            for album in album_feed:
-                photos_feed = self.client.photos_feed(album)
-                for photo in photos_feed:    
-                    updated = self.client.get_photo_updated(photo)
-                    album_dir = dir + '/' + album.title.text
-                    if not os.path.exists(album_dir):
-                        os.mkdir(album_dir)
-                        write(dir + '/' + album.title.text + '.self', album.GetSelfLink().href)
-                        if album.GetEditLink() is not None:
-                            write(dir + '/' + album.title.text + '.edit', album.GetEditLink().href)
-                    name = album_dir + '/' + photo.title.text
-                    get = False						
-                    if os.path.exists(name):
-                        mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime = os.stat(name)
-                        if updated > datetime.datetime.fromtimestamp(mtime):
-                            get = True
-                    else:
+        album_feed = self.client.albums_feed()
+        for album in album_feed:
+            if album.access.text == 'public':
+                dir = PUB_PHOTOS_DIR
+            else:
+                dir = PRIV_PHOTOS_DIR
+            photos_feed = self.client.photos_feed(album)
+            for photo in photos_feed:    
+                updated = self.client.get_photo_updated(photo)
+                album_dir = dir + '/' + album.title.text
+                if not os.path.exists(album_dir):
+                    os.mkdir(album_dir)
+                    write(dir + '/' + album.title.text + '.self', album.GetSelfLink().href)
+                    if album.GetEditLink() is not None:
+                        write(dir + '/' + album.title.text + '.edit', album.GetEditLink().href)
+                name = album_dir + '/' + photo.title.text
+                get = False						
+                if os.path.exists(name):
+                    mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime = os.stat(name)
+                    if updated > datetime.datetime.fromtimestamp(mtime):
                         get = True
-                    if get:
-                        write(name, self.client.get_photo_content(photo))
-                        print 'wrote %s', name
-                        write(name + '.self', photo.GetSelfLink().href)
-                        if photo.GetEditLink() is not None:
-                            write(name + '.edit', photo.GetEditLink().href) 
-                    else:
-                        print 'no need to get'
+                else:
+                    get = True
+                if get:
+                    write(name, self.client.get_photo_content(photo))
+                    print 'wrote %s', name
+                    write(name + '.self', photo.GetSelfLink().href)
+                    if photo.GetEditLink() is not None:
+                        write(name + '.edit', photo.GetEditLink().href) 
+                else:
+                    print 'no need to get'
 
 
 
@@ -233,22 +256,16 @@ class Goofs(Fuse):
         if os.path.exists("." + path + '.edit'):
             uri = read("." + path + '.edit')
             self.client.delete_album_or_photo_by_uri(uri)
-            os.unlink("." + path)
-            for ext in ['.self', '.edit']:
-                if os.path.exists("." + path + ext):
-                    os.unlink("." + path + ext)  
+            remove_file_and_metadata("." + path)
         else:
            return -errno.EACCES
-
 
     def rmdir(self, path):
         if os.path.exists("." + path + '.edit'):
             uri = read("." + path + '.edit')
             self.client.delete_album_or_photo_by_uri(uri)
-            os.rmdir("." + path)
-            for ext in ['.self', '.edit']:
-                if os.path.exists("." + path + ext):
-                    os.unlink("." + path + ext)
+            remove_dir_and_metadata(self.root + path)
+            os.chdir(self.root)
         else:
             return -errno.EACCES
 
@@ -384,7 +401,6 @@ def main():
               print 'Password cannot be blank.'
                       
     init(user)
-
 
     usage = "Google filesystem" + Fuse.fusage
 
