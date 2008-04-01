@@ -37,6 +37,7 @@ PHOTOS = None
 PHOTOS_DIR = None
 PUB_PHOTOS_DIR = None
 PRIV_PHOTOS_DIR = None
+QUERY_DIR = None
 GDOCS_DIRS = None
 
 def remove_dir_and_metadata(path):
@@ -76,15 +77,16 @@ def read(path):
 
 def init(user):
 	
-    global HOME, GOOFS_CACHE, PHOTOS, PHOTOS_DIR, GDOCS_DIRS, PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR
+    global HOME, GOOFS_CACHE, PHOTOS, PHOTOS_DIR, GDOCS_DIRS, PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR, QUERY_DIR
 
     HOME = os.path.expanduser("~")
-    GOOFS_CACHE = HOME + '/.goofs-cache/' + user.split('@')[0]
+    GOOFS_CACHE = os.path.join(HOME, '.goofs-cache', user.split('@')[0])
     PHOTOS = 'photos'
-    PHOTOS_DIR = GOOFS_CACHE + '/' + PHOTOS
-    PUB_PHOTOS_DIR = PHOTOS_DIR + '/public'
-    PRIV_PHOTOS_DIR = PHOTOS_DIR + '/private'
-    GDOCS_DIRS = [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR]
+    PHOTOS_DIR = os.path.join(GOOFS_CACHE, PHOTOS)
+    PUB_PHOTOS_DIR = os.path.join(PHOTOS_DIR, 'public')
+    PRIV_PHOTOS_DIR = os.path.join(PHOTOS_DIR, 'private')
+    QUERY_DIR = os.path.join(PHOTOS_DIR, 'queries')
+    GDOCS_DIRS = [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR, QUERY_DIR]
     
     try:
         for root, dirs, files in os.walk(GOOFS_CACHE, topdown=False):
@@ -112,7 +114,7 @@ class TaskThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self._finished = threading.Event()
-        self._interval = 30.0
+        self._interval = 15.0
     
     def setInterval(self, interval):
         """Set the number of seconds we sleep between executing our task"""
@@ -159,6 +161,9 @@ class GClient:
     def upload_photo(self, album, loc):
         return self.ph_client.InsertPhotoSimple(album, os.path.basename(loc), os.path.basename(loc), loc)
 
+    def upload_album(self, album_name, pub_or_priv):
+        return self.ph_client.InsertAlbum(album_name, album_name, access=pub_or_priv)
+    
     def get_photo(self, uri):
         return self.ph_client.GetEntry(uri)
     
@@ -179,15 +184,29 @@ class GClient:
 
     def get_photo_updated_str(self, photo):
 		return photo.updated.text
-	
+    
+    def search_photos_feed(self, query):
+        return self.ph_client.SearchUserPhotos(query).entry
+
 	
 class GTaskThread(TaskThread):
 
     def __init__(self, client):
         TaskThread.__init__(self)
         self.client = client
-            
-    def task(self):
+    
+    def _do_searches(self):
+        if os.path.exists(QUERY_DIR):
+            for root, dirs, files in os.walk(GOOFS_CACHE, topdown=False):
+                for d in dirs:
+                    photos_feed = self.client.search_photos_feed(d)
+                    for photo in photos_feed:
+                         name = os.path.join(root, dir, photo.title.text)
+                         write(name, self.client.get_photo_content(photo))
+                         write(name + '.self', photo.GetSelfLink().href)
+                         if photo.GetEditLink() is not None:
+                             write(name + '.edit', photo.GetEditLink().href)
+    def _do_downloads(self):
         album_feed = self.client.albums_feed()
         for album in album_feed:
             if album.access.text == 'public':
@@ -203,8 +222,8 @@ class GTaskThread(TaskThread):
                     write(dir + '/' + album.title.text + '.self', album.GetSelfLink().href)
                     if album.GetEditLink() is not None:
                         write(dir + '/' + album.title.text + '.edit', album.GetEditLink().href)
-                name = album_dir + '/' + photo.title.text
-                get = False						
+                name = os.path.join(album_dir, photo.title.text)
+                get = False                        
                 if os.path.exists(name):
                     mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime = os.stat(name)
                     if updated > datetime.datetime.fromtimestamp(mtime):
@@ -213,13 +232,16 @@ class GTaskThread(TaskThread):
                     get = True
                 if get:
                     write(name, self.client.get_photo_content(photo))
-                    print 'wrote %s', name
                     write(name + '.self', photo.GetSelfLink().href)
                     if photo.GetEditLink() is not None:
-                        write(name + '.edit', photo.GetEditLink().href) 
-                else:
-                    print 'no need to get'
-
+                        write(name + '.edit', photo.GetEditLink().href)        
+                                
+    def task(self):
+        
+        self._do_downloads()
+        
+        #self._do_searches()
+        
 
 
 def flag2mode(flags):
@@ -242,27 +264,27 @@ class Goofs(Fuse):
         self.client = GClient(self.user, self.pw)
 	
     def getattr(self, path):
-        return os.lstat("." + path)
+        return os.lstat(self.root + path)
 
     def readlink(self, path):
-        return os.readlink("." + path)
+        return os.readlink(self.root + path)
 
     def readdir(self, path, offset):
-        for e in os.listdir("." + path):
+        for e in os.listdir(self.root + path):
             if not e.endswith('.self') and not e.endswith('.edit'):
                 yield fuse.Direntry(e)
                 
     def unlink(self, path):
-        if os.path.exists("." + path + '.edit'):
-            uri = read("." + path + '.edit')
+        if os.path.exists(self.root + path + '.edit'):
+            uri = read(self.root + path + '.edit')
             self.client.delete_album_or_photo_by_uri(uri)
-            remove_file_and_metadata("." + path)
+            remove_file_and_metadata(self.root + path)
         else:
            return -errno.EACCES
 
     def rmdir(self, path):
-        if os.path.exists("." + path + '.edit'):
-            uri = read("." + path + '.edit')
+        if os.path.exists(self.root + path + '.edit'):
+            uri = read(self.root + path + '.edit')
             self.client.delete_album_or_photo_by_uri(uri)
             remove_dir_and_metadata(self.root + path)
             os.chdir(self.root)
@@ -270,40 +292,56 @@ class Goofs(Fuse):
             return -errno.EACCES
 
     def symlink(self, path, path1):
-        os.symlink(path, "." + path1)
+        os.symlink(path, self.root + path1)
 
     def rename(self, path, path1):
-        os.rename("." + path, "." + path1)
+        os.rename(self.root + path, self.root + path1)
 
     def link(self, path, path1):
-        os.link("." + path, "." + path1)
+        os.link(self.root + path, self.root + path1)
 
     def chmod(self, path, mode):
-        os.chmod("." + path, mode)
+        os.chmod(self.root + path, mode)
 
     def chown(self, path, user, group):
-        os.chown("." + path, user, group)
+        os.chown(self.root + path, user, group)
 
     def truncate(self, path, len):
-        f = open("." + path, "a")
+        f = open(self.root + path, "a")
         f.truncate(len)
         f.close()
 
     def mknod(self, path, mode, dev):
-        os.mknod("." + path, mode, dev)
+        os.mknod(self.root + path, mode, dev)
 
     def mkdir(self, path, mode):
-        os.mkdir("." + path, mode)
-
+        if path.startswith('/photos/public') or path.startswith('/photos/private'):
+            album = None
+            if path.startswith('/photos/public'):
+                album = self.client.upload_album(os.path.basename(path), 'public')
+                dir = PUB_PHOTOS_DIR
+            else:
+                album = self.client.upload_album(os.path.basename(path), 'private')
+                dir = PRIV_PHOTOS_DIR
+            
+            if album:
+                album_dir = dir + '/' + album.title.text
+                os.mkdir(album_dir, mode)
+                write(dir + '/' + album.title.text + '.self', album.GetSelfLink().href)
+                if album.GetEditLink() is not None:
+                    write(dir + '/' + album.title.text + '.edit', album.GetEditLink().href)    
+        else:
+            return -errno.EACCES
+            
     def utime(self, path, times):
-        os.utime("." + path, times)
+        os.utime(self.root + path, times)
 
     def access(self, path, mode):
-        if not os.access("." + path, mode):
+        if not os.access(self.root + path, mode):
             return -EACCES
 
     def statfs(self):
-        return os.statvfs(".")
+        return os.statvfs(self.root)
 
     def fsinit(self):   
 		os.chdir(self.root)
@@ -317,7 +355,8 @@ class Goofs(Fuse):
     class GoofsFile(object):
 
         def __init__(self, path, flags, *mode):
-            self.file = os.fdopen(os.open("." + path, flags, *mode),
+            self.root = GOOFS_CACHE
+            self.file = os.fdopen(os.open(self.root + path, flags, *mode),
                                   flag2mode(flags))
             self.fd = self.file.fileno()
 
