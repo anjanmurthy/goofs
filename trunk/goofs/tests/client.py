@@ -89,7 +89,6 @@ class WriteTestCase(ClientTestCase):
                         write(name + '.edit', photo.GetEditLink().href)        
    
     def write(self, path, buff, offset):
-        print 'in write'
         file_ext = os.path.basename(path).split(os.extsep)
         if len(file_ext) < 2 or not file_ext[1] in ['bmp', 'gif', 'png', 'jpeg', 'jpg']:
             return -errno.EACCES
@@ -100,31 +99,17 @@ class WriteTestCase(ClientTestCase):
             if photo_dir in ['/photos/public', '/photos/private']:
                 try:
                     if os.path.exists(self.root + dir + '.self'):
-                        print 'writing contents'
                         write(name, buff)
-                        print 'wrote contents'
                         album_uri = read(self.root + dir + '.self')
-                        print 'got album uri - %s' % (album_uri)
                         album = self.client.get_album_or_photo_by_uri(album_uri)
-                        print 'got album'
-                        
-                        photo = self.client.upload_photo(album_uri, name)
-                        
-                        print 'photo uploaded'
-                        try:
-                            assert(isinstance(photo, gdata.photos.PhotoEntry))
-                            print 'got back a photo entry'
-                        except AssertionError, ae:
-                            print 'assertion failed'
+                        print 'album is %s' % (album)
+                        photo = self.client.upload_photo(album, name)
                         write(name + '.self', photo.GetSelfLink().href)
-                        print 'wrote self link'
                         if photo.GetEditLink() is not None:
                             write(name + '.edit', photo.GetEditLink().href)
-                            print 'wrote edit link' 
                         return len(buff)
                 except Exception, reason:
-                    print 'handling exception'
-                    print reason
+                	print 'failed because %s' % (reason)
         return -errno.EACCES
 
     
@@ -132,9 +117,9 @@ class WriteTestCase(ClientTestCase):
     
     def runTest(self):
         self.do_downloads()
-        content = read('/home/rwynn/Pictures/robot.jpeg')
+        content = read('/home/rwynn/Pictures/phone.jpeg')
         assert content is not None
-        self.write('/photos/public/Test/robot.jpeg', content, 0)
+        self.write('/photos/public/Test/phone.jpeg', content, 0)
         
 
 

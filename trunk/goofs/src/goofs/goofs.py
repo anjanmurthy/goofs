@@ -289,7 +289,6 @@ class Goofs(Fuse):
         return content
     
     def write(self, path, buff, offset):
-        
         file_ext = os.path.basename(path).split(os.extsep)
         if len(file_ext) < 2 or not file_ext[1] in ['bmp', 'gif', 'png', 'jpeg', 'jpg']:
             return -errno.EACCES
@@ -300,20 +299,13 @@ class Goofs(Fuse):
             if photo_dir in ['/photos/public', '/photos/private']:
                 try:
                     if os.path.exists(self.root + dir + '.self'):
-                        
                         write(name, buff)
-                        
                         album_uri = read(self.root + dir + '.self')
-                        
                         album = self.client.get_album_or_photo_by_uri(album_uri)
-                        
-                        photo = self.client.upload_photo(album_uri, name)
-                        
+                        photo = self.client.upload_photo(album, name)
                         write(name + '.self', photo.GetSelfLink().href)
-                        
                         if photo.GetEditLink() is not None:
                             write(name + '.edit', photo.GetEditLink().href)
- 
                         return len(buff)
                 except Exception, reason:
                     if os.path.exists(name):
