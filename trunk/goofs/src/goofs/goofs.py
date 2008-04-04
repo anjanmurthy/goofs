@@ -13,6 +13,7 @@ from errno import *
 from stat import *
 import fcntl
 
+
 # pull in some spaghetti to make this stuff work without fuse-py being installed
 try:
     import _find_fuse_parts
@@ -39,6 +40,7 @@ PUB_PHOTOS_DIR = None
 PRIV_PHOTOS_DIR = None
 QUERY_DIR = None
 GDOCS_DIRS = None
+EXT_CTYPE = {'bmp': 'image/bmp', 'gif': 'image/gif', 'png': 'image/png', 'jpg':'image/jpeg', 'jpeg':'image/jpeg'}
 
 def remove_dir_and_metadata(path):
     for root, dirs, files in os.walk(path, topdown=False):
@@ -58,6 +60,7 @@ def remove_file_and_metadata(path):
             os.remove(path + ext)
 
 def write(path, content):
+    out = None
     try:
         out = open(path, 'w')
         out.write(content)
@@ -67,6 +70,7 @@ def write(path, content):
             
 def read(path):
     content = None
+    inf = None
     try:
         inf = open(path, 'r')
         content = inf.read()
@@ -74,6 +78,22 @@ def read(path):
         if inf is not None:
             inf.close()
     return content
+
+def content_type_from_path(path):
+    parts = path.split(os.extsep)
+    if len(parts) > 0:
+        return EXT_CTYPE[parts[-1]]
+    else:
+        return None
+
+def flag2mode(flags):
+    md = {os.O_RDONLY: 'r', os.O_WRONLY: 'w', os.O_RDWR: 'w+'}
+    m = md[flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)]
+
+    if flags | os.O_APPEND:
+        m = m.replace('w', 'a', 1)
+
+    return m
 
 def init(user):
 	
@@ -114,7 +134,8 @@ class TaskThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self._finished = threading.Event()
-        self._interval = 15.0
+        self._interval = 60.0
+        self.setDaemon ( True )
     
     def setInterval(self, interval):
         """Set the number of seconds we sleep between executing our task"""
@@ -158,8 +179,11 @@ class GClient:
     def photos_feed(self, album):
         return self.ph_client.GetFeed(album.GetPhotosUri()).entry
 
-    def upload_photo(self, album, loc):
-        return self.ph_client.InsertPhotoSimple(album, os.path.basename(loc), os.path.basename(loc), loc)
+    def upload_photo(self, album, path):    
+        return self.ph_client.InsertPhotoSimple(album, os.path.basename(path), os.path.basename(path), path, content_type_from_path(path))
+
+    def update_photo(self, photo, path):
+        return self.ph_client.UpdatePhotoBlob(photo, path, content_type_from_path(path))
 
     def upload_album(self, album_name, pub_or_priv):
         return self.ph_client.InsertAlbum(album_name, album_name, access=pub_or_priv)
@@ -237,21 +261,12 @@ class GTaskThread(TaskThread):
                         write(name + '.edit', photo.GetEditLink().href)        
                                 
     def task(self):
-        
         self._do_downloads()
         
         #self._do_searches()
         
 
 
-def flag2mode(flags):
-    md = {os.O_RDONLY: 'r', os.O_WRONLY: 'w', os.O_RDWR: 'w+'}
-    m = md[flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)]
-
-    if flags | os.O_APPEND:
-        m = m.replace('w', 'a', 1)
-
-    return m
 
 
 class Goofs(Fuse):
@@ -265,7 +280,47 @@ class Goofs(Fuse):
 	
     def getattr(self, path):
         return os.lstat(self.root + path)
-
+    
+    def read(self, path, size, offset):
+        f=open(self.root + path, 'r')
+        f.seek(offset)
+        content = f.read(size)
+        f.close()
+        return content
+    
+    def write(self, path, buff, offset):
+        
+        file_ext = os.path.basename(path).split(os.extsep)
+        if len(file_ext) < 2 or not file_ext[1] in ['bmp', 'gif', 'png', 'jpeg', 'jpg']:
+            return -errno.EACCES
+        name = self.root + path
+        dir = os.path.dirname(path)
+        if dir.startswith('/photos/public') or dir.startwith('/photos/private'):
+            photo_dir, album = os.path.split(dir)
+            if photo_dir in ['/photos/public', '/photos/private']:
+                try:
+                    if os.path.exists(self.root + dir + '.self'):
+                        
+                        write(name, buff)
+                        
+                        album_uri = read(self.root + dir + '.self')
+                        
+                        album = self.client.get_album_or_photo_by_uri(album_uri)
+                        
+                        photo = self.client.upload_photo(album_uri, name)
+                        
+                        write(name + '.self', photo.GetSelfLink().href)
+                        
+                        if photo.GetEditLink() is not None:
+                            write(name + '.edit', photo.GetEditLink().href)
+ 
+                        return len(buff)
+                except Exception, reason:
+                    if os.path.exists(name):
+                        os.unlink(name)
+                        return 0
+        return -errno.EACCES
+    
     def readlink(self, path):
         return os.readlink(self.root + path)
 
@@ -315,9 +370,9 @@ class Goofs(Fuse):
         os.mknod(self.root + path, mode, dev)
 
     def mkdir(self, path, mode):
-        if path.startswith('/photos/public') or path.startswith('/photos/private'):
+        if os.path.dirname(path) in ['/photos/public', '/photos/private']:
             album = None
-            if path.startswith('/photos/public'):
+            if os.path.dirname(path) == '/photos/public':
                 album = self.client.upload_album(os.path.basename(path), 'public')
                 dir = PUB_PHOTOS_DIR
             else:
@@ -351,71 +406,12 @@ class Goofs(Fuse):
     def fsdestroy(self):
 		self.gtask.shutdown()
 
-
-    class GoofsFile(object):
-
-        def __init__(self, path, flags, *mode):
-            self.root = GOOFS_CACHE
-            self.file = os.fdopen(os.open(self.root + path, flags, *mode),
-                                  flag2mode(flags))
-            self.fd = self.file.fileno()
-
-        def read(self, length, offset):
-            self.file.seek(offset)
-            return self.file.read(length)
-
-        def write(self, buf, offset):
-            self.file.seek(offset)
-            self.file.write(buf)
-            return len(buf)
-
-        def release(self, flags):
-            self.file.close()
-
-        def _fflush(self):
-            if 'w' in self.file.mode or 'a' in self.file.mode:
-                self.file.flush()
-
-        def fsync(self, isfsyncfile):
-            self._fflush()
-            if isfsyncfile and hasattr(os, 'fdatasync'):
-                os.fdatasync(self.fd)
-            else:
-                os.fsync(self.fd)
-
-        def flush(self):
-            self._fflush()
-            os.close(os.dup(self.fd))
-
-        def fgetattr(self):
-            return os.fstat(self.fd)
-
-        def ftruncate(self, len):
-            self.file.truncate(len)
-
-        def lock(self, cmd, owner, **kw):
-            op = { fcntl.F_UNLCK : fcntl.LOCK_UN,
-                   fcntl.F_RDLCK : fcntl.LOCK_SH,
-                   fcntl.F_WRLCK : fcntl.LOCK_EX }[kw['l_type']]
-            if cmd == fcntl.F_GETLK:
-                return -EOPNOTSUPP
-            elif cmd == fcntl.F_SETLK:
-                if op != fcntl.LOCK_UN:
-                    op |= fcntl.LOCK_NB
-            elif cmd == fcntl.F_SETLKW:
-                pass
-            else:
-                return -EINVAL
-
-            fcntl.lockf(self.fd, op, kw['l_start'], kw['l_len'])
-
-
     def main(self, *a, **kw):
-        self.file_class = self.GoofsFile
         return Fuse.main(self, *a, **kw)
 
 def main():	
     
+    """
     try:
         opts, args = getopt.getopt(sys.argv[1:], '', ['user=', 'pw='])
     except getopt.error, msg:
@@ -430,6 +426,9 @@ def main():
             user = arg
         elif option == '--pw':
             pw = arg
+    """
+    user = 'bigwynnr@gmail.com'
+    pw = 'jane804lane'
 
     while not user:
         user = raw_input('Please enter your username: ')
