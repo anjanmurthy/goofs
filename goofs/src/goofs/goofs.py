@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import gdata.photos.service
+import atom
 import urllib2, httplib
 import threading
 import thread
@@ -182,8 +183,8 @@ class GClient:
     def upload_photo(self, album, path):    
         return self.ph_client.InsertPhotoSimple(album, os.path.basename(path), os.path.basename(path), path, content_type_from_path(path))
 
-    def update_photo(self, photo, path):
-        return self.ph_client.UpdatePhotoBlob(photo, path, content_type_from_path(path))
+    def update_photo_meta(self, photo):
+        return self.ph_client.UpdatePhotoMetadata(photo)
 
     def upload_album(self, album_name, pub_or_priv):
         return self.ph_client.InsertAlbum(album_name, album_name, access=pub_or_priv)
@@ -292,12 +293,12 @@ class Goofs(Fuse):
         file_ext = os.path.basename(path).split(os.extsep)
         if len(file_ext) < 2 or not file_ext[1] in ['bmp', 'gif', 'png', 'jpeg', 'jpg']:
             return -errno.EACCES
-        name = self.root + path
         dir = os.path.dirname(path)
-        if dir.startswith('/photos/public') or dir.startwith('/photos/private'):
+        if dir is not None and (dir.startswith('/photos/public') or dir.startwith('/photos/private')):
             photo_dir, album = os.path.split(dir)
             if photo_dir in ['/photos/public', '/photos/private']:
                 try:
+                    name = self.root + path
                     if os.path.exists(self.root + dir + '.self'):
                         write(name, buff)
                         album_uri = read(self.root + dir + '.self')
@@ -341,9 +342,24 @@ class Goofs(Fuse):
     def symlink(self, path, path1):
         os.symlink(path, self.root + path1)
 
-    def rename(self, path, path1):
-        os.rename(self.root + path, self.root + path1)
-
+    def rename(self, src, dest):
+		# only handle renaming photos
+		if os.path.isfile(self.root + src) and (os.path.dirname(src) == os.path.dirname(dest)):
+			if os.path.exists(self.root + src + '.self'):
+				photo_uri = read(self.root + src + '.self')
+        		photo = self.client.get_album_or_photo_by_uri(photo_uri)
+				photo.title=atom.Title(text=os.path.basename(dest))
+				photo.summary = atom.Summary(text=os.path.basename(dest), summary_type='text')
+        		updated_photo = self.client.update_photo_meta(photo)
+        		os.remove(self.root + src + '.self')
+        		if os.path.exists(self.root + src + '.edit'):
+        			os.remove(self.root + src + '.edit')
+        		write(self.root + dest + '.self', updated_photo.GetSelfLink().href)
+                if updated_photo.GetEditLink() is not None:
+                	write(self.root + dest + '.edit', updated_photo.GetEditLink().href)
+        		os.rename(self.root + src, self.root + dest)
+		return -errno.EACCES
+        
     def link(self, path, path1):
         os.link(self.root + path, self.root + path1)
 
