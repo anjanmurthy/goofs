@@ -40,7 +40,6 @@ PHOTOS = None
 PHOTOS_DIR = None
 PUB_PHOTOS_DIR = None
 PRIV_PHOTOS_DIR = None
-QUERY_DIR = None
 GDOCS_DIRS = None
 EXT_CTYPE = {'bmp': 'image/bmp', 'gif': 'image/gif', 'png': 'image/png', 'jpg':'image/jpeg', 'jpeg':'image/jpeg'}
 
@@ -87,7 +86,7 @@ def flag2mode(flags):
 
 def init(user):
     
-    global HOME, GOOFS_CACHE, PHOTOS, PHOTOS_DIR, GDOCS_DIRS, PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR, QUERY_DIR
+    global HOME, GOOFS_CACHE, PHOTOS, PHOTOS_DIR, GDOCS_DIRS, PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR
 
     HOME = os.path.expanduser("~")
     GOOFS_CACHE = os.path.join(HOME, '.goofs-cache', user.split('@')[0])
@@ -95,8 +94,7 @@ def init(user):
     PHOTOS_DIR = os.path.join(GOOFS_CACHE, PHOTOS)
     PUB_PHOTOS_DIR = os.path.join(PHOTOS_DIR, 'public')
     PRIV_PHOTOS_DIR = os.path.join(PHOTOS_DIR, 'private')
-    QUERY_DIR = os.path.join(PHOTOS_DIR, 'queries')
-    GDOCS_DIRS = [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR, QUERY_DIR]
+    GDOCS_DIRS = [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR]
     
     try:
         for root, dirs, files in os.walk(GOOFS_CACHE, topdown=False):
@@ -107,7 +105,6 @@ def init(user):
     
     except OSError, err:
         print 'removing did not work'
-        print OSError
         print err
 
     try:
@@ -115,7 +112,6 @@ def init(user):
             os.makedirs(d)
     except OSError, err:
         print 'could not create the cache dirs'
-        print OSError
         print err
 
 class TaskThread(threading.Thread):
@@ -124,7 +120,7 @@ class TaskThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self._finished = threading.Event()
-        self._interval = 60.0
+        self._interval = 30.0
         self.setDaemon ( True )
     
     def setInterval(self, interval):
@@ -212,17 +208,30 @@ class GTaskThread(TaskThread):
         TaskThread.__init__(self)
         self.client = client
     
-    def _do_searches(self):
-        if os.path.exists(QUERY_DIR):
-            for root, dirs, files in os.walk(GOOFS_CACHE, topdown=False):
-                for d in dirs:
-                    photos_feed = self.client.search_photos_feed(d)
-                    for photo in photos_feed:
-                         name = os.path.join(root, dir, photo.title.text)
-                         write(name, self.client.get_photo_content(photo))
-                         write(name + '.self', photo.GetSelfLink().href)
-                         if photo.GetEditLink() is not None:
-                             write(name + '.edit', photo.GetEditLink().href)
+    def _do_cleanup(self):
+	    for dir in GDOCS_DIRS:
+		    try:
+		        for root, dirs, files in os.walk(dir, topdown=True):
+		            for d in dirs:
+		            	if os.path.exists(os.path.join(root, d + '.self')):
+		                	album_uri = read(os.path.join(root, d + '.self'))
+		                	try:
+		                		album = self.client.get_album_or_photo_by_uri(album_uri)
+		                	except GooglePhotosException, ex:
+								# album no longer exists
+								remove_dir_and_metadata(os.path.join(root, d))		            
+		            for file in files:
+		                if os.path.exists(os.path.join(root, file + '.self')):
+		                	photo_uri = read(os.path.join(root, file + '.self'))
+		                	try:
+		                		photo = self.client.get_album_or_photo_by_uri(photo_uri)
+		                	except GooglePhotosException, ex:
+								# photo no longer exists
+								remove_file_and_metadata(os.path.join(root, file))
+		    except OSError, err:
+		        print 'cleanup did not work'
+		        print err
+	
     def _do_downloads(self):
         album_feed = self.client.albums_feed()
         for album in album_feed:
@@ -255,8 +264,7 @@ class GTaskThread(TaskThread):
                                 
     def task(self):
         self._do_downloads()
-        
-        #self._do_searches()
+        self._do_cleanup()
         
 
 class Goofs(Fuse):
@@ -286,38 +294,28 @@ class Goofs(Fuse):
             if photo_dir in ['/photos/public', '/photos/private']:
                 try:
                     name = self.root + path
-                    print "name is %s" % (name)
                     if os.path.exists(name + '.self'):
                         # existing photo
-                        print "in existing photo"
                         write(name, buff)
-                        print "wrote local fs"
                         photo_uri = read(name + '.self')
                         cur_photo = self.client.get_album_or_photo_by_uri(photo_uri)
-                        print "got photo ref"
                         photo = self.client.upload_photo_blob(cur_photo, name)
-                        print "wrote remote photo"
                         write(name + '.self', photo.GetSelfLink().href)
                         if photo.GetEditLink() is not None:
                             write(name + '.edit', photo.GetEditLink().href)
                         return len(buff)  
                     else:
                         # new photo
-                        print "in new photo"
                         if os.path.exists(self.root + dir + '.self'):
                             write(name, buff)
-                            print "wrote local fs"
                             album_uri = read(self.root + dir + '.self')
                             album = self.client.get_album_or_photo_by_uri(album_uri)
-                            print "got album ref"
                             photo = self.client.upload_photo(album, name)
-                            print "wrote remote photo"
                             write(name + '.self', photo.GetSelfLink().href)
                             if photo.GetEditLink() is not None:
                                 write(name + '.edit', photo.GetEditLink().href)
                             return len(buff)
                 except Exception, reason:
-                    print "caught exception:%s" % (reason)
                     if os.path.exists(name):
                         os.unlink(name)
                         return 0
@@ -431,20 +429,18 @@ def main():
     user = ''
     pw = ''
     
-    """
     try:
         opts, args = getopt.getopt(sys.argv[1:], '', ['user=', 'pw='])
     except getopt.error, msg:
         print 'python goofs.py --user [username] --pw [password] mntpoint '
         sys.exit(2)
         
-      # Process options
+    # Process options
     for option, arg in opts:
         if option == '--user':
             user = arg
         elif option == '--pw':
             pw = arg
-    """
 
     while not user:
         user = raw_input('Please enter your username: ')
