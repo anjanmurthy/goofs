@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import with_statement
 import gdata.photos.service
 import atom
 import urllib2, httplib
@@ -61,24 +62,12 @@ def remove_file_and_metadata(path):
             os.remove(path + ext)
 
 def write(path, content):
-    out = None
-    try:
-        out = open(path, 'w')
-        out.write(content)
-    finally:
-        if out is not None:
-            out.close()
+    with open(path, 'w') as f:
+        f.write(content)
             
 def read(path):
-    content = None
-    inf = None
-    try:
-        inf = open(path, 'r')
-        content = inf.read()
-    finally:
-        if inf is not None:
-            inf.close()
-    return content
+    with open(path, 'r') as f:
+        return f.read()
 
 def content_type_from_path(path):
     parts = path.split(os.extsep)
@@ -183,6 +172,9 @@ class GClient:
     def upload_photo(self, album, path):    
         return self.ph_client.InsertPhotoSimple(album, os.path.basename(path), os.path.basename(path), path, content_type_from_path(path))
 
+    def upload_photo_blob(self, photo, path):    
+        return self.ph_client.UpdatePhotoBlob(photo, path, content_type_from_path(path))
+    
     def update_photo_meta(self, photo):
         return self.ph_client.UpdatePhotoMetadata(photo)
 
@@ -267,9 +259,6 @@ class GTaskThread(TaskThread):
         #self._do_searches()
         
 
-
-
-
 class Goofs(Fuse):
 
     def __init__(self, user, pw, *args, **kw):
@@ -283,11 +272,9 @@ class Goofs(Fuse):
         return os.lstat(self.root + path)
     
     def read(self, path, size, offset):
-        f=open(self.root + path, 'r')
-        f.seek(offset)
-        content = f.read(size)
-        f.close()
-        return content
+        with open(self.root + path, 'r') as f:
+            f.seek(offset)
+            return f.read(size)
     
     def write(self, path, buff, offset):
         file_ext = os.path.basename(path).split(os.extsep)
@@ -299,16 +286,38 @@ class Goofs(Fuse):
             if photo_dir in ['/photos/public', '/photos/private']:
                 try:
                     name = self.root + path
-                    if os.path.exists(self.root + dir + '.self'):
+                    print "name is %s" % (name)
+                    if os.path.exists(name + '.self'):
+                        # existing photo
+                        print "in existing photo"
                         write(name, buff)
-                        album_uri = read(self.root + dir + '.self')
-                        album = self.client.get_album_or_photo_by_uri(album_uri)
-                        photo = self.client.upload_photo(album, name)
+                        print "wrote local fs"
+                        photo_uri = read(name + '.self')
+                        cur_photo = self.client.get_album_or_photo_by_uri(photo_uri)
+                        print "got photo ref"
+                        photo = self.client.upload_photo_blob(cur_photo, name)
+                        print "wrote remote photo"
                         write(name + '.self', photo.GetSelfLink().href)
                         if photo.GetEditLink() is not None:
                             write(name + '.edit', photo.GetEditLink().href)
-                        return len(buff)
+                        return len(buff)  
+                    else:
+                        # new photo
+                        print "in new photo"
+                        if os.path.exists(self.root + dir + '.self'):
+                            write(name, buff)
+                            print "wrote local fs"
+                            album_uri = read(self.root + dir + '.self')
+                            album = self.client.get_album_or_photo_by_uri(album_uri)
+                            print "got album ref"
+                            photo = self.client.upload_photo(album, name)
+                            print "wrote remote photo"
+                            write(name + '.self', photo.GetSelfLink().href)
+                            if photo.GetEditLink() is not None:
+                                write(name + '.edit', photo.GetEditLink().href)
+                            return len(buff)
                 except Exception, reason:
+                    print "caught exception:%s" % (reason)
                     if os.path.exists(name):
                         os.unlink(name)
                         return 0
@@ -344,21 +353,21 @@ class Goofs(Fuse):
 
     def rename(self, src, dest):
 		# only handle renaming photos
-		if os.path.isfile(self.root + src) and (os.path.dirname(src) == os.path.dirname(dest)):
-			if os.path.exists(self.root + src + '.self'):
-				photo_uri = read(self.root + src + '.self')
-        		photo = self.client.get_album_or_photo_by_uri(photo_uri)
-				photo.title=atom.Title(text=os.path.basename(dest))
-				photo.summary = atom.Summary(text=os.path.basename(dest), summary_type='text')
-        		updated_photo = self.client.update_photo_meta(photo)
-        		os.remove(self.root + src + '.self')
-        		if os.path.exists(self.root + src + '.edit'):
-        			os.remove(self.root + src + '.edit')
-        		write(self.root + dest + '.self', updated_photo.GetSelfLink().href)
+        if os.path.isfile(self.root + src) and (os.path.dirname(src) == os.path.dirname(dest)):
+            if os.path.exists(self.root + src + '.self'):
+                photo_uri = read(self.root + src + '.self')
+                photo = self.client.get_album_or_photo_by_uri(photo_uri)
+                photo.title=atom.Title(text=os.path.basename(dest))
+                photo.summary = atom.Summary(text=os.path.basename(dest), summary_type='text')
+                updated_photo = self.client.update_photo_meta(photo)
+                os.remove(self.root + src + '.self')
+                if os.path.exists(self.root + src + '.edit'):
+                    os.remove(self.root + src + '.edit')
+                write(self.root + dest + '.self', updated_photo.GetSelfLink().href)
                 if updated_photo.GetEditLink() is not None:
-                	write(self.root + dest + '.edit', updated_photo.GetEditLink().href)
-        		os.rename(self.root + src, self.root + dest)
-		return -errno.EACCES
+                    write(self.root + dest + '.edit', updated_photo.GetEditLink().href)
+                os.rename(self.root + src, self.root + dest)
+        return -errno.EACCES
         
     def link(self, path, path1):
         os.link(self.root + path, self.root + path1)
@@ -418,22 +427,24 @@ class Goofs(Fuse):
         return Fuse.main(self, *a, **kw)
 
 def main():    
+
+    user = ''
+    pw = ''
     
-    
+    """
     try:
         opts, args = getopt.getopt(sys.argv[1:], '', ['user=', 'pw='])
     except getopt.error, msg:
         print 'python goofs.py --user [username] --pw [password] mntpoint '
         sys.exit(2)
-
-    user = ''
-    pw = ''
+        
       # Process options
     for option, arg in opts:
         if option == '--user':
             user = arg
         elif option == '--pw':
             pw = arg
+    """
 
     while not user:
         user = raw_input('Please enter your username: ')

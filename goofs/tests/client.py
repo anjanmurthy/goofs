@@ -91,35 +91,49 @@ class WriteTestCase(ClientTestCase):
     def write(self, path, buff, offset):
         file_ext = os.path.basename(path).split(os.extsep)
         if len(file_ext) < 2 or not file_ext[1] in ['bmp', 'gif', 'png', 'jpeg', 'jpg']:
-            return -errno.EACCES
-        name = self.root + path
+            return 0
         dir = os.path.dirname(path)
-        if dir.startswith('/photos/public') or dir.startwith('/photos/private'):
+        if dir is not None and (dir.startswith('/photos/public') or dir.startwith('/photos/private')):
             photo_dir, album = os.path.split(dir)
             if photo_dir in ['/photos/public', '/photos/private']:
                 try:
-                    if os.path.exists(self.root + dir + '.self'):
-                        write(name, buff)
-                        album_uri = read(self.root + dir + '.self')
-                        album = self.client.get_album_or_photo_by_uri(album_uri)
-                        print 'album is %s' % (album)
-                        photo = self.client.upload_photo(album, name)
-                        write(name + '.self', photo.GetSelfLink().href)
-                        if photo.GetEditLink() is not None:
-                            write(name + '.edit', photo.GetEditLink().href)
-                        return len(buff)
+                    name = self.root + path
+                    if os.path.exists(name) == True:
+                        # existing photo
+                        if os.path.exists(name + '.self'):
+                            write(name, buff)
+                            photo_uri = read(name + '.self')
+                            cur_photo = self.client.get_album_or_photo_by_uri(photo_uri)
+                            photo = self.client.upload_photo_blob(cur_photo, name)
+                            write(name + '.self', photo.GetSelfLink().href)
+                            if photo.GetEditLink() is not None:
+                                write(name + '.edit', photo.GetEditLink().href)
+                            return len(buff)  
+                    else:
+                        # new photo
+                        if os.path.exists(self.root + dir + '.self'):
+                            write(name, buff)
+                            album_uri = read(self.root + dir + '.self')
+                            album = self.client.get_album_or_photo_by_uri(album_uri)
+                            photo = self.client.upload_photo(album, name)
+                            write(name + '.self', photo.GetSelfLink().href)
+                            if photo.GetEditLink() is not None:
+                                write(name + '.edit', photo.GetEditLink().href)
+                            return len(buff)
                 except Exception, reason:
-                	print 'failed because %s' % (reason)
-        return -errno.EACCES
-
+                    print reason
+                    if os.path.exists(name):
+                        os.unlink(name)
+                        return 0
+        return 0
     
 
     
     def runTest(self):
         self.do_downloads()
-        content = read('/home/rwynn/Pictures/phone.jpeg')
+        content = read('/home/rwynn/Pictures/pants.jpg')
         assert content is not None
-        self.write('/photos/public/Test/phone.jpeg', content, 0)
+        self.write('/photos/public/Test/leopard.jpg', content, 0)
         
 
 
