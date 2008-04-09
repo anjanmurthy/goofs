@@ -14,6 +14,7 @@ import sys
 from errno import *
 from stat import *
 import fcntl
+from Queue import Queue
 
 
 # pull in some spaghetti to make this stuff work without fuse-py being installed
@@ -33,7 +34,7 @@ fuse.fuse_python_api = (0, 2)
 
 fuse.feature_assert('stateful_files', 'has_init')
 
-
+UPLOAD_QUEUE = Queue()
 HOME = None
 GOOFS_CACHE = None
 PHOTOS = None
@@ -120,7 +121,7 @@ class TaskThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self._finished = threading.Event()
-        self._interval = 30.0
+        self._interval = 5.0
         self.setDaemon ( True )
     
     def setInterval(self, interval):
@@ -201,38 +202,42 @@ class GClient:
     def search_photos_feed(self, query):
         return self.ph_client.SearchUserPhotos(query).entry
 
+class UploadThread(TaskThread):
     
+    def __init__(self, client):
+        TaskThread.__init__(self)
+        self.client = client
+
+    def task(self):
+        path = UPLOAD_QUEUE.get()
+        print 'Got %s off queue' % (path)
+        if os.path.exists(path + '.self'):
+            # existing photo
+            existing_photo = self.client.get_album_or_photo_by_uri(read(path + '.self'))
+            photo = self.client.upload_photo_blob(existing_photo, path)
+            print 'updated photo'
+        else:
+            # new photo
+            album_self = os.path.dirname(path) + '.self'
+            print 'Album self is %s' % (album_self)
+            album = self.client.get_album_or_photo_by_uri(read(album_self))
+            print 'got album'
+            photo = self.client.upload_photo(album, path)
+            print 'uploaded photo'
+            
+        write(path + '.self', photo.GetSelfLink().href)
+        if photo.GetEditLink() is not None:
+            write(path + '.edit', photo.GetEditLink().href)
+        UPLOAD_QUEUE.task_done()
+                        
+        
 class GTaskThread(TaskThread):
 
     def __init__(self, client):
         TaskThread.__init__(self)
         self.client = client
-    
-    def _do_cleanup(self):
-	    for dir in GDOCS_DIRS:
-		    try:
-		        for root, dirs, files in os.walk(dir, topdown=True):
-		            for d in dirs:
-		            	if os.path.exists(os.path.join(root, d + '.self')):
-		                	album_uri = read(os.path.join(root, d + '.self'))
-		                	try:
-		                		album = self.client.get_album_or_photo_by_uri(album_uri)
-		                	except GooglePhotosException, ex:
-								# album no longer exists
-								remove_dir_and_metadata(os.path.join(root, d))		            
-		            for file in files:
-		                if os.path.exists(os.path.join(root, file + '.self')):
-		                	photo_uri = read(os.path.join(root, file + '.self'))
-		                	try:
-		                		photo = self.client.get_album_or_photo_by_uri(photo_uri)
-		                	except GooglePhotosException, ex:
-								# photo no longer exists
-								remove_file_and_metadata(os.path.join(root, file))
-		    except OSError, err:
-		        print 'cleanup did not work'
-		        print err
-	
-    def _do_downloads(self):
+                            
+    def task(self):
         album_feed = self.client.albums_feed()
         for album in album_feed:
             if album.access.text == 'public':
@@ -261,10 +266,6 @@ class GTaskThread(TaskThread):
                     write(name + '.self', photo.GetSelfLink().href)
                     if photo.GetEditLink() is not None:
                         write(name + '.edit', photo.GetEditLink().href)        
-                                
-    def task(self):
-        self._do_downloads()
-        self._do_cleanup()
         
 
 class Goofs(Fuse):
@@ -278,48 +279,6 @@ class Goofs(Fuse):
     
     def getattr(self, path):
         return os.lstat(self.root + path)
-    
-    def read(self, path, size, offset):
-        with open(self.root + path, 'r') as f:
-            f.seek(offset)
-            return f.read(size)
-    
-    def write(self, path, buff, offset):
-        file_ext = os.path.basename(path).split(os.extsep)
-        if len(file_ext) < 2 or not file_ext[1] in ['bmp', 'gif', 'png', 'jpeg', 'jpg']:
-            return -errno.EACCES
-        dir = os.path.dirname(path)
-        if dir is not None and (dir.startswith('/photos/public') or dir.startwith('/photos/private')):
-            photo_dir, album = os.path.split(dir)
-            if photo_dir in ['/photos/public', '/photos/private']:
-                try:
-                    name = self.root + path
-                    if os.path.exists(name + '.self'):
-                        # existing photo
-                        write(name, buff)
-                        photo_uri = read(name + '.self')
-                        cur_photo = self.client.get_album_or_photo_by_uri(photo_uri)
-                        photo = self.client.upload_photo_blob(cur_photo, name)
-                        write(name + '.self', photo.GetSelfLink().href)
-                        if photo.GetEditLink() is not None:
-                            write(name + '.edit', photo.GetEditLink().href)
-                        return len(buff)  
-                    else:
-                        # new photo
-                        if os.path.exists(self.root + dir + '.self'):
-                            write(name, buff)
-                            album_uri = read(self.root + dir + '.self')
-                            album = self.client.get_album_or_photo_by_uri(album_uri)
-                            photo = self.client.upload_photo(album, name)
-                            write(name + '.self', photo.GetSelfLink().href)
-                            if photo.GetEditLink() is not None:
-                                write(name + '.edit', photo.GetEditLink().href)
-                            return len(buff)
-                except Exception, reason:
-                    if os.path.exists(name):
-                        os.unlink(name)
-                        return 0
-        return -errno.EACCES
     
     def readlink(self, path):
         return os.readlink(self.root + path)
@@ -417,11 +376,77 @@ class Goofs(Fuse):
         os.chdir(self.root)
         self.gtask = GTaskThread(self.client)
         self.gtask.start()
+        self.uptask = UploadThread(self.client)
+        self.uptask.start()
 
     def fsdestroy(self):
         self.gtask.shutdown()
+        self.uptask.shutdown()
+    
+    class GoofsFile(object):
+
+        def __init__(self, path, flags, *mode):
+            self.file = os.fdopen(os.open(GOOFS_CACHE + path, flags, *mode),
+                                  flag2mode(flags))
+            self.fd = self.file.fileno()
+            self.path = path
+
+        def read(self, length, offset):
+            self.file.seek(offset)
+            return self.file.read(length)
+
+        def write(self, buf, offset):
+            print 'writing to file'
+            self.file.seek(offset)
+            self.file.write(buf)
+            return len(buf)
+
+        def release(self, flags):
+            print 'releasing file'
+            self.file.close()
+            UPLOAD_QUEUE.put(GOOFS_CACHE + self.path)
+            print 'just put %s on queue' % (GOOFS_CACHE + self.path)
+
+        def _fflush(self):
+            if 'w' in self.file.mode or 'a' in self.file.mode:
+                self.file.flush()
+
+        def fsync(self, isfsyncfile):
+            self._fflush()
+            if isfsyncfile and hasattr(os, 'fdatasync'):
+                os.fdatasync(self.fd)
+            else:
+                os.fsync(self.fd)
+
+        def flush(self):
+            self._fflush()
+            # cf. xmp_flush() in fusexmp_fh.c
+            os.close(os.dup(self.fd))
+
+        def fgetattr(self):
+            return os.fstat(self.fd)
+
+        def ftruncate(self, len):
+            self.file.truncate(len)
+
+        def lock(self, cmd, owner, **kw):
+            op = { fcntl.F_UNLCK : fcntl.LOCK_UN,
+                   fcntl.F_RDLCK : fcntl.LOCK_SH,
+                   fcntl.F_WRLCK : fcntl.LOCK_EX }[kw['l_type']]
+            if cmd == fcntl.F_GETLK:
+                return -EOPNOTSUPP
+            elif cmd == fcntl.F_SETLK:
+                if op != fcntl.LOCK_UN:
+                    op |= fcntl.LOCK_NB
+            elif cmd == fcntl.F_SETLKW:
+                pass
+            else:
+                return -EINVAL
+
+            fcntl.lockf(self.fd, op, kw['l_start'], kw['l_len'])
 
     def main(self, *a, **kw):
+        self.file_class = self.GoofsFile
         return Fuse.main(self, *a, **kw)
 
 def main():    
@@ -429,6 +454,7 @@ def main():
     user = ''
     pw = ''
     
+    """
     try:
         opts, args = getopt.getopt(sys.argv[1:], '', ['user=', 'pw='])
     except getopt.error, msg:
@@ -441,6 +467,7 @@ def main():
             user = arg
         elif option == '--pw':
             pw = arg
+    """
 
     while not user:
         user = raw_input('Please enter your username: ')
