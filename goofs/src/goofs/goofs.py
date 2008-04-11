@@ -1,20 +1,15 @@
 #!/usr/bin/env python
 
-from __future__ import with_statement
-import gdata.photos.service
-import atom
-import urllib2, httplib
-import threading
-import thread
+
 import os
-import datetime, time
 import getpass
 import getopt
 import sys
 from errno import *
 from stat import *
 import fcntl
-from Queue import Queue
+from backend import *
+from background import *
 
 
 # pull in some spaghetti to make this stuff work without fuse-py being installed
@@ -34,7 +29,7 @@ fuse.fuse_python_api = (0, 2)
 
 fuse.feature_assert('stateful_files', 'has_init')
 
-UPLOAD_QUEUE = Queue()
+
 HOME = None
 GOOFS_CACHE = None
 PHOTOS = None
@@ -42,39 +37,8 @@ PHOTOS_DIR = None
 PUB_PHOTOS_DIR = None
 PRIV_PHOTOS_DIR = None
 GDOCS_DIRS = None
-EXT_CTYPE = {'bmp': 'image/bmp', 'gif': 'image/gif', 'png': 'image/png', 'jpg':'image/jpeg', 'jpeg':'image/jpeg'}
+CLIENT = None
 
-def remove_dir_and_metadata(path):
-    for root, dirs, files in os.walk(path, topdown=False):
-        for file in files:
-            os.remove(os.path.join(root, file))
-        for d in dirs:
-            os.rmdir(os.path.join(root, d))
-    for ext in ['.self', '.edit']:
-        if os.path.exists(path + ext):
-            os.remove(path + ext)
-    os.rmdir(path)
-
-def remove_file_and_metadata(path):
-    os.remove(path)
-    for ext in ['.self', '.edit']:
-        if os.path.exists(path + ext):
-            os.remove(path + ext)
-
-def write(path, content):
-    with open(path, 'w') as f:
-        f.write(content)
-            
-def read(path):
-    with open(path, 'r') as f:
-        return f.read()
-
-def content_type_from_path(path):
-    parts = path.split(os.extsep)
-    if len(parts) > 0:
-        return EXT_CTYPE[parts[-1]]
-    else:
-        return None
 
 def flag2mode(flags):
     md = {os.O_RDONLY: 'r', os.O_WRONLY: 'w', os.O_RDWR: 'w+'}
@@ -85,9 +49,11 @@ def flag2mode(flags):
 
     return m
 
-def init(user):
+def init(user, pw):
     
-    global HOME, GOOFS_CACHE, PHOTOS, PHOTOS_DIR, GDOCS_DIRS, PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR
+    global CLIENT, HOME, GOOFS_CACHE, PHOTOS, PHOTOS_DIR, GDOCS_DIRS, PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR
+
+    CLIENT = GClient(user, pw)
 
     HOME = os.path.expanduser("~")
     GOOFS_CACHE = os.path.join(HOME, '.goofs-cache', user.split('@')[0])
@@ -115,274 +81,136 @@ def init(user):
         print 'could not create the cache dirs'
         print err
 
-class TaskThread(threading.Thread):
-    """Thread that executes a task every N seconds"""
-    
-    def __init__(self):
-        threading.Thread.__init__(self)
-        self._finished = threading.Event()
-        self._interval = 5.0
-        self.setDaemon ( True )
-    
-    def setInterval(self, interval):
-        """Set the number of seconds we sleep between executing our task"""
-        self._interval = interval
-    
-    def shutdown(self):
-        """Stop this thread"""
-        self._finished.set()
-    
-    def run(self):
-       while 1:
-            if self._finished.isSet(): return
-            self.task()    
-            # sleep for interval or until shutdown
-            self._finished.wait(self._interval)
-    
-    def task(self):
-        """The task done by this thread - override in subclasses"""
-        pass
-
-class GPhotosService(gdata.photos.service.PhotosService):
-    
-    def __init__(self, email, password):
-        gdata.photos.service.PhotosService.__init__(self, email, password)
-    
-    def GetAuthorizationToken(self):
-        return self._GetAuthToken()
-    
-class GClient:
-    
-    def __init__(self, email, password):
-        self.ph_client = GPhotosService(email, password)
-        self.ph_client.ProgrammaticLogin()
-
-    def albums_feed(self):
-        return self.ph_client.GetUserFeed().entry
-
-    def get_album_or_photo_by_uri(self, uri):
-        return self.ph_client.GetEntry(uri)
-    
-    def photos_feed(self, album):
-        return self.ph_client.GetFeed(album.GetPhotosUri()).entry
-
-    def upload_photo(self, album, path):    
-        return self.ph_client.InsertPhotoSimple(album, os.path.basename(path), os.path.basename(path), path, content_type_from_path(path))
-
-    def upload_photo_blob(self, photo, path):    
-        return self.ph_client.UpdatePhotoBlob(photo, path, content_type_from_path(path))
-    
-    def update_photo_meta(self, photo):
-        return self.ph_client.UpdatePhotoMetadata(photo)
-
-    def upload_album(self, album_name, pub_or_priv):
-        return self.ph_client.InsertAlbum(album_name, album_name, access=pub_or_priv)
-    
-    def get_photo(self, uri):
-        return self.ph_client.GetEntry(uri)
-    
-    def delete_album_or_photo_by_uri(self, uri):
-        return self.ph_client.Delete(uri)
-
-    def get_photo_content(self, photo):
-        request = urllib2.Request(photo.media.content[0].url)
-        request.add_header('Authorization', self.ph_client.GetAuthorizationToken())
-        opener = urllib2.build_opener()
-        f = opener.open(request)
-        thecontent = f.read()
-        f.close()
-        return thecontent
-    
-    def get_photo_updated(self, photo):
-        return datetime.datetime.strptime(self.get_photo_updated_str(photo)[0:19], '%Y-%m-%dT%H:%M:%S')
-
-    def get_photo_updated_str(self, photo):
-        return photo.updated.text
-    
-    def search_photos_feed(self, query):
-        return self.ph_client.SearchUserPhotos(query).entry
-
-class UploadThread(TaskThread):
-    
-    def __init__(self, client):
-        TaskThread.__init__(self)
-        self.client = client
-
-    def task(self):
-        path = UPLOAD_QUEUE.get()
-        print 'Got %s off queue' % (path)
-        if os.path.exists(path + '.self'):
-            # existing photo
-            existing_photo = self.client.get_album_or_photo_by_uri(read(path + '.self'))
-            photo = self.client.upload_photo_blob(existing_photo, path)
-            print 'updated photo'
-        else:
-            # new photo
-            album_self = os.path.dirname(path) + '.self'
-            print 'Album self is %s' % (album_self)
-            album = self.client.get_album_or_photo_by_uri(read(album_self))
-            print 'got album'
-            photo = self.client.upload_photo(album, path)
-            print 'uploaded photo'
-            
-        write(path + '.self', photo.GetSelfLink().href)
-        if photo.GetEditLink() is not None:
-            write(path + '.edit', photo.GetEditLink().href)
-        UPLOAD_QUEUE.task_done()
-                        
-        
-class GTaskThread(TaskThread):
-
-    def __init__(self, client):
-        TaskThread.__init__(self)
-        self.client = client
-                            
-    def task(self):
-        album_feed = self.client.albums_feed()
-        for album in album_feed:
-            if album.access.text == 'public':
-                dir = PUB_PHOTOS_DIR
-            else:
-                dir = PRIV_PHOTOS_DIR
-            photos_feed = self.client.photos_feed(album)
-            for photo in photos_feed:    
-                updated = self.client.get_photo_updated(photo)
-                album_dir = dir + '/' + album.title.text
-                if not os.path.exists(album_dir):
-                    os.mkdir(album_dir)
-                    write(dir + '/' + album.title.text + '.self', album.GetSelfLink().href)
-                    if album.GetEditLink() is not None:
-                        write(dir + '/' + album.title.text + '.edit', album.GetEditLink().href)
-                name = os.path.join(album_dir, photo.title.text)
-                get = False                        
-                if os.path.exists(name):
-                    mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime = os.stat(name)
-                    if updated > datetime.datetime.fromtimestamp(mtime):
-                        get = True
-                else:
-                    get = True
-                if get:
-                    write(name, self.client.get_photo_content(photo))
-                    write(name + '.self', photo.GetSelfLink().href)
-                    if photo.GetEditLink() is not None:
-                        write(name + '.edit', photo.GetEditLink().href)        
-        
 
 class Goofs(Fuse):
 
     def __init__(self, user, pw, *args, **kw):
         Fuse.__init__(self, *args, **kw)
         self.root = GOOFS_CACHE
-        self.user = user
-        self.pw = pw
-        self.client = GClient(self.user, self.pw)
     
     def getattr(self, path):
         return os.lstat(self.root + path)
     
     def readlink(self, path):
         return os.readlink(self.root + path)
+                
+    def getattr(self, path):
+        return os.lstat("." + path)
+
+    def readlink(self, path):
+        return os.readlink("." + path)
 
     def readdir(self, path, offset):
-        for e in os.listdir(self.root + path):
+        for e in os.listdir("." + path):
             if not e.endswith('.self') and not e.endswith('.edit'):
                 yield fuse.Direntry(e)
-                
+
     def unlink(self, path):
-        if os.path.exists(self.root + path + '.edit'):
-            uri = read(self.root + path + '.edit')
-            self.client.delete_album_or_photo_by_uri(uri)
-            remove_file_and_metadata(self.root + path)
-        else:
-           return -errno.EACCES
+        ev = UnlinkEventHandler(CLIENT)
+        ev.consume(UnlinkEvent(GOOFS_CACHE + path))
+        os.unlink("." + path)
 
     def rmdir(self, path):
-        if os.path.exists(self.root + path + '.edit'):
-            uri = read(self.root + path + '.edit')
-            self.client.delete_album_or_photo_by_uri(uri)
-            remove_dir_and_metadata(self.root + path)
-            os.chdir(self.root)
-        else:
-            return -errno.EACCES
+        ev = RmdirEventHandler(CLIENT)
+        ev.consume(RmdirEvent(GOOFS_CACHE + path))
+        os.rmdir("." + path)
 
     def symlink(self, path, path1):
-        os.symlink(path, self.root + path1)
+        os.symlink(path, "." + path1)
 
-    def rename(self, src, dest):
-		# only handle renaming photos
-        if os.path.isfile(self.root + src) and (os.path.dirname(src) == os.path.dirname(dest)):
-            if os.path.exists(self.root + src + '.self'):
-                photo_uri = read(self.root + src + '.self')
-                photo = self.client.get_album_or_photo_by_uri(photo_uri)
-                photo.title=atom.Title(text=os.path.basename(dest))
-                photo.summary = atom.Summary(text=os.path.basename(dest), summary_type='text')
-                updated_photo = self.client.update_photo_meta(photo)
-                os.remove(self.root + src + '.self')
-                if os.path.exists(self.root + src + '.edit'):
-                    os.remove(self.root + src + '.edit')
-                write(self.root + dest + '.self', updated_photo.GetSelfLink().href)
-                if updated_photo.GetEditLink() is not None:
-                    write(self.root + dest + '.edit', updated_photo.GetEditLink().href)
-                os.rename(self.root + src, self.root + dest)
-        return -errno.EACCES
+    def rename(self, path, path1):
+        ev = RenameEventHandler(CLIENT)
+        ev.consume(RenameEvent(GOOFS_CACHE + path, GOOFS_CACHE + path1))
+        os.rename("." + path, "." + path1)
         
     def link(self, path, path1):
-        os.link(self.root + path, self.root + path1)
+        os.link("." + path, "." + path1)
 
     def chmod(self, path, mode):
-        os.chmod(self.root + path, mode)
+        os.chmod("." + path, mode)
 
     def chown(self, path, user, group):
-        os.chown(self.root + path, user, group)
+        os.chown("." + path, user, group)
 
     def truncate(self, path, len):
-        f = open(self.root + path, "a")
+        f = open("." + path, "a")
         f.truncate(len)
         f.close()
 
     def mknod(self, path, mode, dev):
-        os.mknod(self.root + path, mode, dev)
+        os.mknod("." + path, mode, dev)
 
     def mkdir(self, path, mode):
         if os.path.dirname(path) in ['/photos/public', '/photos/private']:
-            album = None
-            if os.path.dirname(path) == '/photos/public':
-                album = self.client.upload_album(os.path.basename(path), 'public')
-                dir = PUB_PHOTOS_DIR
-            else:
-                album = self.client.upload_album(os.path.basename(path), 'private')
-                dir = PRIV_PHOTOS_DIR
-            
-            if album:
-                album_dir = dir + '/' + album.title.text
-                os.mkdir(album_dir, mode)
-                write(dir + '/' + album.title.text + '.self', album.GetSelfLink().href)
-                if album.GetEditLink() is not None:
-                    write(dir + '/' + album.title.text + '.edit', album.GetEditLink().href)    
+            ev = MkdirEventHandler(CLIENT)
+            ev.consume(MkdirEvent(GOOFS_CACHE + path))
+            os.mkdir("." + path, mode)
         else:
             return -errno.EACCES
-            
+
     def utime(self, path, times):
-        os.utime(self.root + path, times)
+        os.utime("." + path, times)
+
+#    The following utimens method would do the same as the above utime method.
+#    We can't make it better though as the Python stdlib doesn't know of
+#    subsecond preciseness in acces/modify times.
+#  
+#    def utimens(self, path, ts_acc, ts_mod):
+#      os.utime("." + path, (ts_acc.tv_sec, ts_mod.tv_sec))
 
     def access(self, path, mode):
-        if not os.access(self.root + path, mode):
+        if not os.access("." + path, mode):
             return -EACCES
 
+#    This is how we could add stub extended attribute handlers...
+#    (We can't have ones which aptly delegate requests to the underlying fs
+#    because Python lacks a standard xattr interface.)
+#
+#    def getxattr(self, path, name, size):
+#        val = name.swapcase() + '@' + path
+#        if size == 0:
+#            # We are asked for size of the value.
+#            return len(val)
+#        return val
+#
+#    def listxattr(self, path, size):
+#        # We use the "user" namespace to please XFS utils
+#        aa = ["user." + a for a in ("foo", "bar")]
+#        if size == 0:
+#            # We are asked for size of the attr list, ie. joint size of attrs
+#            # plus null separators.
+#            return len("".join(aa)) + len(aa)
+#        return aa
+
     def statfs(self):
-        return os.statvfs(self.root)
+        """
+        Should return an object with statvfs attributes (f_bsize, f_frsize...).
+        Eg., the return value of os.statvfs() is such a thing (since py 2.2).
+        If you are not reusing an existing statvfs object, start with
+        fuse.StatVFS(), and define the attributes.
+
+        To provide usable information (ie., you want sensible df(1)
+        output, you are suggested to specify the following attributes:
+
+            - f_bsize - preferred size of file blocks, in bytes
+            - f_frsize - fundamental size of file blcoks, in bytes
+                [if you have no idea, use the same as blocksize]
+            - f_blocks - total number of blocks in the filesystem
+            - f_bfree - number of free blocks
+            - f_files - total number of file inodes
+            - f_ffree - nunber of free file inodes
+        """
+
+        return os.statvfs(".")
 
     def fsinit(self):   
         os.chdir(self.root)
-        self.gtask = GTaskThread(self.client)
-        self.gtask.start()
-        self.uptask = UploadThread(self.client)
-        self.uptask.start()
-
+        self.dtask = DownloadThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR])
+        self.dtask.start()
+        
     def fsdestroy(self):
-        self.gtask.shutdown()
-        self.uptask.shutdown()
-    
+        self.dtask.shutdown()
+        
     class GoofsFile(object):
 
         def __init__(self, path, flags, *mode):
@@ -390,22 +218,23 @@ class Goofs(Fuse):
                                   flag2mode(flags))
             self.fd = self.file.fileno()
             self.path = path
+            self.written_to = False
 
         def read(self, length, offset):
             self.file.seek(offset)
             return self.file.read(length)
 
         def write(self, buf, offset):
-            print 'writing to file'
+            self.written_to = True
             self.file.seek(offset)
             self.file.write(buf)
             return len(buf)
 
         def release(self, flags):
-            print 'releasing file'
             self.file.close()
-            UPLOAD_QUEUE.put(GOOFS_CACHE + self.path)
-            print 'just put %s on queue' % (GOOFS_CACHE + self.path)
+            if self.written_to:
+                ev = ReleaseEventHandler(CLIENT)
+                ev.consume(ReleaseEvent(GOOFS_CACHE + self.path))
 
         def _fflush(self):
             if 'w' in self.file.mode or 'a' in self.file.mode:
@@ -477,7 +306,7 @@ def main():
           if not pw:
               print 'Password cannot be blank.'
                       
-    init(user)
+    init(user, pw)
 
     usage = "Google filesystem" + Fuse.fusage
 
