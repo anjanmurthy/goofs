@@ -38,15 +38,10 @@ svn checkout http://goofs.googlecode.com/svn/trunk/ goofs-read-only
 cd into the src/goofs directory
 
 {{{
-python goofs.py --user [username] --pw [password] mntpoint
-}}}
-
-or 
-{{{
 python goofs.py mntpoint
 }}}
 
-In the second case you will be prompted to enter you google username and password.  In both cases the username is your full google username (i.e. bigwynnr@gmail.com).
+You will be prompted to enter you google username and password.  The username is your full google username (i.e. bigwynnr@gmail.com).
 
 mntpoint should now contain a photos directory.  Inside photos you will find 2 more directories, namely public and private.  Your shared albums go into public and your private albums go into private.  
 
