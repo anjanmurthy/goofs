@@ -38,6 +38,9 @@ class GClient:
     def upload_photo(self, album, path):    
         return self.ph_client.InsertPhotoSimple(album, os.path.basename(path), os.path.basename(path), path, self.__content_type_from_path(path))
 
+    def upload_photo_with_path(self, album, src_path, dest_path):    
+        return self.ph_client.InsertPhotoSimple(album, os.path.basename(dest_path), os.path.basename(dest_path), src_path, self.__content_type_from_path(src_path))
+
     def upload_photo_blob(self, photo, path):    
         return self.ph_client.UpdatePhotoBlob(photo, path, self.__content_type_from_path(path))
     

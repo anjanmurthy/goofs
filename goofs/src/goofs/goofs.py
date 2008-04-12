@@ -10,13 +10,6 @@ from stat import *
 import fcntl
 from backend import *
 from background import *
-
-
-# pull in some spaghetti to make this stuff work without fuse-py being installed
-try:
-    import _find_fuse_parts
-except ImportError:
-    pass
 import fuse
 from fuse import Fuse
 
@@ -63,24 +56,15 @@ def init(user, pw):
     PRIV_PHOTOS_DIR = os.path.join(PHOTOS_DIR, 'private')
     GDOCS_DIRS = [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR]
     
-    try:
-        for root, dirs, files in os.walk(GOOFS_CACHE, topdown=False):
-            for file in files:
-                os.remove(os.path.join(root, file))
-            for d in dirs:
-                os.rmdir(os.path.join(root, d))
+    for root, dirs, files in os.walk(GOOFS_CACHE, topdown=False):
+        for file in files:
+            os.remove(os.path.join(root, file))
+        for d in dirs:
+            os.rmdir(os.path.join(root, d))
+            
+    for d in GDOCS_DIRS:
+        os.makedirs(d)
     
-    except OSError, err:
-        print 'removing did not work'
-        print err
-
-    try:
-        for d in GDOCS_DIRS:
-            os.makedirs(d)
-    except OSError, err:
-        print 'could not create the cache dirs'
-        print err
-
 
 class Goofs(Fuse):
 
@@ -151,56 +135,11 @@ class Goofs(Fuse):
     def utime(self, path, times):
         os.utime("." + path, times)
 
-#    The following utimens method would do the same as the above utime method.
-#    We can't make it better though as the Python stdlib doesn't know of
-#    subsecond preciseness in acces/modify times.
-#  
-#    def utimens(self, path, ts_acc, ts_mod):
-#      os.utime("." + path, (ts_acc.tv_sec, ts_mod.tv_sec))
-
     def access(self, path, mode):
         if not os.access("." + path, mode):
             return -EACCES
-
-#    This is how we could add stub extended attribute handlers...
-#    (We can't have ones which aptly delegate requests to the underlying fs
-#    because Python lacks a standard xattr interface.)
-#
-#    def getxattr(self, path, name, size):
-#        val = name.swapcase() + '@' + path
-#        if size == 0:
-#            # We are asked for size of the value.
-#            return len(val)
-#        return val
-#
-#    def listxattr(self, path, size):
-#        # We use the "user" namespace to please XFS utils
-#        aa = ["user." + a for a in ("foo", "bar")]
-#        if size == 0:
-#            # We are asked for size of the attr list, ie. joint size of attrs
-#            # plus null separators.
-#            return len("".join(aa)) + len(aa)
-#        return aa
-
+        
     def statfs(self):
-        """
-        Should return an object with statvfs attributes (f_bsize, f_frsize...).
-        Eg., the return value of os.statvfs() is such a thing (since py 2.2).
-        If you are not reusing an existing statvfs object, start with
-        fuse.StatVFS(), and define the attributes.
-
-        To provide usable information (ie., you want sensible df(1)
-        output, you are suggested to specify the following attributes:
-
-            - f_bsize - preferred size of file blocks, in bytes
-            - f_frsize - fundamental size of file blcoks, in bytes
-                [if you have no idea, use the same as blocksize]
-            - f_blocks - total number of blocks in the filesystem
-            - f_bfree - number of free blocks
-            - f_files - total number of file inodes
-            - f_ffree - nunber of free file inodes
-        """
-
         return os.statvfs(".")
 
     def fsinit(self):   
