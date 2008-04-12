@@ -109,15 +109,14 @@ class RenameEventHandler(EventHandler):
         return event.name == 'rename'
         
     def consume(self, event):
-        photo_uri = read(event.src_path + '.self')
-        photo = self.client.get_album_or_photo_by_uri(photo_uri)
-        photo.title=atom.Title(text=os.path.basename(event.dest_path))
-        photo.summary = atom.Summary(text=os.path.basename(event.dest_path), summary_type='text')
-        updated_photo = self.client.update_photo_meta(photo)
-        remove_metadata(event.src_path)
-        write(event.dest_path + '.self', updated_photo.GetSelfLink().href)
-        if updated_photo.GetEditLink() is not None:
-            write(event.dest_path + '.edit', updated_photo.GetEditLink().href)
+        album_self = os.path.dirname(event.dest_path) + '.self'
+        album = self.client.get_album_or_photo_by_uri(read(album_self))
+        photo = self.client.upload_photo_with_path(album, event.src_path, event.dest_path)
+        write(event.dest_path + '.self', photo.GetSelfLink().href)
+        if photo.GetEditLink() is not None:
+            write(event.dest_path + '.edit', photo.GetEditLink().href)
+        ev = UnlinkEventHandler(self.client)
+        ev.consume(UnlinkEvent(event.src_path))
 
 class MkdirEventHandler(EventHandler):
     def __init__(self, client):
@@ -148,15 +147,11 @@ class ReleaseEventHandler(EventHandler):
             # existing photo
             existing_photo = self.client.get_album_or_photo_by_uri(read(event.path + '.self'))
             photo = self.client.upload_photo_blob(existing_photo, event.path)
-            print 'updated photo'
         else:
             # new photo
             album_self = os.path.dirname(event.path) + '.self'
-            print 'Album self is %s' % (album_self)
             album = self.client.get_album_or_photo_by_uri(read(album_self))
-            print 'got album'
             photo = self.client.upload_photo(album, event.path)
-            print 'uploaded photo'    
         write(event.path + '.self', photo.GetSelfLink().href)
         if photo.GetEditLink() is not None:
             write(event.path + '.edit', photo.GetEditLink().href)
