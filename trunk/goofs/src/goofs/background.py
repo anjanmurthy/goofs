@@ -4,7 +4,7 @@ import thread
 import atom
 import os
 from backend import *
-
+import gdata.photos.service
 
 def write(path, content):
     with open(path, 'w') as f:
@@ -183,6 +183,34 @@ class TaskThread(threading.Thread):
         """The task done by this thread - override in subclasses"""
         pass
 
+class CleanupThread(TaskThread):
+    def __init__(self, client, photo_dirs):
+        TaskThread.__init__(self)
+        self.client = client
+        self._interval = 60.0
+        self.photo_dirs = photo_dirs
+
+    def task(self):
+        for dir in self.photo_dirs:
+            for entry in os.listdir(dir):
+                if os.path.isdir(os.path.join(dir, entry)):
+                    for f in os.listdir(os.path.join(dir, entry)):
+                        if os.path.isfile(os.path.join(dir, entry, f + '.self')):
+                            try:
+                                uri = read(os.path.join(dir, entry, f + '.self'))
+                                photo = self.client.get_album_or_photo_by_uri(uri)
+                            except gdata.photos.service.GooglePhotosException, ex:
+                                remove_file_and_metadata(os.path.join(dir, entry, f))
+                                
+                    if os.path.isfile(os.path.join(dir, entry + '.self')):
+                        try:
+                            uri = read(os.path.join(dir, entry + '.self'))
+                            album = self.client.get_album_or_photo_by_uri(uri)
+                        except gdata.photos.service.GooglePhotosException, ex:
+                            for root, dirs, files in os.walk(os.path.join(dir, entry), topdown=False):
+                                for file in files:
+                                    os.remove(os.path.join(root, file))
+                            remove_dir_and_metadata(os.path.join(dir, entry))
                       
 class DownloadThread(TaskThread):
 
