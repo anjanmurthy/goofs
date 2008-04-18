@@ -146,9 +146,12 @@ class Goofs(Fuse):
         os.chdir(self.root)
         self.dtask = DownloadThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR])
         self.dtask.start()
+        self.ctask = CleanupThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR])
+        self.ctask.start()
         
     def fsdestroy(self):
         self.dtask.shutdown()
+        self.ctask.shutdown()
         
     class GoofsFile(object):
 
