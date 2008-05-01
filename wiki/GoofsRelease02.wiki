@@ -20,10 +20,19 @@ picasa backend includes support for:
   * python-gdata
   * subversion
 
-you can install the requirments on a debian based system with:
+first make sure you have the latest and greatest python-gdata
 
 {{{
-sudo apt-get install python-fuse python-gdata subversion
+sudo apt-get remove python-gdata
+}}}
+
+then install python-gdata according to the instructions at
+http://code.google.com/p/gdata-python-client/
+
+finally install the remaining dependencies
+
+{{{
+sudo apt-get install python-fuse subversion
 }}}
 
 = installation =
