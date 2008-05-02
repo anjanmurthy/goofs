@@ -43,13 +43,25 @@ class GClient:
         return self.username
         
     def contacts_feed(self):
-        return self.con_client.GetContactsFeed().entry
+        return self.con_client.GetContactsFeed(uri='http://www.google.com/m8/feeds/contacts/default/base?max-results=1000').entry
     
     def get_contact_by_uri(self, uri):
         return self.con_client.Get(uri, converter=gdata.contacts.ContactEntryFromString)
     
+    def delete_contact(self, uri):
+        return self.con_client.DeleteContact(uri)
+    
     def update_contact(self, uri, contact):
         return self.con_client.UpdateContact(uri, contact)
+    
+    def upload_contact(self, contact):
+        return self.con_client.CreateContact(contact)
+    
+    def get_contact_updated(self, contact):
+        return datetime.datetime.strptime(self.get_contact_updated_str(contact)[0:19], '%Y-%m-%dT%H:%M:%S')
+
+    def get_contact_updated_str(self, contact):
+        return contact.updated.text
     
     def albums_feed(self):
         return self.ph_client.GetUserFeed().entry
