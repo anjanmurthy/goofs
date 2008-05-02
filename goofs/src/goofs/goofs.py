@@ -5,6 +5,7 @@ import os
 import getpass
 import getopt
 import sys
+import errno
 from errno import *
 from stat import *
 import fcntl
@@ -127,7 +128,7 @@ class Goofs(Fuse):
         os.mknod("." + path, mode, dev)
 
     def mkdir(self, path, mode):
-        if os.path.dirname(path) in ['/photos/public', '/photos/private']:
+        if os.path.dirname(path) in ['/photos/public', '/photos/private', '/contacts']:
             ev = MkdirEventHandler(CLIENT)
             ev.consume(MkdirEvent(GOOFS_CACHE + path))
             os.mkdir("." + path, mode)
