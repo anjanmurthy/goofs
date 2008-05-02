@@ -29,6 +29,7 @@ PHOTOS = None
 PHOTOS_DIR = None
 PUB_PHOTOS_DIR = None
 PRIV_PHOTOS_DIR = None
+CONTACTS_DIR = None
 GDOCS_DIRS = None
 CLIENT = None
 
@@ -44,7 +45,7 @@ def flag2mode(flags):
 
 def init(user, pw):
     
-    global CLIENT, HOME, GOOFS_CACHE, PHOTOS, PHOTOS_DIR, GDOCS_DIRS, PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR
+    global CLIENT, HOME, GOOFS_CACHE, CONTACTS_DIR, PHOTOS, PHOTOS_DIR, GDOCS_DIRS, PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR
 
     CLIENT = GClient(user, pw)
 
@@ -52,9 +53,10 @@ def init(user, pw):
     GOOFS_CACHE = os.path.join(HOME, '.goofs-cache', user.split('@')[0])
     PHOTOS = 'photos'
     PHOTOS_DIR = os.path.join(GOOFS_CACHE, PHOTOS)
+    CONTACTS_DIR = os.path.join(GOOFS_CACHE, 'contacts')
     PUB_PHOTOS_DIR = os.path.join(PHOTOS_DIR, 'public')
     PRIV_PHOTOS_DIR = os.path.join(PHOTOS_DIR, 'private')
-    GDOCS_DIRS = [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR]
+    GDOCS_DIRS = [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR, CONTACTS_DIR]
     
     for root, dirs, files in os.walk(GOOFS_CACHE, topdown=False):
         for file in files:
@@ -144,9 +146,9 @@ class Goofs(Fuse):
 
     def fsinit(self):   
         os.chdir(self.root)
-        self.dtask = DownloadThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR])
+        self.dtask = DownloadThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR], CONTACTS_DIR)
         self.dtask.start()
-        self.ctask = CleanupThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR])
+        self.ctask = CleanupThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR], CONTACTS_DIR)
         self.ctask.start()
         
     def fsdestroy(self):

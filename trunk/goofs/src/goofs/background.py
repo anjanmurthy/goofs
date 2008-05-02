@@ -5,6 +5,14 @@ import atom
 import os
 from backend import *
 import gdata.photos.service
+import gdata.contacts.service
+
+def service_from_path(path, username):
+    parts = path.split('/')
+    for i, part in enumerate(parts):
+        if part == username:
+            return parts[i+1]
+    return None
 
 def write(path, content):
     with open(path, 'w') as f:
@@ -84,9 +92,11 @@ class UnlinkEventHandler(EventHandler):
         return event.name == 'unlink'
 
     def consume(self, event):
-        uri = read(event.path + '.edit')
-        self.client.delete_album_or_photo_by_uri(uri)
-        remove_metadata(event.path)
+        service = service_from_path(event.path, self.client.get_username())
+        if service == 'photos':
+            uri = read(event.path + '.edit')
+            self.client.delete_album_or_photo_by_uri(uri)
+            remove_metadata(event.path)
 
 class RmdirEventHandler(EventHandler):
     def __init__(self, client):
@@ -96,10 +106,12 @@ class RmdirEventHandler(EventHandler):
         return event.name == 'rmdir'
 
     def consume(self, event):
-        uri = read(event.path + '.edit')
-        album = self.client.get_album_or_photo_by_uri(uri)
-        self.client.delete_album(album)
-        remove_metadata(event.path)
+        service = service_from_path(event.path, self.client.get_username())
+        if service == 'photos':
+            uri = read(event.path + '.edit')
+            album = self.client.get_album_or_photo_by_uri(uri)
+            self.client.delete_album(album)
+            remove_metadata(event.path)
 
 class RenameEventHandler(EventHandler):
     def __init__(self, client):
@@ -109,14 +121,16 @@ class RenameEventHandler(EventHandler):
         return event.name == 'rename'
         
     def consume(self, event):
-        album_self = os.path.dirname(event.dest_path) + '.self'
-        album = self.client.get_album_or_photo_by_uri(read(album_self))
-        photo = self.client.upload_photo_with_path(album, event.src_path, event.dest_path)
-        write(event.dest_path + '.self', photo.GetSelfLink().href)
-        if photo.GetEditLink() is not None:
-            write(event.dest_path + '.edit', photo.GetEditLink().href)
-        ev = UnlinkEventHandler(self.client)
-        ev.consume(UnlinkEvent(event.src_path))
+        service = service_from_path(event.dest_path, self.client.get_username())
+        if service == 'photos':
+            album_self = os.path.dirname(event.dest_path) + '.self'
+            album = self.client.get_album_or_photo_by_uri(read(album_self))
+            photo = self.client.upload_photo_with_path(album, event.src_path, event.dest_path)
+            write(event.dest_path + '.self', photo.GetSelfLink().href)
+            if photo.GetEditLink() is not None:
+                write(event.dest_path + '.edit', photo.GetEditLink().href)
+            ev = UnlinkEventHandler(self.client)
+            ev.consume(UnlinkEvent(event.src_path))
 
 class MkdirEventHandler(EventHandler):
     def __init__(self, client):
@@ -126,14 +140,16 @@ class MkdirEventHandler(EventHandler):
         return event.name == 'mkdir'
         
     def consume(self, event):
-        album = None
-        if os.path.dirname(event.path).endswith('/photos/public'):
-            album = self.client.upload_album(os.path.basename(event.path), 'public')
-        else:
-            album = self.client.upload_album(os.path.basename(event.path), 'private')
-        write(event.path + '.self', album.GetSelfLink().href)
-        if album.GetEditLink() is not None:
-            write(event.path + '.edit', album.GetEditLink().href)
+        service = service_from_path(event.path, self.client.get_username())
+        if service == 'photos':
+            album = None
+            if os.path.dirname(event.path).endswith('/photos/public'):
+                album = self.client.upload_album(os.path.basename(event.path), 'public')
+            else:
+                album = self.client.upload_album(os.path.basename(event.path), 'private')
+            write(event.path + '.self', album.GetSelfLink().href)
+            if album.GetEditLink() is not None:
+                write(event.path + '.edit', album.GetEditLink().href)
             
 class ReleaseEventHandler(EventHandler):
     def __init__(self, client):
@@ -143,19 +159,47 @@ class ReleaseEventHandler(EventHandler):
         return event.name == 'release'
         
     def consume(self, event):
-        if os.path.exists(event.path + '.self'):
-            # existing photo
-            existing_photo = self.client.get_album_or_photo_by_uri(read(event.path + '.self'))
-            photo = self.client.upload_photo_blob(existing_photo, event.path)
-        else:
-            # new photo
-            album_self = os.path.dirname(event.path) + '.self'
-            album = self.client.get_album_or_photo_by_uri(read(album_self))
-            photo = self.client.upload_photo(album, event.path)
-        write(event.path + '.self', photo.GetSelfLink().href)
-        if photo.GetEditLink() is not None:
-            write(event.path + '.edit', photo.GetEditLink().href)
-
+        service = service_from_path(event.path, self.client.get_username())
+        if service == 'photos':       
+            if os.path.exists(event.path + '.self'):
+                # existing photo
+                existing_photo = self.client.get_album_or_photo_by_uri(read(event.path + '.self'))
+                photo = self.client.upload_photo_blob(existing_photo, event.path)
+            else:
+                # new photo
+                album_self = os.path.dirname(event.path) + '.self'
+                album = self.client.get_album_or_photo_by_uri(read(album_self))
+                photo = self.client.upload_photo(album, event.path)
+            write(event.path + '.self', photo.GetSelfLink().href)
+            if photo.GetEditLink() is not None:
+                write(event.path + '.edit', photo.GetEditLink().href)
+        elif service == 'contacts':
+            if os.path.basename(event.path) not in ['email', 'phone', 'notes', 'organization']:
+                return
+            self_uri = read(os.path.dirname(event.path) + '.self')
+            contact = self.client.get_contact_by_uri(self_uri)
+            field_val = read(event.path)
+            contact_field = os.path.basename(event.path)
+            if contact_field == 'email':
+                data = gdata.contacts.Email(rel='http://schemas.google.com/g/2005#work',primary='true',address=field_val)
+                if len(contact.email) == 0:
+                    contact.email.append(data)
+                else:
+                    contact.email[0] = data
+            elif contact_field == 'phone':
+                data = gdata.contacts.PhoneNumber(rel='http://schemas.google.com/g/2005#work', text=field_val)
+                if len(contact.phone_number) == 0:
+                    contact.phone_number.append(data)
+                else:
+                    contact.phone_number[0] = data
+            elif contact_field == 'notes':
+                data = atom.Content(text=field_val)
+                contact.content = data
+            elif contact_field == 'organization':
+                data = gdata.contacts.Organization(org_name=gdata.contacts.OrgName(text=field_val), rel='http://schemas.google.com/g/2005#work')
+                contact.organization = data
+            self.client.update_contact(read(os.path.dirname(event.path) + '.edit'), contact)
+                
 class TaskThread(threading.Thread):
     """Thread that executes a task every N seconds"""
     def __init__(self):
@@ -184,13 +228,26 @@ class TaskThread(threading.Thread):
         pass
 
 class CleanupThread(TaskThread):
-    def __init__(self, client, photo_dirs):
+    def __init__(self, client, photo_dirs, contact_base_dir):
         TaskThread.__init__(self)
         self.client = client
         self._interval = 60.0
         self.photo_dirs = photo_dirs
+        self.contact_base_dir = contact_base_dir
 
     def task(self):
+        
+        for contact_dir in os.listdir(self.contact_base_dir):
+            if os.path.isfile(os.path.join(self.contact_base_dir, contact_dir + '.self')):
+                try:
+                    uri = read(os.path.join(self.contact_base_dir, contact_dir + '.self'))
+                    contact = self.client.get_contact_by_uri(uri)
+                except Exception, ex:
+                    for root, dirs, files in os.walk(os.path.join(self.contact_base_dir, contact_dir), topdown=False):
+                        for file in files:
+                            os.remove(os.path.join(root, file))
+                    remove_dir_and_metadata(os.path.join(self.contact_base_dir, contact_dir))
+        
         for dir in self.photo_dirs:
             for entry in os.listdir(dir):
                 if os.path.isdir(os.path.join(dir, entry)):
@@ -214,13 +271,44 @@ class CleanupThread(TaskThread):
                       
 class DownloadThread(TaskThread):
 
-    def __init__(self, client, photo_dirs):
+    def __init__(self, client, photo_dirs, contact_base_dir):
         TaskThread.__init__(self)
         self.client = client
         self._interval = 30.0
         self.photo_dirs = photo_dirs
+        self.contact_base_dir = contact_base_dir
                             
     def task(self):
+        
+        contacts_feed = self.client.contacts_feed()
+        for contact in contacts_feed:
+            if contact.title.text is not None:
+                contact_dir = os.path.join(self.contact_base_dir, contact.title.text)
+                write(contact_dir + '.self', contact.GetSelfLink().href)
+                if contact.GetEditLink() is not None:
+                    write(contact_dir + '.edit', contact.GetEditLink().href)
+                if not os.path.exists(contact_dir):
+                    os.mkdir(contact_dir)
+                if len(contact.email) > 0:    
+                    write(os.path.join(contact_dir, 'email'), contact.email[0].address)
+                else:
+                    write(os.path.join(contact_dir, 'email'), '')
+                
+                if len(contact.phone_number) > 0:
+                    write(os.path.join(contact_dir, 'phone'), contact.phone_number[0].text)
+                else:
+                    write(os.path.join(contact_dir, 'phone'), '')
+
+                if contact.content is not None and contact.content.text is not None:
+                    write(os.path.join(contact_dir, 'notes'), contact.content.text)
+                else:
+                    write(os.path.join(contact_dir, 'notes'), '')
+                
+                if contact.organization is not None and contact.organization.org_name is not None:
+                    write(os.path.join(contact_dir, 'organization'), contact.organization.org_name.text)
+                else:
+                    write(os.path.join(contact_dir, 'organization'), '')
+                          
         album_feed = self.client.albums_feed()
         for album in album_feed:
             if album.access.text == 'public':
