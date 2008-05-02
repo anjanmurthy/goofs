@@ -45,15 +45,15 @@ sudo apt-get install python-fuse subversion
 
 Download the goofs source code with subversion
 {{{
-svn checkout http://goofs.googlecode.com/svn/trunk/ goofs-0.2-read-only
+svn checkout http://goofs.googlecode.com/svn/trunk/ goofs-0.3-read-only
 }}}
 
 Or download it from the downloads page and unpack it:
 
-http://goofs.googlecode.com/files/goofs-0.2.tar.gz
+http://goofs.googlecode.com/files/goofs-0.3.tar.gz
 
 {{{
-tar -zxvf goofs-0.2.tar.gz
+tar -zxvf goofs-0.3.tar.gz
 }}}
 
 = running goofs =
