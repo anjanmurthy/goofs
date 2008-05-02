@@ -1,5 +1,4 @@
 #summary goofs-0.2 is available.
-#labels Featured
 
 = goofs-0.2 is available =
 goofs-0.2 is available now.  At present 1 back end is complete: picasa.  This feature allows you to manipulate your picasa photos just as you would any other file on the filesytem.  
