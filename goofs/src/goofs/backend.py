@@ -1,4 +1,6 @@
 import gdata.photos.service
+import gdata.contacts.service
+from gdata.contacts import ContactEntryFromString
 import datetime, time
 import os
 import urllib2, httplib
@@ -12,12 +14,23 @@ class GPhotosService(gdata.photos.service.PhotosService):
     def GetAuthorizationToken(self):
         return self._GetAuthToken()
     
+class GContactsService(gdata.contacts.service.ContactsService):
+    
+    def __init__(self, email, password):
+        gdata.contacts.service.ContactsService.__init__(self, email, password)
+    
+    def GetAuthorizationToken(self):
+        return self._GetAuthToken()
+    
 class GClient:
     
     def __init__(self, email, password):
         self.ph_client = GPhotosService(email, password)
         self.ph_client.ProgrammaticLogin()
         self.ext_ctype = {'bmp': 'image/bmp', 'gif': 'image/gif', 'png': 'image/png', 'jpg':'image/jpeg', 'jpeg':'image/jpeg'}
+        self.con_client = GContactsService(email, password)
+        self.con_client.ProgrammaticLogin()
+        self.username = email.split('@')[0]
     
     def __content_type_from_path(self, path):
         parts = path.split(os.extsep)
@@ -25,7 +38,19 @@ class GClient:
             return self.ext_ctype[parts[-1]]
         else:
             return None
-            
+        
+    def get_username(self):
+        return self.username
+        
+    def contacts_feed(self):
+        return self.con_client.GetContactsFeed().entry
+    
+    def get_contact_by_uri(self, uri):
+        return self.con_client.Get(uri, converter=gdata.contacts.ContactEntryFromString)
+    
+    def update_contact(self, uri, contact):
+        return self.con_client.UpdateContact(uri, contact)
+    
     def albums_feed(self):
         return self.ph_client.GetUserFeed().entry
 
