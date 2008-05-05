@@ -31,6 +31,7 @@ PHOTOS_DIR = None
 PUB_PHOTOS_DIR = None
 PRIV_PHOTOS_DIR = None
 CONTACTS_DIR = None
+BLOGS_DIR = None
 GDOCS_DIRS = None
 CLIENT = None
 
@@ -46,7 +47,7 @@ def flag2mode(flags):
 
 def init(user, pw):
     
-    global CLIENT, HOME, GOOFS_CACHE, CONTACTS_DIR, PHOTOS, PHOTOS_DIR, GDOCS_DIRS, PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR
+    global CLIENT, HOME, GOOFS_CACHE, BLOGS_DIR, CONTACTS_DIR, PHOTOS, PHOTOS_DIR, GDOCS_DIRS, PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR
 
     CLIENT = GClient(user, pw)
 
@@ -55,9 +56,10 @@ def init(user, pw):
     PHOTOS = 'photos'
     PHOTOS_DIR = os.path.join(GOOFS_CACHE, PHOTOS)
     CONTACTS_DIR = os.path.join(GOOFS_CACHE, 'contacts')
+    BLOGS_DIR = os.path.join(GOOFS_CACHE, 'blogs')
     PUB_PHOTOS_DIR = os.path.join(PHOTOS_DIR, 'public')
     PRIV_PHOTOS_DIR = os.path.join(PHOTOS_DIR, 'private')
-    GDOCS_DIRS = [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR, CONTACTS_DIR]
+    GDOCS_DIRS = [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR, CONTACTS_DIR, BLOGS_DIR]
     
     for root, dirs, files in os.walk(GOOFS_CACHE, topdown=False):
         for file in files:
@@ -128,7 +130,7 @@ class Goofs(Fuse):
         os.mknod("." + path, mode, dev)
 
     def mkdir(self, path, mode):
-        if os.path.dirname(path) in ['/photos/public', '/photos/private', '/contacts']:
+        if os.path.dirname(path) in ['/photos/public', '/photos/private', '/contacts'] or os.path.dirname(os.path.dirname(path)) in ['/blogs']:
             ev = MkdirEventHandler(CLIENT)
             ev.consume(MkdirEvent(GOOFS_CACHE + path))
             os.mkdir("." + path, mode)
@@ -147,9 +149,9 @@ class Goofs(Fuse):
 
     def fsinit(self):   
         os.chdir(self.root)
-        self.dtask = DownloadThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR], CONTACTS_DIR)
+        self.dtask = DownloadThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR], CONTACTS_DIR, BLOGS_DIR)
         self.dtask.start()
-        self.ctask = CleanupThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR], CONTACTS_DIR)
+        self.ctask = CleanupThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR], CONTACTS_DIR, BLOGS_DIR)
         self.ctask.start()
         
     def fsdestroy(self):

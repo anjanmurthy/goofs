@@ -1,5 +1,7 @@
 import gdata.photos.service
 import gdata.contacts.service
+from gdata import service
+from gdata.service import RequestError
 from gdata.contacts import ContactEntryFromString
 import datetime, time
 import os
@@ -21,6 +23,14 @@ class GContactsService(gdata.contacts.service.ContactsService):
     
     def GetAuthorizationToken(self):
         return self._GetAuthToken()
+
+class GBlogsService(service.GDataService):
+    
+    def __init__(self, email, password):
+        service.GDataService.__init__(self, email, password)
+        self.source = 'goofs'
+        self.service = 'blogger'
+        self.server = 'www.blogger.com'
     
 class GClient:
     
@@ -30,6 +40,8 @@ class GClient:
         self.ext_ctype = {'bmp': 'image/bmp', 'gif': 'image/gif', 'png': 'image/png', 'jpg':'image/jpeg', 'jpeg':'image/jpeg'}
         self.con_client = GContactsService(email, password)
         self.con_client.ProgrammaticLogin()
+        self.blog_client = GBlogsService(email, password)
+        self.blog_client.ProgrammaticLogin()
         self.username = email.split('@')[0]
     
     def __content_type_from_path(self, path):
@@ -41,6 +53,42 @@ class GClient:
         
     def get_username(self):
         return self.username
+    
+    def blogs_feed(self):
+        return self.blog_client.Get('/feeds/default/blogs').entry
+    
+    def get_blog_id_from_uri(self, uri):
+        return uri.split('/')[-1]
+    
+    def get_blog_id(self, blog):
+        return blog.GetSelfLink().href.split('/')[-1]
+    
+    def get_post_id(self, post):
+        return post.GetSelfLink().href.split('/')[-1]
+    
+    def get_comment_id(self, comment):
+        return comment.GetSelfLink().href.split('/')[-1]
+    
+    def create_blog_post(self, blog_id, post):
+        return self.blog_client.Post(post, '/feeds/' + blog_id + '/posts/default')
+    
+    def update_blog_post(self, post):
+        return self.blog_client.Put(post, post.GetEditLink().href)
+    
+    def get_blog_post(self, uri):
+        return self.blog_client.Get(uri)
+    
+    def get_blog_posts(self, blog):
+        return self.blog_client.GetFeed('/feeds/' + self.get_blog_id(blog) + '/posts/default').entry
+    
+    def get_post_comments(self, blog, post):
+        try:
+            return self.blog_client.GetFeed('/feeds/' + self.get_blog_id(blog) + '/' + self.get_post_id(post) + '/comments/default').entry
+        except RequestError, e:
+            return []
+    
+    def delete_blog_entity(self, uri):
+        return self.blog_client.Delete(uri)
         
     def contacts_feed(self):
         return self.con_client.GetContactsFeed(uri='http://www.google.com/m8/feeds/contacts/default/base?max-results=1000').entry
