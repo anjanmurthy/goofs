@@ -13,7 +13,7 @@ in python
 """,
     author='Ryan Wynn',
     author_email='bigwynnr@gmail.com',
-    license='LGPL',
+    license='GPL',
     url='http://code.google.com/p/goofs/',
     packages=['goofs'],
     package_dir = {'goofs':'src/goofs'}
