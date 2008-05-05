@@ -98,6 +98,10 @@ class UnlinkEventHandler(EventHandler):
             uri = read(event.path + '.edit')
             self.client.delete_album_or_photo_by_uri(uri)
             remove_metadata(event.path)
+        elif service == 'blogs':
+            if os.path.exists(event.path + '.edit'):
+                self.client.delete_blog_entity(read(event.path + '.edit'))
+                remove_metadata(event.path)
 
 class RmdirEventHandler(EventHandler):
     def __init__(self, client):
@@ -117,6 +121,10 @@ class RmdirEventHandler(EventHandler):
             if os.path.dirname(event.path).endswith('/contacts'): 
                 contact = self.client.get_contact_by_uri(read(event.path + '.self'))
                 self.client.delete_contact(contact.GetEditLink().href)
+                remove_metadata(event.path)
+        elif service == 'blogs':
+            if os.path.exists(event.path + '.edit'):
+                self.client.delete_blog_entity(read(event.path + '.edit'))
                 remove_metadata(event.path)
 
 class RenameEventHandler(EventHandler):
@@ -147,6 +155,16 @@ class RenameEventHandler(EventHandler):
                 if contact.GetEditLink() is not None:
                     write(event.dest_path + '.edit', contact.GetEditLink().href)
                 remove_metadata(event.src_path)
+        elif service == 'blogs':
+            if os.path.dirname(os.path.dirname(event.src_path)).endswith('/blogs') and os.path.dirname(os.path.dirname(event.dest_path)).endswith('/blogs'):
+                post = self.client.get_blog_post(read(event.src_path + '.self'))
+                post.title = atom.Title('xhtml', os.path.basename(event.dest_path))
+                new_post = self.client.update_blog_post(post)
+                write(event.dest_path + '.self', new_post.GetSelfLink().href)
+                if new_post.GetEditLink() is not None:
+                    write(event.dest_path + '.edit', new_post.GetEditLink().href)
+                remove_metadata(event.src_path)
+                
 
 class MkdirEventHandler(EventHandler):
     def __init__(self, client):
@@ -174,6 +192,17 @@ class MkdirEventHandler(EventHandler):
                 write(event.path + '.self', contact.GetSelfLink().href)
                 if contact.GetEditLink() is not None:
                     write(event.path + '.edit', contact.GetEditLink().href)
+        elif service == 'blogs':
+            if os.path.dirname(os.path.dirname(event.path)).endswith('/blogs'):
+                blog_id = self.client.get_blog_id_from_uri(read(os.path.dirname(event.path) + '.self'))
+                post = gdata.GDataEntry()
+                post.author.append(atom.Author(atom.Name(text=self.client.get_username())))
+                post.title = atom.Title(title_type='xhtml', text=os.path.basename(event.path))
+                post.content = atom.Content(content_type='html', text='')
+                new_post = self.client.create_blog_post(blog_id, post)
+                write(event.path + '.self', new_post.GetSelfLink().href)
+                if new_post.GetEditLink() is not None:
+                    write(event.path + '.edit', new_post.GetEditLink().href)
 
             
 class ReleaseEventHandler(EventHandler):
@@ -265,6 +294,16 @@ class ReleaseEventHandler(EventHandler):
                 data = gdata.contacts.Organization(org_name=gdata.contacts.OrgName(text=field_val), rel='http://schemas.google.com/g/2005#work')
                 contact.organization = data
             self.client.update_contact(edit_uri, contact)
+        
+        elif service == 'blogs':
+            if os.path.basename(event.path) not in ['content.html']:
+                return
+            post = self.client.get_blog_post(read(os.path.dirname(event.path) + '.self'))
+            post.content = atom.Content(content_type='html', text=read(event.path))
+            new_post = self.client.update_blog_post(post)
+            write(event.path + '.self', new_post.GetSelfLink().href)
+            if new_post.GetEditLink() is not None:
+                write(event.path + '.edit', new_post.GetEditLink().href)
                 
 class TaskThread(threading.Thread):
     """Thread that executes a task every N seconds"""
@@ -294,12 +333,13 @@ class TaskThread(threading.Thread):
         pass
 
 class CleanupThread(TaskThread):
-    def __init__(self, client, photo_dirs, contact_base_dir):
+    def __init__(self, client, photo_dirs, contact_base_dir, blogs_base_dir):
         TaskThread.__init__(self)
         self.client = client
         self._interval = 60.0
         self.photo_dirs = photo_dirs
         self.contact_base_dir = contact_base_dir
+        self.blogs_base_dir = blogs_base_dir
 
     def task(self):
         
@@ -337,14 +377,45 @@ class CleanupThread(TaskThread):
                       
 class DownloadThread(TaskThread):
 
-    def __init__(self, client, photo_dirs, contact_base_dir):
+    def __init__(self, client, photo_dirs, contact_base_dir, blogs_base_dir):
         TaskThread.__init__(self)
         self.client = client
         self._interval = 30.0
         self.photo_dirs = photo_dirs
         self.contact_base_dir = contact_base_dir
+        self.blogs_base_dir = blogs_base_dir
                             
     def task(self):
+        
+        blogs_feed = self.client.blogs_feed()
+        for blog in blogs_feed:
+            blog_dir = os.path.join(self.blogs_base_dir, blog.title.text)
+            if not os.path.exists(blog_dir):
+                os.mkdir(blog_dir)
+                write(blog_dir + '.self', blog.GetSelfLink().href)
+                if blog.GetEditLink() is not None:
+                    write(blog_dir + '.edit', blog.GetEditLink().href)
+            posts_feed = self.client.get_blog_posts(blog)
+            for post in posts_feed:
+                post_dir = os.path.join(self.blogs_base_dir, blog.title.text, post.title.text)
+                if not os.path.exists(post_dir):
+                    os.mkdir(post_dir)
+                    write(post_dir + '.self', post.GetSelfLink().href)
+                    if post.GetEditLink() is not None:
+                        write(post_dir + '.edit', post.GetEditLink().href)
+                if post.content.text is not None:
+                    write(os.path.join(post_dir, 'content.html'), post.content.text)
+                else:
+                    write(os.path.join(post_dir, 'content.html'), '')
+                comment_dir = os.path.join(post_dir, 'comments')
+                if not os.path.exists(comment_dir):
+                    os.mkdir(comment_dir)
+                comments_feed = self.client.get_post_comments(blog, post)
+                for comment in comments_feed:
+                    write(os.path.join(comment_dir, comment.title.text), comment.content.text)
+                    write(os.path.join(comment_dir, comment.title.text + '.self'), comment.GetSelfLink().href)
+                    if comment.GetEditLink() is not None:
+                         write(os.path.join(comment_dir, comment.title.text + '.edit'), comment.GetEditLink().href)
         
         contacts_feed = self.client.contacts_feed()
         for contact in contacts_feed:
