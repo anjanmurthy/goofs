@@ -62,6 +62,9 @@ class GClient:
     
     def get_blog_id(self, blog):
         return blog.GetSelfLink().href.split('/')[-1]
+
+    def get_post_id_from_uri(self, uri):
+        return uri.split('/')[-1]
     
     def get_post_id(self, post):
         return post.GetSelfLink().href.split('/')[-1]
@@ -72,10 +75,19 @@ class GClient:
     def create_blog_post(self, blog_id, post):
         return self.blog_client.Post(post, '/feeds/' + blog_id + '/posts/default')
     
+    def create_blog_post_comment(self, blog_id, post_id, comment):
+        return self.blog_client.Post(comment, '/feeds/' + blog_id + '/' + post_id + '/comments/default')
+    
     def update_blog_post(self, post):
         return self.blog_client.Put(post, post.GetEditLink().href)
     
+    def update_blog_comment(self, comment):
+        return self.blog_client.Put(comment, comment.GetEditLink().href)
+    
     def get_blog_post(self, uri):
+        return self.blog_client.Get(uri)
+    
+    def get_blog_comment(self, uri):
         return self.blog_client.Get(uri)
     
     def get_blog_posts(self, blog):

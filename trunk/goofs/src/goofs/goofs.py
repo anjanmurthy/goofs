@@ -149,14 +149,13 @@ class Goofs(Fuse):
 
     def fsinit(self):   
         os.chdir(self.root)
-        self.dtask = DownloadThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR], CONTACTS_DIR, BLOGS_DIR)
-        self.dtask.start()
-        self.ctask = CleanupThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR], CONTACTS_DIR, BLOGS_DIR)
-        self.ctask.start()
-        
+        self.threads = [PhotosDownloadThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR]), ContactsDownloadThread(CLIENT, CONTACTS_DIR), BlogsDownloadThread(CLIENT, BLOGS_DIR), PhotosCleanupThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR]), ContactsCleanupThread(CLIENT, CONTACTS_DIR)]
+        for thread in self.threads:
+            thread.start()
+            
     def fsdestroy(self):
-        self.dtask.shutdown()
-        self.ctask.shutdown()
+        for thread in self.threads:
+            thread.shutdown();
         
     class GoofsFile(object):
 
