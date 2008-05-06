@@ -1,5 +1,5 @@
 #summary goofs-0.3 is available. New support for Google Contacts!
-#labels Featured,Phase-Deploy
+#labels Phase-Deploy
 
 = goofs-0.3 is available =
 goofs-0.2 is available now.  There are now 2 backends complete: picasa and contacts.  These features allow you to manipulate your picasa photos or your gmail contacts just as you would any other file on the filesytem.  
