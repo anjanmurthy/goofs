@@ -95,6 +95,23 @@ cd Goofs\ 0.4\ Released\ Today/
 echo "Please download it from <a href='http://goofs.googlecode.com/files/goofs-0.4.tar.gz'>goofs.googlecode.com</a>" > content
 }}}
 
+To comment on a blog entry you would do the following:
+{{{
+cd Goofs\ 0.4\ Released\ Today/
+cd comments
+echo "you did a great job" > new
+}}}
+
+You can name the comment file whatever you like, it will be renamed to a snippet of the contents of the comment.  If you cat the file it will contain the entire comment.
+
+You can delete posts and comments using the rm command...
+
+{{{
+cd blogs/Ryan\'s\ Blog/
+rm -rf Goofs\ 0.4\ Released\ Today/
+}}}
+
+
 = working with contacts =
 
 mntpoint should now contain a contacts directory.  This directory will hold up to 1000 of your google contacts.  Any changes you make on the filesystem will be reflected when you log in to Gmail.
