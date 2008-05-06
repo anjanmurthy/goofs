@@ -77,7 +77,7 @@ You will be prompted to enter you google username and password.  The username is
 
 = working with blogs =
 
-mntpoint should contain a blog directory.  Within this directory you should see a list of all your blogs from blogger. 
+mntpoint should contain a *blogs* directory.  Within this directory you should see a list of all your blogs from blogger. 
 
 You need to create brand new blogs through the blogger web interface (you cannot create blogs through goofs).  For some reason this interface is read-only at the moment.
 
@@ -114,7 +114,7 @@ rm -rf Goofs\ 0.4\ Released\ Today/
 
 = working with contacts =
 
-mntpoint should now contain a contacts directory.  This directory will hold up to 1000 of your google contacts.  Any changes you make on the filesystem will be reflected when you log in to Gmail.
+mntpoint should now contain a *contacts* directory.  This directory will hold up to 1000 of your google contacts.  Any changes you make on the filesystem will be reflected when you log in to Gmail.
 
 To create a new contact cd into the contacts directory and then
 
@@ -147,7 +147,7 @@ rm -rf Chrissy
 
 = working with photos =
 
-mntpoint should also contain a photos directory.  Inside photos you will find 2 more directories, namely public and private.  Your shared picasa albums go into public and your private albums go into private.  
+mntpoint should also contain a *photos* directory.  Inside photos you will find 2 more directories, namely public and private.  Your shared picasa albums go into public and your private albums go into private.  
 
 goofs will immediately begin synching the local filesystem with your existing picasa photos.  You may have to wait a couple seconds for albums and photos to start showing up.  
 
