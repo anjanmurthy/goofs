@@ -90,6 +90,9 @@ class GClient:
     def get_blog_comment(self, uri):
         return self.blog_client.Get(uri)
     
+    def get_blog(self, uri):
+        return self.blog_client.Get(uri)
+    
     def get_blog_posts(self, blog):
         return self.blog_client.GetFeed('/feeds/' + self.get_blog_id(blog) + '/posts/default').entry
     

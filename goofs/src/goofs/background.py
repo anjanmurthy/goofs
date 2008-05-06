@@ -203,8 +203,7 @@ class MkdirEventHandler(EventHandler):
                 write(event.path + '.self', new_post.GetSelfLink().href)
                 if new_post.GetEditLink() is not None:
                     write(event.path + '.edit', new_post.GetEditLink().href)
-
-            
+       
 class ReleaseEventHandler(EventHandler):
     def __init__(self, client):
         EventHandler.__init__(self, client)
@@ -391,7 +390,38 @@ class ContactsCleanupThread(TaskThread):
                         for file in files:
                             os.remove(os.path.join(root, file))
                     remove_dir_and_metadata(os.path.join(self.contact_base_dir, contact_dir))
-                                                     
+                    
+
+class BlogsCleanupThread(TaskThread):
+    def __init__(self, client, blog_base_dir):
+        TaskThread.__init__(self)
+        self.client = client
+        self._interval = 60.0
+        self.blog_base_dir = blog_base_dir
+
+    def task(self):
+        for blog_dir in os.listdir(self.blog_base_dir):
+            if os.path.isfile(os.path.join(self.blog_base_dir, blog_dir + '.self')):
+                try:
+                    uri = read(os.path.join(self.blog_base_dir, blog_dir + '.self'))
+                    blog = self.client.get_blog(uri)
+                except Exception, ex:
+                    for root, dirs, files in os.walk(os.path.join(self.blog_base_dir, blog_dir), topdown=False):
+                        for file in files:
+                            os.remove(os.path.join(root, file))
+                    remove_dir_and_metadata(os.path.join(self.blog_base_dir, blog_dir))
+                for post_dir in os.listdir(os.path.join(self.blog_base_dir, blog_dir)):
+                    if os.path.isfile(os.path.join(self.blog_base_dir, blog_dir, post_dir + '.self')):
+                        try:
+                            uri = read(os.path.join(self.blog_base_dir, blog_dir, post_dir + '.self'))
+                            post = self.client.get_blog_post(uri)
+                        except Exception, ex:
+                            for root, dirs, files in os.walk(os.path.join(self.blog_base_dir, blog_dir, post_dir), topdown=False):
+                                for file in files:
+                                    os.remove(os.path.join(root, file))
+                            remove_dir_and_metadata(os.path.join(self.blog_base_dir, blog_dir, post_dir))
+    
+
 class PhotosDownloadThread(TaskThread):
     def __init__(self, client, photo_dirs):
         TaskThread.__init__(self)
