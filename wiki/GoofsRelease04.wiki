@@ -95,6 +95,11 @@ cd Goofs\ 0.4\ Released\ Today/
 echo "Please download it from <a href='http://goofs.googlecode.com/files/goofs-0.4.tar.gz'>goofs.googlecode.com</a>" > content
 }}}
 
+To change the title of a post use the mv command
+{{{
+mv Goofs\ 0.4\ Released\ Today/ "Goofs 0.4 Released Yesterday"
+}}}
+
 To comment on a blog entry you would do the following:
 {{{
 cd Goofs\ 0.4\ Released\ Today/
