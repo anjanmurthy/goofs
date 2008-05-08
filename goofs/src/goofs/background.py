@@ -7,6 +7,8 @@ from backend import *
 import gdata.photos.service
 import gdata.contacts.service
 from gdata.contacts import ContactEntry
+from gdata.service import RequestError
+import logging
 
 def service_from_path(path, username):
     parts = path.split('/')
@@ -333,7 +335,10 @@ class TaskThread(threading.Thread):
     def run(self):
        while 1:
             if self._finished.isSet(): return
-            self.task()    
+            try:
+                self.task()
+            except Exception, ex:
+                logging.debug(ex)
             # sleep for interval or until shutdown
             self._finished.wait(self._interval)
     
@@ -359,17 +364,18 @@ class PhotosCleanupThread(TaskThread):
                                 uri = read(os.path.join(dir, entry, f + '.self'))
                                 photo = self.client.get_album_or_photo_by_uri(uri)
                             except gdata.photos.service.GooglePhotosException, ex:
-                                remove_file_and_metadata(os.path.join(dir, entry, f))
-                                
+                                if ex.error_code == 400 or ex.error_code == 404:
+                                    remove_file_and_metadata(os.path.join(dir, entry, f))          
                     if os.path.isfile(os.path.join(dir, entry + '.self')):
                         try:
                             uri = read(os.path.join(dir, entry + '.self'))
                             album = self.client.get_album_or_photo_by_uri(uri)
                         except gdata.photos.service.GooglePhotosException, ex:
-                            for root, dirs, files in os.walk(os.path.join(dir, entry), topdown=False):
-                                for file in files:
-                                    os.remove(os.path.join(root, file))
-                            remove_dir_and_metadata(os.path.join(dir, entry))
+                            if ex.error_code == 400 or ex.error_code == 404:
+                                for root, dirs, files in os.walk(os.path.join(dir, entry), topdown=False):
+                                    for file in files:
+                                        os.remove(os.path.join(root, file))
+                                remove_dir_and_metadata(os.path.join(dir, entry))
 
 
 class ContactsCleanupThread(TaskThread):
@@ -385,13 +391,13 @@ class ContactsCleanupThread(TaskThread):
                 try:
                     uri = read(os.path.join(self.contact_base_dir, contact_dir + '.self'))
                     contact = self.client.get_contact_by_uri(uri)
-                except Exception, ex:
-                    for root, dirs, files in os.walk(os.path.join(self.contact_base_dir, contact_dir), topdown=False):
-                        for file in files:
-                            os.remove(os.path.join(root, file))
-                    remove_dir_and_metadata(os.path.join(self.contact_base_dir, contact_dir))
+                except RequestError, ex:
+                    if ex.args[0]['status'] == 404 or ex.args[0]['status'] == 400:
+                        for root, dirs, files in os.walk(os.path.join(self.contact_base_dir, contact_dir), topdown=False):
+                            for file in files:
+                                os.remove(os.path.join(root, file))
+                        remove_dir_and_metadata(os.path.join(self.contact_base_dir, contact_dir))
                     
-
 class BlogsCleanupThread(TaskThread):
     def __init__(self, client, blog_base_dir):
         TaskThread.__init__(self)
@@ -405,21 +411,24 @@ class BlogsCleanupThread(TaskThread):
                 try:
                     uri = read(os.path.join(self.blog_base_dir, blog_dir + '.self'))
                     blog = self.client.get_blog(uri)
-                except Exception, ex:
-                    for root, dirs, files in os.walk(os.path.join(self.blog_base_dir, blog_dir), topdown=False):
-                        for file in files:
-                            os.remove(os.path.join(root, file))
-                    remove_dir_and_metadata(os.path.join(self.blog_base_dir, blog_dir))
+                except RequestError, ex:
+                    if ex.args[0]['status'] == 404 or ex.args[0]['status'] == 400:
+                        for root, dirs, files in os.walk(os.path.join(self.blog_base_dir, blog_dir), topdown=False):
+                            for file in files:
+                                os.remove(os.path.join(root, file))
+                        remove_dir_and_metadata(os.path.join(self.blog_base_dir, blog_dir))
+                        continue
                 for post_dir in os.listdir(os.path.join(self.blog_base_dir, blog_dir)):
                     if os.path.isfile(os.path.join(self.blog_base_dir, blog_dir, post_dir + '.self')):
                         try:
                             uri = read(os.path.join(self.blog_base_dir, blog_dir, post_dir + '.self'))
                             post = self.client.get_blog_post(uri)
-                        except Exception, ex:
-                            for root, dirs, files in os.walk(os.path.join(self.blog_base_dir, blog_dir, post_dir), topdown=False):
-                                for file in files:
-                                    os.remove(os.path.join(root, file))
-                            remove_dir_and_metadata(os.path.join(self.blog_base_dir, blog_dir, post_dir))
+                        except RequestError, ex:
+                            if ex.args[0]['status'] == 404 or ex.args[0]['status'] == 400:
+                                for root, dirs, files in os.walk(os.path.join(self.blog_base_dir, blog_dir, post_dir), topdown=False):
+                                    for file in files:
+                                        os.remove(os.path.join(root, file))
+                                remove_dir_and_metadata(os.path.join(self.blog_base_dir, blog_dir, post_dir))
     
 
 class PhotosDownloadThread(TaskThread):
@@ -444,7 +453,7 @@ class PhotosDownloadThread(TaskThread):
                     write(os.path.join(dir, album.title.text + '.edit'), album.GetEditLink().href)
             photos_feed = self.client.photos_feed(album)
             for photo in photos_feed:    
-                updated = self.client.get_photo_updated(photo)
+                updated = self.client.get_entry_updated(photo)
                 name = os.path.join(album_dir, photo.title.text)
                 get = False                        
                 if os.path.exists(name):
@@ -455,9 +464,13 @@ class PhotosDownloadThread(TaskThread):
                     get = True
                 if get:
                     write(name, self.client.get_photo_content(photo))
+                    last_updated = self.client.get_entry_updated_epoch(photo)
+                    os.utime(name, (last_updated, last_updated) )
                     write(name + '.self', photo.GetSelfLink().href)
                     if photo.GetEditLink() is not None:
-                        write(name + '.edit', photo.GetEditLink().href) 
+                        write(name + '.edit', photo.GetEditLink().href)
+            last_updated = self.client.get_entry_updated_epoch(album)
+            os.utime(album_dir, (last_updated, last_updated) )
 
 class ContactsDownloadThread(TaskThread):
     def __init__(self, client, contact_base_dir):
@@ -470,7 +483,7 @@ class ContactsDownloadThread(TaskThread):
         contacts_feed = self.client.contacts_feed()
         for contact in contacts_feed:
             if contact.title.text is not None:
-                updated = self.client.get_contact_updated(contact)
+                updated = self.client.get_entry_updated(contact)
                 contact_dir = os.path.join(self.contact_base_dir, contact.title.text)
                 if os.path.exists(contact_dir):
                     mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime = os.stat(contact_dir)
@@ -555,6 +568,9 @@ class ContactsDownloadThread(TaskThread):
                     write(os.path.join(contact_dir, 'organization'), contact.organization.org_name.text)
                 else:
                     write(os.path.join(contact_dir, 'organization'), '')
+                last_updated = self.client.get_entry_updated_epoch(contact)
+                os.utime(contact_dir, (last_updated, last_updated) )
+                
                                  
 class BlogsDownloadThread(TaskThread):
 
@@ -593,4 +609,8 @@ class BlogsDownloadThread(TaskThread):
                     write(os.path.join(comment_dir, comment.title.text), comment.content.text)
                     write(os.path.join(comment_dir, comment.title.text + '.self'), comment.GetSelfLink().href)
                     if comment.GetEditLink() is not None:
-                         write(os.path.join(comment_dir, comment.title.text + '.edit'), comment.GetEditLink().href)      
+                         write(os.path.join(comment_dir, comment.title.text + '.edit'), comment.GetEditLink().href)
+                last_updated = self.client.get_entry_updated_epoch(post)
+                os.utime(post_dir, (last_updated, last_updated) )
+            last_updated = self.client.get_entry_updated_epoch(blog)
+            os.utime(blog_dir, (last_updated, last_updated) )
