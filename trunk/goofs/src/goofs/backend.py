@@ -120,12 +120,6 @@ class GClient:
     def upload_contact(self, contact):
         return self.con_client.CreateContact(contact)
     
-    def get_contact_updated(self, contact):
-        return datetime.datetime.strptime(self.get_contact_updated_str(contact)[0:19], '%Y-%m-%dT%H:%M:%S')
-
-    def get_contact_updated_str(self, contact):
-        return contact.updated.text
-    
     def albums_feed(self):
         return self.ph_client.GetUserFeed().entry
 
@@ -168,11 +162,15 @@ class GClient:
         f.close()
         return thecontent
     
-    def get_photo_updated(self, photo):
-        return datetime.datetime.strptime(self.get_photo_updated_str(photo)[0:19], '%Y-%m-%dT%H:%M:%S')
+    def get_entry_updated_epoch(self, entry):
+        t = datetime.datetime(*time.strptime(self.get_entry_updated_str(entry)[0:19], '%Y-%m-%dT%H:%M:%S')[0:5])
+        return int(time.mktime(t.timetuple()))
 
-    def get_photo_updated_str(self, photo):
-        return photo.updated.text
+    def get_entry_updated_str(self, entry):
+        return entry.updated.text
+    
+    def get_entry_updated(self, entry):
+        return datetime.datetime.strptime(self.get_entry_updated_str(entry)[0:19], '%Y-%m-%dT%H:%M:%S')
     
     def search_photos_feed(self, query):
         return self.ph_client.SearchUserPhotos(query).entry
