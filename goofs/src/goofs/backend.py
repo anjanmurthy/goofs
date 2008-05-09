@@ -48,6 +48,7 @@ class GClient:
         self.docs_client = GDocumentsService(email, password)
         self.docs_client.ProgrammaticLogin()
         self.username = email.split('@')[0]
+        self.email = email
     
     def __content_type_from_path(self, path):
         parts = path.split(os.extsep)
@@ -58,6 +59,9 @@ class GClient:
         
     def get_username(self):
         return self.username
+    
+    def get_email(self):
+        return self.email
     
     def upload_document(self, ms, title, service):
         if service == 'documents':
@@ -73,8 +77,8 @@ class GClient:
     def get_document(self, uri):
         return self.docs_client.Get(uri)
     
-    def update_document(self, doc):
-        return self.docs_client.Put(doc, doc.GetEditLink().href)
+    def update_document(self, doc, media_source):
+        return self.docs_client.Put(doc, doc.GetEditLink().href, media_source = media_source, extra_headers = {'Slug' : media_source.file_name })
         
     def docs_feed(self):
         return self.docs_client.GetDocumentListFeed().entry
@@ -223,9 +227,12 @@ class GClient:
         return thecontent
     
     def get_entry_updated_epoch(self, entry):
+        """
         t = datetime.datetime(*time.strptime(self.get_entry_updated_str(entry)[0:19], '%Y-%m-%dT%H:%M:%S')[0:5])
         return int(time.mktime(t.timetuple()))
-
+        """
+        return int(time.mktime(time.strptime(self.get_entry_updated_str(entry)[0:19], '%Y-%m-%dT%H:%M:%S')))
+        
     def get_entry_updated_str(self, entry):
         return entry.updated.text
     
