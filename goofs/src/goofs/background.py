@@ -104,7 +104,11 @@ class UnlinkEventHandler(EventHandler):
             if os.path.exists(event.path + '.edit'):
                 self.client.delete_blog_entity(read(event.path + '.edit'))
                 remove_metadata(event.path)
-
+        elif service in ['documents', 'spreadsheets', 'presentations']:
+            if os.path.exists(event.path + '.edit'):
+                self.client.delete_document(read(event.path + '.edit'))
+                remove_metadata(event.path)
+                
 class RmdirEventHandler(EventHandler):
     def __init__(self, client):
         EventHandler.__init__(self, client)
@@ -166,7 +170,6 @@ class RenameEventHandler(EventHandler):
                 if new_post.GetEditLink() is not None:
                     write(event.dest_path + '.edit', new_post.GetEditLink().href)
                 remove_metadata(event.src_path)
-                
 
 class MkdirEventHandler(EventHandler):
     def __init__(self, client):
@@ -314,6 +317,12 @@ class ReleaseEventHandler(EventHandler):
                 write(new_path + '.self', new_comment.GetSelfLink().href)
                 if new_comment.GetEditLink() is not None:
                     write(new_path + '.edit', new_comment.GetEditLink().href)
+        elif service == 'documents':
+            pass
+        elif service == 'spreadsheets':
+            pass
+        elif service == 'presentations':
+            pass
                         
                 
 class TaskThread(threading.Thread):
@@ -335,10 +344,11 @@ class TaskThread(threading.Thread):
     def run(self):
        while 1:
             if self._finished.isSet(): return
-            try:
-                self.task()
+            self.task()
+            """
             except Exception, ex:
                 logging.debug(ex)
+            """
             # sleep for interval or until shutdown
             self._finished.wait(self._interval)
     
@@ -571,7 +581,46 @@ class ContactsDownloadThread(TaskThread):
                 last_updated = self.client.get_entry_updated_epoch(contact)
                 os.utime(contact_dir, (last_updated, last_updated) )
                 
-                                 
+class DocsDownloadThread(TaskThread):
+    def __init__(self, client, docs_base_dir, spreads_base_dir, presents_base_dir):
+        TaskThread.__init__(self)
+        self.client = client
+        self.docs_base_dir = docs_base_dir
+        self.spreads_base_dir = spreads_base_dir
+        self.presents_base_dir = presents_base_dir
+    def task(self):
+        docs_feed = self.client.docs_feed()
+        for doc in docs_feed:
+            if self.client.has_category(doc, 'document'):
+                base_dir = self.docs_base_dir
+            elif self.client.has_category(doc, 'spreadsheet'):
+                base_dir = self.spreads_base_dir
+            else:
+                base_dir = self.presents_base_dir
+            if len(self.client.get_folders(doc)) > 0:
+                folder_dir = base_dir
+                for folder in self.client.get_folders(doc):
+                    folder_dir = os.path.join(folder_dir, folder)
+                    if not os.path.exists(folder_dir):
+                        os.mkdir(folder_dir)
+                doc_file = os.path.join(folder_dir, doc.title.text)
+            else:
+                doc_file = os.path.join(base_dir, doc.title.text)
+            if not os.path.exists(doc_file):
+                if self.client.has_category(doc, 'document'):
+                    write(doc_file, self.client.get_doc_content(doc))
+                else:
+                    write(doc_file, '')
+                write(doc_file + '.self', doc.GetSelfLink().href)
+                if doc.GetEditLink() is not None:
+                    write(doc_file + '.edit', doc.GetEditLink().href)
+                if self.client.has_category(doc, 'starred'):
+                    if not os.path.exists(os.path.join(base_dir, 'starred')):
+                        os.mkdir(os.path.join(base_dir, 'starred'))
+                    os.symlink(doc_file, os.path.join(base_dir, 'starred', doc.title.text))
+                last_updated = self.client.get_entry_updated_epoch(doc)
+                os.utime(doc_file, (last_updated, last_updated) )
+            
 class BlogsDownloadThread(TaskThread):
 
     def __init__(self, client, blogs_base_dir):
