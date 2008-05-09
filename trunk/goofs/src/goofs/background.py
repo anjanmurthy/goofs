@@ -179,6 +179,16 @@ class RenameEventHandler(EventHandler):
                 if new_post.GetEditLink() is not None:
                     write(event.dest_path + '.edit', new_post.GetEditLink().href)
                 remove_metadata(event.src_path)
+        elif service in ['documents', 'spreadsheets', 'presentations']:
+            doc = self.client.get_document(read(event.src_path + '.self'))
+            doc.title = atom.Title('xhtml', os.path.basename(event.dest_path))
+            content_type = gdata.docs.service.SUPPORTED_FILETYPES[get_file_ext(event.src_path)]
+            ms = gdata.MediaSource(file_path=event.src_path, content_type=content_type)
+            new_doc = self.client.update_document(doc, ms)
+            write(event.dest_path + '.self', new_doc.GetSelfLink().href)
+            if new_doc.GetEditLink() is not None:
+                write(event.dest_path + '.edit', new_doc.GetEditLink().href)
+            remove_metadata(event.src_path)
 
 class MkdirEventHandler(EventHandler):
     def __init__(self, client):
@@ -332,6 +342,13 @@ class ReleaseEventHandler(EventHandler):
                 ms = gdata.MediaSource(file_path=event.path, content_type=content_type)
                 title = os.path.basename(event.path)
                 doc = self.client.upload_document(ms, title, service)
+                """ for some reason updating the folder name doesn't seem to work
+                if not os.path.basename(os.path.dirname(event.path)) in ['documents', 'spreadsheets', 'presentations']:
+                    folder = atom.Category(scheme='http://schemas.google.com/docs/2007/folders/%s' % self.client.get_email(),term=os.path.basename(os.path.dirname(event.path)),label=os.path.basename(os.path.dirname(event.path)))
+                    doc.category.append(folder)
+                    ms = gdata.MediaSource(file_path=event.path, content_type=content_type)
+                    self.client.update_document(doc, ms)
+                """
                 write(event.path + '.self', doc.GetSelfLink().href)
                 if doc.GetEditLink() is not None:
                     write(event.path + '.edit', doc.GetEditLink().href)
@@ -418,7 +435,34 @@ class ContactsCleanupThread(TaskThread):
                             for file in files:
                                 os.remove(os.path.join(root, file))
                         remove_dir_and_metadata(os.path.join(self.contact_base_dir, contact_dir))
-                    
+
+class DocsCleanupThread(TaskThread):
+    def __init__(self, client, docs_base_dir):
+        TaskThread.__init__(self)
+        self.client = client
+        self._interval = 60.0
+        self.docs_base_dir = docs_base_dir
+
+    def task(self):
+        dir = self.docs_base_dir
+        for entry in os.listdir(dir):
+            if os.path.isdir(os.path.join(dir, entry)):
+                for f in os.listdir(os.path.join(dir, entry)):
+                    if os.path.isfile(os.path.join(dir, entry, f + '.self')):
+                        try:
+                            uri = read(os.path.join(dir, entry, f + '.self'))
+                            doc = self.client.get_document(uri)
+                        except RequestError, ex:
+                            if ex.args[0]['status'] == 404 or ex.args[0]['status'] == 400:
+                                remove_file_and_metadata(os.path.join(dir, entry, f))          
+            if os.path.isfile(os.path.join(dir, entry + '.self')):
+                try:
+                    uri = read(os.path.join(dir, entry + '.self'))
+                    doc = self.client.get_document(uri)
+                except RequestError, ex:
+                    if ex.args[0]['status'] == 404 or ex.args[0]['status'] == 400:
+                        remove_file_and_metadata(os.path.join(dir, entry))
+ 
 class BlogsCleanupThread(TaskThread):
     def __init__(self, client, blog_base_dir):
         TaskThread.__init__(self)
@@ -618,17 +662,13 @@ class DocsDownloadThread(TaskThread):
             else:
                 doc_file = os.path.join(base_dir, doc.title.text)
             if not os.path.exists(doc_file):
-                if self.client.has_category(doc, 'document'):
+                if self.client.has_category(doc, 'document') or self.client.has_category(doc, 'presentation'):
                     write(doc_file, self.client.get_doc_content(doc))
                 else:
                     write(doc_file, '')
                 write(doc_file + '.self', doc.GetSelfLink().href)
                 if doc.GetEditLink() is not None:
                     write(doc_file + '.edit', doc.GetEditLink().href)
-                if self.client.has_category(doc, 'starred'):
-                    if not os.path.exists(os.path.join(base_dir, 'starred')):
-                        os.mkdir(os.path.join(base_dir, 'starred'))
-                    os.symlink(doc_file, os.path.join(base_dir, 'starred', doc.title.text))
                 last_updated = self.client.get_entry_updated_epoch(doc)
                 os.utime(doc_file, (last_updated, last_updated) )
             

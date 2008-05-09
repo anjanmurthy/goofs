@@ -35,9 +35,6 @@ BLOGS_DIR = None
 DOCS_DIR = None
 DOCS_DIR_STAR = None
 SPREADS_DIR = None
-SPREADS_DIR_STAR = None
-PRESENTS_DIR = None
-PRESENTS_DIR_STAR = None
 GDOCS_DIRS = None
 CLIENT = None
 
@@ -66,12 +63,9 @@ def init(user, pw):
     DOCS_DIR = os.path.join(GOOFS_CACHE, 'documents')
     SPREADS_DIR = os.path.join(GOOFS_CACHE, 'spreadsheets')
     PRESENTS_DIR = os.path.join(GOOFS_CACHE, 'presentations')
-    DOCS_DIR_STAR = os.path.join(DOCS_DIR, 'starred')
-    SPREADS_DIR_STAR = os.path.join(SPREADS_DIR, 'starred')
-    PRESENTS_DIR_STAR = os.path.join(PRESENTS_DIR, 'starred')
     PUB_PHOTOS_DIR = os.path.join(PHOTOS_DIR, 'public')
     PRIV_PHOTOS_DIR = os.path.join(PHOTOS_DIR, 'private')
-    GDOCS_DIRS = [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR, CONTACTS_DIR, BLOGS_DIR, DOCS_DIR, SPREADS_DIR, PRESENTS_DIR, DOCS_DIR_STAR, SPREADS_DIR_STAR, PRESENTS_DIR_STAR]
+    GDOCS_DIRS = [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR, CONTACTS_DIR, BLOGS_DIR, DOCS_DIR, SPREADS_DIR, PRESENTS_DIR]
     
     for root, dirs, files in os.walk(GOOFS_CACHE, topdown=False):
         for file in files:
@@ -120,9 +114,12 @@ class Goofs(Fuse):
         os.symlink(path, "." + path1)
 
     def rename(self, path, path1):
-        ev = RenameEventHandler(CLIENT)
-        ev.consume(RenameEvent(GOOFS_CACHE + path, GOOFS_CACHE + path1))
-        os.rename("." + path, "." + path1)
+        if os.path.dirname(path) in ['/documents', '/spreadsheets', '/presentations'] and os.path.isdir("." + path):
+            return -errno.EACCES
+        else:
+            ev = RenameEventHandler(CLIENT)
+            ev.consume(RenameEvent(GOOFS_CACHE + path, GOOFS_CACHE + path1))
+            os.rename("." + path, "." + path1)
         
     def link(self, path, path1):
         os.link("." + path, "." + path1)
@@ -161,7 +158,7 @@ class Goofs(Fuse):
 
     def fsinit(self):   
         os.chdir(self.root)
-        self.threads = [DocsDownloadThread(CLIENT, DOCS_DIR, SPREADS_DIR, PRESENTS_DIR), PhotosDownloadThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR]), ContactsDownloadThread(CLIENT, CONTACTS_DIR), BlogsDownloadThread(CLIENT, BLOGS_DIR), PhotosCleanupThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR]), ContactsCleanupThread(CLIENT, CONTACTS_DIR), BlogsCleanupThread(CLIENT, BLOGS_DIR)]
+        self.threads = [DocsDownloadThread(CLIENT, DOCS_DIR, SPREADS_DIR, PRESENTS_DIR), PhotosDownloadThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR]), ContactsDownloadThread(CLIENT, CONTACTS_DIR), BlogsDownloadThread(CLIENT, BLOGS_DIR), PhotosCleanupThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR]), ContactsCleanupThread(CLIENT, CONTACTS_DIR), BlogsCleanupThread(CLIENT, BLOGS_DIR), DocsCleanupThread(CLIENT, DOCS_DIR)]
         for thread in self.threads:
             thread.start()
             
