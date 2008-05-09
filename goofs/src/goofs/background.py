@@ -3,12 +3,21 @@ import threading
 import thread
 import atom
 import os
+import re
 from backend import *
+import gdata
 import gdata.photos.service
 import gdata.contacts.service
+import gdata.docs.service
 from gdata.contacts import ContactEntry
 from gdata.service import RequestError
 import logging
+
+def get_file_ext(file_name):
+    match = re.search('.*\.([a-zA-Z]{3,}$)', file_name)
+    if match:
+      return match.group(1).upper()
+    return ''
 
 def service_from_path(path, username):
     parts = path.split('/')
@@ -317,14 +326,16 @@ class ReleaseEventHandler(EventHandler):
                 write(new_path + '.self', new_comment.GetSelfLink().href)
                 if new_comment.GetEditLink() is not None:
                     write(new_path + '.edit', new_comment.GetEditLink().href)
-        elif service == 'documents':
-            pass
-        elif service == 'spreadsheets':
-            pass
-        elif service == 'presentations':
-            pass
-                        
-                
+        elif service in ['documents', 'spreadsheets', 'presentations']:
+            if get_file_ext(event.path) in gdata.docs.service.SUPPORTED_FILETYPES:
+                content_type = gdata.docs.service.SUPPORTED_FILETYPES[get_file_ext(event.path)]
+                ms = gdata.MediaSource(file_path=event.path, content_type=content_type)
+                title = os.path.basename(event.path)
+                doc = self.client.upload_document(ms, title, service)
+                write(event.path + '.self', doc.GetSelfLink().href)
+                if doc.GetEditLink() is not None:
+                    write(event.path + '.edit', doc.GetEditLink().href)
+                          
 class TaskThread(threading.Thread):
     """Thread that executes a task every N seconds"""
     def __init__(self):

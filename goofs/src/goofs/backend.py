@@ -59,6 +59,14 @@ class GClient:
     def get_username(self):
         return self.username
     
+    def upload_document(self, ms, title, service):
+        if service == 'documents':
+            return self.docs_client.UploadDocument(ms, title)
+        elif service == 'spreadsheets':
+            return self.docs_client.UploadSpreadsheet(ms, title)
+        else:
+            return self.docs_client.UploadPresentation(ms, title)
+            
     def delete_document(self, uri):
         return self.docs_client.Delete(uri)
     
