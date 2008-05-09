@@ -1,5 +1,6 @@
 import gdata.photos.service
 import gdata.contacts.service
+import gdata.docs.service
 from gdata import service
 from gdata.service import RequestError
 from gdata.contacts import ContactEntryFromString
@@ -9,28 +10,30 @@ import urllib2, httplib
 
 
 class GPhotosService(gdata.photos.service.PhotosService):
-    
     def __init__(self, email, password):
         gdata.photos.service.PhotosService.__init__(self, email, password)
-    
     def GetAuthorizationToken(self):
         return self._GetAuthToken()
     
 class GContactsService(gdata.contacts.service.ContactsService):
-    
     def __init__(self, email, password):
         gdata.contacts.service.ContactsService.__init__(self, email, password)
-    
     def GetAuthorizationToken(self):
         return self._GetAuthToken()
 
 class GBlogsService(service.GDataService):
-    
     def __init__(self, email, password):
         service.GDataService.__init__(self, email, password)
         self.source = 'goofs'
         self.service = 'blogger'
         self.server = 'www.blogger.com'
+
+class GDocumentsService(gdata.docs.service.DocsService):
+    def __init__(self, email, password):
+        gdata.docs.service.DocsService.__init__(self, email, password)
+        self.source = 'goofs'
+    def GetAuthorizationToken(self):
+        return self._GetAuthToken()
     
 class GClient:
     
@@ -42,6 +45,8 @@ class GClient:
         self.con_client.ProgrammaticLogin()
         self.blog_client = GBlogsService(email, password)
         self.blog_client.ProgrammaticLogin()
+        self.docs_client = GDocumentsService(email, password)
+        self.docs_client.ProgrammaticLogin()
         self.username = email.split('@')[0]
     
     def __content_type_from_path(self, path):
@@ -54,6 +59,53 @@ class GClient:
     def get_username(self):
         return self.username
     
+    def delete_document(self, uri):
+        return self.docs_client.Delete(uri)
+    
+    def get_document(self, uri):
+        return self.docs_client.Get(uri)
+    
+    def update_document(self, doc):
+        return self.docs_client.Put(doc, doc.GetEditLink().href)
+        
+    def docs_feed(self):
+        return self.docs_client.GetDocumentListFeed().entry
+    
+    def wp_feed(self):
+        query = gdata.docs.service.DocumentQuery(categories=['document'])
+        return self.docs_client.Query(query.ToUri()).entry
+    
+    def spreadsheets_feed(self):
+        query = gdata.docs.service.DocumentQuery(categories=['spreadsheet'])
+        return self.docs_client.Query(query.ToUri()).entry
+    
+    def presentations_feed(self):
+        query = gdata.docs.service.DocumentQuery(categories=['presentation'])
+        return self.docs_client.Query(query.ToUri()).entry
+    
+    def has_category(self, doc, label):
+        for cat in doc.category:
+            if cat.label == label:
+                return True
+        return False
+
+    def get_folders(self, doc):
+        folders = []
+        for cat in doc.category:
+            if cat.scheme is not None and cat.scheme.startswith('http://schemas.google.com/docs/2007/folders'):
+                folders.append(cat.term)
+        folders.reverse()
+        return folders
+    
+    def get_doc_content(self, doc):
+        request = urllib2.Request(doc.content.src)
+        request.add_header('Authorization', self.docs_client.GetAuthorizationToken())
+        opener = urllib2.build_opener()
+        f = opener.open(request)
+        thecontent = f.read()
+        f.close()
+        return thecontent
+   
     def blogs_feed(self):
         return self.blog_client.Get('/feeds/default/blogs').entry
     
