@@ -372,11 +372,10 @@ class TaskThread(threading.Thread):
     def run(self):
        while 1:
             if self._finished.isSet(): return
-            self.task()
-            """
+            try:
+                self.task()
             except Exception, ex:
                 logging.debug(ex)
-            """
             # sleep for interval or until shutdown
             self._finished.wait(self._interval)
     
