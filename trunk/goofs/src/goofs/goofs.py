@@ -163,10 +163,8 @@ class Goofs(Fuse):
             thread.start()
             
     def fsdestroy(self):
-        print 'destroy called'
         for thread in self.threads:
             thread.shutdown();
-        print 'threads shutdown'
         
     class GoofsFile(object):
 
