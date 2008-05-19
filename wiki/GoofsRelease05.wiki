@@ -1,4 +1,4 @@
-#summary goofs-0.5 is available. Initial support for documents, spreadsheets, and presentations has been added.  Also added is setting the utime attribute on each entity based on the value returned from the google service.
+#summary goofs-0.5 is available. Initial support for documents, spreadsheets, and presentations has been added.  Also added is setting the utime attribute on each entity properly so ls -ltr will work.
 #labels Featured,Phase-Deploy
 
 = goofs-0.5 is available =
