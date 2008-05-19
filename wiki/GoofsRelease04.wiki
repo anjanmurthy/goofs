@@ -1,5 +1,5 @@
 #summary goofs-0.4 is available. Support for blogger has been added. Now you can blog from the command line!
-#labels Featured,Phase-Deploy
+#labels Phase-Deploy
 
 = goofs-0.4 is available =
 goofs-0.4 is available now.  There are now 3 backends complete: picasa, contacts, and blogger.  These features allow you to manipulate your picasa photos, gmail contacts, and blogs just as you would any other file on the filesytem.  
