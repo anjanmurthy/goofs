@@ -33,7 +33,7 @@ PRIV_PHOTOS_DIR = None
 CONTACTS_DIR = None
 BLOGS_DIR = None
 DOCS_DIR = None
-DOCS_DIR_STAR = None
+CAL_DIR = None
 SPREADS_DIR = None
 GDOCS_DIRS = None
 CLIENT = None
@@ -50,7 +50,7 @@ def flag2mode(flags):
 
 def init(user, pw):
     
-    global CLIENT, HOME, GOOFS_CACHE, DOCS_DIR, SPREADS_DIR, PRESENTS_DIR, BLOGS_DIR, CONTACTS_DIR, PHOTOS, PHOTOS_DIR, GDOCS_DIRS, PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR
+    global CLIENT, HOME, GOOFS_CACHE, DOCS_DIR, SPREADS_DIR, PRESENTS_DIR, BLOGS_DIR, CAL_DIR, CONTACTS_DIR, PHOTOS, PHOTOS_DIR, GDOCS_DIRS, PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR
 
     CLIENT = GClient(user, pw)
 
@@ -60,12 +60,13 @@ def init(user, pw):
     PHOTOS_DIR = os.path.join(GOOFS_CACHE, PHOTOS)
     CONTACTS_DIR = os.path.join(GOOFS_CACHE, 'contacts')
     BLOGS_DIR = os.path.join(GOOFS_CACHE, 'blogs')
+    CAL_DIR = os.path.join(GOOFS_CACHE, 'calendars')
     DOCS_DIR = os.path.join(GOOFS_CACHE, 'documents')
     SPREADS_DIR = os.path.join(GOOFS_CACHE, 'spreadsheets')
     PRESENTS_DIR = os.path.join(GOOFS_CACHE, 'presentations')
     PUB_PHOTOS_DIR = os.path.join(PHOTOS_DIR, 'public')
     PRIV_PHOTOS_DIR = os.path.join(PHOTOS_DIR, 'private')
-    GDOCS_DIRS = [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR, CONTACTS_DIR, BLOGS_DIR, DOCS_DIR, SPREADS_DIR, PRESENTS_DIR]
+    GDOCS_DIRS = [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR, CONTACTS_DIR, BLOGS_DIR, CAL_DIR, DOCS_DIR, SPREADS_DIR, PRESENTS_DIR]
     
     for root, dirs, files in os.walk(GOOFS_CACHE, topdown=False):
         for file in files:
@@ -158,7 +159,7 @@ class Goofs(Fuse):
 
     def fsinit(self):   
         os.chdir(self.root)
-        self.threads = [DocsDownloadThread(CLIENT, DOCS_DIR, SPREADS_DIR, PRESENTS_DIR), PhotosDownloadThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR]), ContactsDownloadThread(CLIENT, CONTACTS_DIR), BlogsDownloadThread(CLIENT, BLOGS_DIR), PhotosCleanupThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR]), ContactsCleanupThread(CLIENT, CONTACTS_DIR), BlogsCleanupThread(CLIENT, BLOGS_DIR), DocsCleanupThread(CLIENT, DOCS_DIR)]
+        self.threads = [CalendarDownloadThread(CLIENT, CAL_DIR), DocsDownloadThread(CLIENT, DOCS_DIR, SPREADS_DIR, PRESENTS_DIR), PhotosDownloadThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR]), ContactsDownloadThread(CLIENT, CONTACTS_DIR), BlogsDownloadThread(CLIENT, BLOGS_DIR), PhotosCleanupThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR]), ContactsCleanupThread(CLIENT, CONTACTS_DIR), BlogsCleanupThread(CLIENT, BLOGS_DIR), DocsCleanupThread(CLIENT, DOCS_DIR)]
         for thread in self.threads:
             thread.start()
             
