@@ -4,10 +4,12 @@ import gdata.docs.service
 from gdata import service
 from gdata.service import RequestError
 from gdata.contacts import ContactEntryFromString
+import gdata.calendar.service
+import gdata.calendar
 import datetime, time
 import os
 import urllib2, httplib
-
+import atom
 
 class GPhotosService(gdata.photos.service.PhotosService):
     def __init__(self, email, password):
@@ -34,6 +36,11 @@ class GDocumentsService(gdata.docs.service.DocsService):
         self.source = 'goofs'
     def GetAuthorizationToken(self):
         return self._GetAuthToken()
+
+class GCalendarService(gdata.calendar.service.CalendarService):
+    def __init__(self, email, password):
+        gdata.calendar.service.CalendarService.__init__(self, email, password)
+        self.source = 'goofs'
     
 class GClient:
     
@@ -47,6 +54,8 @@ class GClient:
         self.blog_client.ProgrammaticLogin()
         self.docs_client = GDocumentsService(email, password)
         self.docs_client.ProgrammaticLogin()
+        self.cal_client = GCalendarService(email, password)
+        self.cal_client.ProgrammaticLogin()
         self.username = email.split('@')[0]
         self.email = email
     
@@ -63,6 +72,58 @@ class GClient:
     def get_email(self):
         return self.email
     
+    def calendar_feed(self):
+        return self.cal_client.GetAllCalendarsFeed().entry
+    
+    def get_calendar(self, uri):
+        cal_feed = self.calendar_feed()
+        for i, cal in zip(xrange(len(cal_feed)), cal_feed):
+            if cal.GetSelfLink().href == uri:
+                return cal
+        return None
+    
+    def get_calendar_event(self, uri):
+        return self.cal_client.GetCalendarEventEntry(uri)
+    
+    def update_calendar_event(self, event):
+        return self.cal_client.UpdateEvent(event.GetEditLink().href, event)
+    
+    def calendar_quick_add(self, cal, content):
+        calId = cal.GetSelfLink().href.split('/')[-1]
+        event = gdata.calendar.CalendarEventEntry()
+        event.content = atom.Content(text=content)
+        event.quick_add = gdata.calendar.QuickAdd(value='true');
+        return self.cal_client.InsertEvent(event, '/calendar/feeds/%s/private/full' % calId)
+    
+    def calendar_entry_feed(self, cal):
+        calId = cal.GetSelfLink().href.split('/')[-1]
+        uri = '/calendar/feeds/%s/private/full' % calId
+        return self.cal_client.GetCalendarEventFeed(uri=uri).entry
+    
+    def calendar_query(self, query):
+        return self.cal_client.CalendarQuery(query).entry
+    
+    def calendar_entry_feed_today(self, cal):
+        calId = cal.GetSelfLink().href.split('/')[-1]
+        query = gdata.calendar.service.CalendarEventQuery(calId, 'private', 'full')
+        query.start_min = time.strftime('%Y-%m-%d', time.gmtime())
+        query.start_max = time.strftime('%Y-%m-%d', time.gmtime(time.time() + 86400))
+        return self.calendar_query(query)
+    
+    def calendar_entry_feed_7_days(self, cal):
+        calId = cal.GetSelfLink().href.split('/')[-1]
+        query = gdata.calendar.service.CalendarEventQuery(calId, 'private', 'full')
+        query.start_min = time.strftime('%Y-%m-%d', time.gmtime())
+        query.start_max = time.strftime('%Y-%m-%d', time.gmtime(time.time() + (86400 * 7)))
+        return self.calendar_query(query)
+    
+    def calendar_entry_feed_30_days(self, cal):
+        calId = cal.GetSelfLink().href.split('/')[-1]
+        query = gdata.calendar.service.CalendarEventQuery(calId, 'private', 'full')
+        query.start_min = time.strftime('%Y-%m-%d', time.gmtime())
+        query.start_max = time.strftime('%Y-%m-%d', time.gmtime(time.time() + (86400 * 30)))
+        return self.calendar_query(query)
+        
     def upload_document(self, ms, title, service):
         if service == 'documents':
             return self.docs_client.UploadDocument(ms, title)

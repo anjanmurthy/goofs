@@ -9,6 +9,7 @@ import gdata
 import gdata.photos.service
 import gdata.contacts.service
 import gdata.docs.service
+import gdata.calendar
 from gdata.contacts import ContactEntry
 from gdata.service import RequestError
 import logging
@@ -352,7 +353,25 @@ class ReleaseEventHandler(EventHandler):
                 write(event.path + '.self', doc.GetSelfLink().href)
                 if doc.GetEditLink() is not None:
                     write(event.path + '.edit', doc.GetEditLink().href)
-                          
+        elif service == 'calendars':
+            if os.path.basename(event.path) == 'quick':
+                if os.path.exists(os.path.dirname(event.path) + '.self'):
+                    cal = self.client.get_calendar(read(os.path.dirname(event.path) + '.self'))
+                    content = read(event.path)
+                    self.client.calendar_quick_add(cal, content)
+                    os.remove(event.path)
+            elif os.path.basename(event.path) == 'content':
+                if os.path.exists(os.path.dirname(event.path) + '.self'):
+                    cevent = self.client.get_calendar_event(read(os.path.dirname(event.path) + '.self'))
+                    cevent.content = atom.Content(text=read(event.path))
+                    self.client.update_calendar_event(cevent)
+            elif os.path.basename(event.path) == 'when':
+                if os.path.exists(os.path.dirname(event.path) + '.self'):
+                    cevent = self.client.get_calendar_event(read(os.path.dirname(event.path) + '.self'))
+                    start_time, end_time = read(event.path).split()
+                    cevent.when[0] = gdata.calendar.When(start_time=start_time, end_time=end_time)
+                    self.client.update_calendar_event(cevent)
+            
 class TaskThread(threading.Thread):
     """Thread that executes a task every N seconds"""
     def __init__(self):
@@ -372,10 +391,10 @@ class TaskThread(threading.Thread):
     def run(self):
        while 1:
             if self._finished.isSet(): return
-            try:
-                self.task()
-            except Exception, ex:
-                logging.debug(ex)
+            #try:
+            self.task()
+            #except Exception, ex:
+            #    logging.debug(ex)
             # sleep for interval or until shutdown
             self._finished.wait(self._interval)
     
@@ -713,3 +732,53 @@ class BlogsDownloadThread(TaskThread):
                 os.utime(post_dir, (last_updated, last_updated) )
             last_updated = self.client.get_entry_updated_epoch(blog)
             os.utime(blog_dir, (last_updated, last_updated) )
+
+class CalendarDownloadThread(TaskThread):
+    def __init__(self, client, cal_base_dir):
+        TaskThread.__init__(self)
+        self.client = client
+        self._interval = 10.0
+        self.cal_base_dir = cal_base_dir
+    def do_cal_entries(self, cal_dir, entry_dir, cal_entry_feed):
+        for j, cal_entry in zip(xrange(len(cal_entry_feed)), cal_entry_feed):
+            try:
+                cal_entry_dir = os.path.join(cal_dir, entry_dir, cal_entry.title.text)
+                if not os.path.exists(cal_entry_dir):
+                    os.mkdir(cal_entry_dir)
+                    write(cal_entry_dir + '.self', cal_entry.GetSelfLink().href)
+                    if cal_entry.GetEditLink() is not None:
+                        write(cal_entry_dir + '.edit', cal_entry.GetEditLink().href)
+                    if cal_entry.content.text is not None:
+                        write(os.path.join(cal_entry_dir, 'content'), cal_entry.content.text)
+                    else:
+                        write(os.path.join(cal_entry_dir, 'content'), '')
+                    if cal_entry.when[0] is not None:
+                        write(os.path.join(cal_entry_dir, 'when'), cal_entry.when[0].start_time + ' ' + cal_entry.when[0].end_time)
+                    else:
+                        write(os.path.join(cal_entry_dir, 'when'), '')
+                last_updated = self.client.get_entry_updated_epoch(cal_entry)
+                os.utime(cal_entry_dir, (last_updated, last_updated) )
+            except OSError, err:
+                continue
+    def task(self):
+        cal_feed = self.client.calendar_feed()
+        for i, cal in zip(xrange(len(cal_feed)), cal_feed):
+            cal_dir = os.path.join(self.cal_base_dir, cal.title.text)
+            if not os.path.exists(cal_dir):
+                os.mkdir(cal_dir)
+                write(cal_dir + '.self', cal.GetSelfLink().href)
+                if cal.GetEditLink() is not None:
+                    write(cal_dir + '.edit', cal.GetEditLink().href)
+                os.mkdir(os.path.join(cal_dir, 'Today'))
+                os.mkdir(os.path.join(cal_dir, '7_Days_From_Now'))
+                os.mkdir(os.path.join(cal_dir, '30_Days_From_Now'))
+            today_feed = self.client.calendar_entry_feed_today(cal)
+            self.do_cal_entries(cal_dir, 'Today', today_feed)
+            week_feed = self.client.calendar_entry_feed_7_days(cal)
+            self.do_cal_entries(cal_dir, '7_Days_From_Now', week_feed)
+            month_feed = self.client.calendar_entry_feed_30_days(cal)
+            self.do_cal_entries(cal_dir, '30_Days_From_Now', month_feed)
+            last_updated = self.client.get_entry_updated_epoch(cal)
+            os.utime(cal_dir, (last_updated, last_updated) )  
+        
+            
