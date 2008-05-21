@@ -110,6 +110,13 @@ class GClient:
         query.start_max = time.strftime('%Y-%m-%d', time.gmtime(time.time() + 86400))
         return self.calendar_query(query)
     
+    def event_is_today(self, cal, event):
+        cal_entry_feed = self.calendar_entry_feed_today(cal)
+        for j, cal_entry in zip(xrange(len(cal_entry_feed)), cal_entry_feed):
+            if cal_entry.GetSelfLink().href == event.GetSelfLink().href:
+                return True
+        return False
+    
     def calendar_entry_feed_7_days(self, cal):
         calId = cal.GetSelfLink().href.split('/')[-1]
         query = gdata.calendar.service.CalendarEventQuery(calId, 'private', 'full')
@@ -117,12 +124,26 @@ class GClient:
         query.start_max = time.strftime('%Y-%m-%d', time.gmtime(time.time() + (86400 * 7)))
         return self.calendar_query(query)
     
+    def event_is_7_days_from_now(self, cal, event):
+        cal_entry_feed = self.calendar_entry_feed_7_days(cal)
+        for j, cal_entry in zip(xrange(len(cal_entry_feed)), cal_entry_feed):
+            if cal_entry.GetSelfLink().href == event.GetSelfLink().href:
+                return True
+        return False
+    
     def calendar_entry_feed_30_days(self, cal):
         calId = cal.GetSelfLink().href.split('/')[-1]
         query = gdata.calendar.service.CalendarEventQuery(calId, 'private', 'full')
         query.start_min = time.strftime('%Y-%m-%d', time.gmtime())
         query.start_max = time.strftime('%Y-%m-%d', time.gmtime(time.time() + (86400 * 30)))
         return self.calendar_query(query)
+    
+    def event_is_30_days_from_now(self, cal, event):
+        cal_entry_feed = self.calendar_entry_feed_30_days(cal)
+        for j, cal_entry in zip(xrange(len(cal_entry_feed)), cal_entry_feed):
+            if cal_entry.GetSelfLink().href == event.GetSelfLink().href:
+                return True
+        return False
         
     def upload_document(self, ms, title, service):
         if service == 'documents':
