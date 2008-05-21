@@ -159,7 +159,7 @@ class Goofs(Fuse):
 
     def fsinit(self):   
         os.chdir(self.root)
-        self.threads = [CalendarDownloadThread(CLIENT, CAL_DIR), DocsDownloadThread(CLIENT, DOCS_DIR, SPREADS_DIR, PRESENTS_DIR), PhotosDownloadThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR]), ContactsDownloadThread(CLIENT, CONTACTS_DIR), BlogsDownloadThread(CLIENT, BLOGS_DIR), PhotosCleanupThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR]), ContactsCleanupThread(CLIENT, CONTACTS_DIR), BlogsCleanupThread(CLIENT, BLOGS_DIR), DocsCleanupThread(CLIENT, DOCS_DIR)]
+        self.threads = [CalendarDownloadThread(CLIENT, CAL_DIR), DocsDownloadThread(CLIENT, DOCS_DIR, SPREADS_DIR, PRESENTS_DIR), PhotosDownloadThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR]), ContactsDownloadThread(CLIENT, CONTACTS_DIR), BlogsDownloadThread(CLIENT, BLOGS_DIR), PhotosCleanupThread(CLIENT, [PUB_PHOTOS_DIR, PRIV_PHOTOS_DIR]), ContactsCleanupThread(CLIENT, CONTACTS_DIR), BlogsCleanupThread(CLIENT, BLOGS_DIR), DocsCleanupThread(CLIENT, DOCS_DIR), CalendarCleanupThread(CLIENT, CAL_DIR)]
         for thread in self.threads:
             thread.start()
             
