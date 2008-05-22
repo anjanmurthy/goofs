@@ -107,15 +107,18 @@ class Goofs(Fuse):
         os.unlink("." + path)
 
     def rmdir(self, path):
-        ev = RmdirEventHandler(CLIENT)
-        ev.consume(RmdirEvent(GOOFS_CACHE + path))
-        os.rmdir("." + path)
+        if os.path.dirname(path) in ['/', '/calendars']:
+            return -errno.EACCES
+        else:
+            ev = RmdirEventHandler(CLIENT)
+            ev.consume(RmdirEvent(GOOFS_CACHE + path))
+            os.rmdir("." + path)
 
     def symlink(self, path, path1):
         os.symlink(path, "." + path1)
 
     def rename(self, path, path1):
-        if os.path.dirname(path) in ['/documents', '/spreadsheets', '/presentations'] and os.path.isdir("." + path):
+        if os.path.dirname(path) in ['/', '/documents', '/spreadsheets', '/presentations'] and os.path.isdir("." + path):
             return -errno.EACCES
         else:
             ev = RenameEventHandler(CLIENT)
@@ -140,10 +143,11 @@ class Goofs(Fuse):
         os.mknod("." + path, mode, dev)
 
     def mkdir(self, path, mode):
-        if os.path.dirname(path) in ['/photos/public', '/photos/private', '/contacts'] or os.path.dirname(os.path.dirname(path)) in ['/blogs']:
+        if os.path.dirname(path) in ['/photos/public', '/photos/private', '/contacts'] or os.path.dirname(os.path.dirname(path)) in ['/blogs', '/calendars']:
             ev = MkdirEventHandler(CLIENT)
             ev.consume(MkdirEvent(GOOFS_CACHE + path))
-            os.mkdir("." + path, mode)
+            if not os.path.isdir("." + path):
+                os.mkdir("." + path, mode)
         else:
             return -errno.EACCES
 

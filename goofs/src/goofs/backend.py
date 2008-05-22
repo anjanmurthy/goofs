@@ -88,6 +88,35 @@ class GClient:
     def update_calendar_event(self, event):
         return self.cal_client.UpdateEvent(event.GetEditLink().href, event)
     
+    def delete_calendar_event(self, editUri):
+        return self.cal_client.DeleteEvent(editUri)
+    
+    def calendar_query_full_text(self, cal, text_query):
+        calId = cal.GetSelfLink().href.split('/')[-1]
+        query = gdata.calendar.service.CalendarEventQuery(calId, 'private', 'full', text_query)
+        return self.cal_client.CalendarQuery(query).entry
+
+    def calendar_query_date_range(self, cal, start, end):
+        calId = cal.GetSelfLink().href.split('/')[-1]
+        query = gdata.calendar.service.CalendarEventQuery(calId, 'private', 'full')
+        query.start_min = start
+        query.start_max = end
+        return self.cal_client.CalendarQuery(query).entry
+    
+    def event_matches_text_query(self, cal, query, event):
+        cal_entry_feed = self.calendar_query_full_text(cal, query)
+        for j, cal_entry in zip(xrange(len(cal_entry_feed)), cal_entry_feed):
+            if cal_entry.GetSelfLink().href == event.GetSelfLink().href:
+                return True
+        return False
+
+    def event_matches_date_range(self, cal, start, end, event):
+        cal_entry_feed = self.calendar_query_date_range(cal, start, end)
+        for j, cal_entry in zip(xrange(len(cal_entry_feed)), cal_entry_feed):
+            if cal_entry.GetSelfLink().href == event.GetSelfLink().href:
+                return True
+        return False
+    
     def calendar_quick_add(self, cal, content):
         calId = cal.GetSelfLink().href.split('/')[-1]
         event = gdata.calendar.CalendarEventEntry()
