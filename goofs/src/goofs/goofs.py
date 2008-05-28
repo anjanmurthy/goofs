@@ -80,10 +80,23 @@ def init(user, pw):
 
 class Goofs(Fuse):
 
-    def __init__(self, user, pw, *args, **kw):
+    def __init__(self, *args, **kw):
         Fuse.__init__(self, *args, **kw)
+        self.user = None
+        self.pw = None
+        
+    def login(self):
+        while not self.user:
+            self.user = raw_input('Please enter your username: ')
+            if not self.user:
+                print 'Username cannot be blank.'
+        while not self.pw:
+            self.pw = getpass.getpass()
+            if not self.pw:
+                print 'Password cannot be blank.'
+        init(self.user, self.pw)
         self.root = GOOFS_CACHE
-    
+
     def getattr(self, path):
         return os.lstat(self.root + path)
     
@@ -195,6 +208,7 @@ class Goofs(Fuse):
         def release(self, flags):
             self.file.close()
             if self.written_to:
+                self.written_to = False
                 ev = ReleaseEventHandler(CLIENT)
                 ev.consume(ReleaseEvent(GOOFS_CACHE + self.path))
 
@@ -240,45 +254,24 @@ class Goofs(Fuse):
         self.file_class = self.GoofsFile
         return Fuse.main(self, *a, **kw)
 
-def main():    
-
-    user = ''
-    pw = ''
-    
-    """
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], '', ['user=', 'pw='])
-    except getopt.error, msg:
-        print 'python goofs.py --user [username] --pw [password] mntpoint '
-        sys.exit(2)
-        
-    # Process options
-    for option, arg in opts:
-        if option == '--user':
-            user = arg
-        elif option == '--pw':
-            pw = arg
-    """
-
-    while not user:
-        user = raw_input('Please enter your username: ')
-
-    while not pw:
-          pw = getpass.getpass()
-          if not pw:
-              print 'Password cannot be blank.'
-                      
-    init(user, pw)
+def main():
 
     usage = "Google filesystem" + Fuse.fusage
 
-    server = Goofs(user, pw, version="%prog " + fuse.__version__,
+    server = Goofs(version="%prog " + fuse.__version__,
                  usage=usage,
                  dash_s_do='setsingle')
 
     server.parser.add_option(mountopt="root", metavar="PATH", default=GOOFS_CACHE,
                              help="mirror filesystem from under PATH [default: %default]")
+    
+    server.parser.add_option('--user', action="store", type="string", dest="user", help='username')
+
+    server.parser.add_option('--pw', action="store", type="string", dest="pw", help='password')
+    
     server.parse(values=server, errex=1)
+    
+    server.login()
 
     try:
         if server.fuse_args.mount_expected():

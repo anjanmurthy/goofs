@@ -289,8 +289,8 @@ class GClient:
     def delete_contact(self, uri):
         return self.con_client.DeleteContact(uri)
     
-    def update_contact(self, uri, contact):
-        return self.con_client.UpdateContact(uri, contact)
+    def update_contact(self, contact):
+        return self.con_client.UpdateContact(contact.GetEditLink().href, contact)
     
     def upload_contact(self, contact):
         return self.con_client.CreateContact(contact)

@@ -301,16 +301,14 @@ class ReleaseEventHandler(EventHandler):
                 return
             if os.path.exists(os.path.dirname(event.path) + '.self'):
                 self_uri = read(os.path.dirname(event.path) + '.self')
-                edit_uri = read(os.path.dirname(event.path) + '.edit')
                 contact_field = os.path.basename(event.path)
             else:
                 self_uri = read(os.path.dirname(os.path.dirname(event.path)) + '.self')
-                edit_uri = read(os.path.dirname(os.path.dirname(event.path)) + '.edit')
                 contact_field = os.path.basename(os.path.dirname(event.path))
             contact = self.client.get_contact_by_uri(self_uri)
             field_val = read(event.path)
             if contact_field == 'email':
-                data = gdata.contacts.Email(rel='http://schemas.google.com/g/2005#%s' % os.path.basename(event.path),primary='true',address=field_val)
+                data = gdata.contacts.Email(rel='http://schemas.google.com/g/2005#%s' % os.path.basename(event.path),primary='false',address=field_val)
                 if len(contact.email) == 0:
                     contact.email.append(data)
                 else:
@@ -354,7 +352,7 @@ class ReleaseEventHandler(EventHandler):
             elif contact_field == 'organization':
                 data = gdata.contacts.Organization(org_name=gdata.contacts.OrgName(text=field_val), rel='http://schemas.google.com/g/2005#work')
                 contact.organization = data
-            self.client.update_contact(edit_uri, contact)
+            self.client.update_contact(contact)
         elif service == 'blogs':
             if os.path.basename(event.path) in ['content']:
                 post = self.client.get_blog_post(read(os.path.dirname(event.path) + '.self'))
@@ -615,7 +613,7 @@ class ContactsDownloadThread(TaskThread):
                 contact_dir = os.path.join(self.contact_base_dir, contact.title.text)
                 if os.path.exists(contact_dir):
                     mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime = os.stat(contact_dir)
-                    if updated < datetime.datetime.fromtimestamp(mtime):
+                    if updated <= datetime.datetime.fromtimestamp(mtime):
                         continue
                 write(contact_dir + '.self', contact.GetSelfLink().href)
                 if contact.GetEditLink() is not None:
