@@ -91,7 +91,11 @@ def write_cal_entries(client, cal_dir, entry_dir, cal_entry_feed):
         if len(cal_entry.where) > 0 and cal_entry.where[0].text is not None:
             write(os.path.join(cal_entry_dir, 'where'), cal_entry.where[0].text)
         else:
-            write(os.path.join(cal_entry_dir, 'where'), '')
+            write(os.path.join(cal_entry_dir, 'where'), '') 
+        if cal_entry.recurrence is not None:
+            write(os.path.join(cal_entry_dir, 'recurrence'), str(cal_entry.recurrence))
+        else:
+            write(os.path.join(cal_entry_dir, 'recurrence'), '')
         last_updated = client.get_entry_updated_epoch(cal_entry)
         os.utime(cal_entry_dir, (last_updated, last_updated) )
        
