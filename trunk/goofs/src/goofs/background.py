@@ -88,6 +88,10 @@ def write_cal_entries(client, cal_dir, entry_dir, cal_entry_feed):
             write(os.path.join(cal_entry_dir, 'when'), cal_entry.when[0].start_time + ' ' + cal_entry.when[0].end_time)
         else:
             write(os.path.join(cal_entry_dir, 'when'), '')
+        if len(cal_entry.where) > 0 and cal_entry.where[0].text is not None:
+            write(os.path.join(cal_entry_dir, 'where'), cal_entry.where[0].text)
+        else:
+            write(os.path.join(cal_entry_dir, 'where'), '')
         last_updated = client.get_entry_updated_epoch(cal_entry)
         os.utime(cal_entry_dir, (last_updated, last_updated) )
        
@@ -803,7 +807,7 @@ class CalendarDownloadThread(TaskThread):
     def __init__(self, client, cal_base_dir):
         TaskThread.__init__(self)
         self.client = client
-        self._interval = 10.0
+        self._interval = 100.0
         self.cal_base_dir = cal_base_dir
     def task(self):
         cal_feed = self.client.calendar_feed()
