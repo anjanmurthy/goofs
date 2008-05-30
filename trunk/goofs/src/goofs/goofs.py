@@ -133,8 +133,6 @@ class Goofs(Fuse):
     def rename(self, path, path1):
         if os.path.dirname(path) in ['/', '/documents', '/spreadsheets', '/presentations'] and os.path.isdir("." + path):
             return -errno.EACCES
-        elif path.startswith('/calendars'):
-            return -errno.EACCES
         else:
             ev = RenameEventHandler(CLIENT)
             ev.consume(RenameEvent(GOOFS_CACHE + path, GOOFS_CACHE + path1))

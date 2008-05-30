@@ -75,6 +75,10 @@ class GClient:
     def calendar_feed(self):
         return self.cal_client.GetAllCalendarsFeed().entry
     
+    def calendar_query(self, cal, query):
+        query.ctz = cal.timezone.value
+        return self.cal_client.CalendarQuery(query).entry
+
     def get_calendar(self, uri):
         cal_feed = self.calendar_feed()
         for i, cal in zip(xrange(len(cal_feed)), cal_feed):
@@ -94,14 +98,14 @@ class GClient:
     def calendar_query_full_text(self, cal, text_query):
         calId = cal.GetSelfLink().href.split('/')[-1]
         query = gdata.calendar.service.CalendarEventQuery(calId, 'private', 'full', text_query)
-        return self.cal_client.CalendarQuery(query).entry
+        return self.calendar_query(cal, query)
 
     def calendar_query_date_range(self, cal, start, end):
         calId = cal.GetSelfLink().href.split('/')[-1]
         query = gdata.calendar.service.CalendarEventQuery(calId, 'private', 'full')
         query.start_min = start
         query.start_max = end
-        return self.cal_client.CalendarQuery(query).entry
+        return self.calendar_query(cal, query)
     
     def event_matches_text_query(self, cal, query, event):
         cal_entry_feed = self.calendar_query_full_text(cal, query)
@@ -128,16 +132,13 @@ class GClient:
         calId = cal.GetSelfLink().href.split('/')[-1]
         uri = '/calendar/feeds/%s/private/full' % calId
         return self.cal_client.GetCalendarEventFeed(uri=uri).entry
-    
-    def calendar_query(self, query):
-        return self.cal_client.CalendarQuery(query).entry
-    
+        
     def calendar_entry_feed_today(self, cal):
         calId = cal.GetSelfLink().href.split('/')[-1]
         query = gdata.calendar.service.CalendarEventQuery(calId, 'private', 'full')
         query.start_min = time.strftime('%Y-%m-%d', time.gmtime())
         query.start_max = time.strftime('%Y-%m-%d', time.gmtime(time.time() + 86400))
-        return self.calendar_query(query)
+        return self.calendar_query(cal, query)
     
     def event_is_today(self, cal, event):
         cal_entry_feed = self.calendar_entry_feed_today(cal)
@@ -151,7 +152,7 @@ class GClient:
         query = gdata.calendar.service.CalendarEventQuery(calId, 'private', 'full')
         query.start_min = time.strftime('%Y-%m-%d', time.gmtime())
         query.start_max = time.strftime('%Y-%m-%d', time.gmtime(time.time() + (86400 * 7)))
-        return self.calendar_query(query)
+        return self.calendar_query(cal, query)
     
     def event_is_7_days_from_now(self, cal, event):
         cal_entry_feed = self.calendar_entry_feed_7_days(cal)
@@ -165,7 +166,7 @@ class GClient:
         query = gdata.calendar.service.CalendarEventQuery(calId, 'private', 'full')
         query.start_min = time.strftime('%Y-%m-%d', time.gmtime())
         query.start_max = time.strftime('%Y-%m-%d', time.gmtime(time.time() + (86400 * 30)))
-        return self.calendar_query(query)
+        return self.calendar_query(cal, query)
     
     def event_is_30_days_from_now(self, cal, event):
         cal_entry_feed = self.calendar_entry_feed_30_days(cal)
