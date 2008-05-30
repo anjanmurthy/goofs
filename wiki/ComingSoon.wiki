@@ -1,0 +1,7 @@
+#summary Coming Soon - Calendar support!
+#labels Featured
+
+
+= Coming Soon - Calendar support! =
+
+Release 0.6 will add google calendar support to goofs.  You will be able to view upcoming calendar events, search for events by date range or by a text query.  And of course edit event information.  0.6 will be available in the next couple of weeks.  Until then please report any problems you are having with 0.5.  
