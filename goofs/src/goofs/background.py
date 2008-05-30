@@ -15,6 +15,10 @@ from gdata.service import RequestError
 import logging
 
 REGEX_DF = '(19|20)\d\d(0[1-9]|1[012])(0[1-9]|[12][0-9]|3[01])'
+TODAY_STR = 'Today'
+SEV_DAYS_STR = '7_Days'
+THIRTY_DAYS_STR = '30_Days'
+
 
 def is_date_range(file_name):
     return re.match(REGEX_DF + '-' + REGEX_DF, file_name) is not None
@@ -65,27 +69,29 @@ def remove_metadata(path):
             
 def write_cal_entries(client, cal_dir, entry_dir, cal_entry_feed):
     for j, cal_entry in zip(xrange(len(cal_entry_feed)), cal_entry_feed):
-        try:
-            cal_entry_dir = os.path.join(cal_dir, entry_dir, cal_entry.title.text)
-            if not os.path.exists(cal_entry_dir):
-                os.mkdir(cal_entry_dir)
-            write(cal_entry_dir + '.self', cal_entry.GetSelfLink().href)
-            if cal_entry.GetEditLink() is not None:
-                write(cal_entry_dir + '.edit', cal_entry.GetEditLink().href)
-            if cal_entry.content.text is not None:
-                write(os.path.join(cal_entry_dir, 'content'), cal_entry.content.text)
-            else:
-                write(os.path.join(cal_entry_dir, 'content'), '')
-            if len(cal_entry.when) > 0 and cal_entry.when[0] is not None:
-                write(os.path.join(cal_entry_dir, 'when'), cal_entry.when[0].start_time + ' ' + cal_entry.when[0].end_time)
-            else:
-                write(os.path.join(cal_entry_dir, 'when'), '')
-            last_updated = client.get_entry_updated_epoch(cal_entry)
-            os.utime(cal_entry_dir, (last_updated, last_updated) )
-        except OSError, err:
-            continue
-
-            
+        cal_entry_dir = os.path.join(cal_dir, entry_dir, cal_entry.title.text)
+        updated = client.get_entry_updated(cal_entry)
+        if os.path.exists(cal_entry_dir):
+            mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime = os.stat(cal_entry_dir)
+            if updated <= datetime.datetime.fromtimestamp(mtime):
+                continue
+        else:
+            os.mkdir(cal_entry_dir)
+        write(cal_entry_dir + '.self', cal_entry.GetSelfLink().href)
+        if cal_entry.GetEditLink() is not None:
+            write(cal_entry_dir + '.edit', cal_entry.GetEditLink().href)
+        if cal_entry.content.text is not None:
+            write(os.path.join(cal_entry_dir, 'content'), cal_entry.content.text)
+        else:
+            write(os.path.join(cal_entry_dir, 'content'), '')
+        if len(cal_entry.when) > 0 and cal_entry.when[0] is not None:
+            write(os.path.join(cal_entry_dir, 'when'), cal_entry.when[0].start_time + ' ' + cal_entry.when[0].end_time)
+        else:
+            write(os.path.join(cal_entry_dir, 'when'), '')
+        last_updated = client.get_entry_updated_epoch(cal_entry)
+        os.utime(cal_entry_dir, (last_updated, last_updated) )
+       
+     
 class Event():
     def __init__(self, name):
         self.name = name
@@ -223,6 +229,23 @@ class RenameEventHandler(EventHandler):
             if new_doc.GetEditLink() is not None:
                 write(event.dest_path + '.edit', new_doc.GetEditLink().href)
             remove_metadata(event.src_path)
+        elif service == 'calendars':
+            if os.path.basename(event.dest_path) == 'quick':
+                if os.path.exists(os.path.dirname(event.dest_path) + '.self'):
+                    cal = self.client.get_calendar(read(os.path.dirname(event.dest_path) + '.self'))
+                    content = read(event.src_path)
+                    self.client.calendar_quick_add(cal, content)
+            elif os.path.basename(event.dest_path) == 'content':
+                if os.path.exists(os.path.dirname(event.dest_path) + '.self'):
+                    cevent = self.client.get_calendar_event(read(os.path.dirname(event.dest_path) + '.self'))
+                    cevent.content = atom.Content(text=read(event.src_path))
+                    self.client.update_calendar_event(cevent)
+            elif os.path.basename(event.dest_path) == 'when':
+                if os.path.exists(os.path.dirname(event.dest_path) + '.self'):
+                    cevent = self.client.get_calendar_event(read(os.path.dirname(event.dest_path) + '.self'))
+                    start_time, end_time = read(event.src_path).split()
+                    cevent.when[0] = gdata.calendar.When(start_time=start_time, end_time=end_time)
+                    self.client.update_calendar_event(cevent)
 
 class MkdirEventHandler(EventHandler):
     def __init__(self, client):
@@ -791,15 +814,15 @@ class CalendarDownloadThread(TaskThread):
                 write(cal_dir + '.self', cal.GetSelfLink().href)
                 if cal.GetEditLink() is not None:
                     write(cal_dir + '.edit', cal.GetEditLink().href)
-                os.mkdir(os.path.join(cal_dir, 'Today'))
-                os.mkdir(os.path.join(cal_dir, '7_Days'))
-                os.mkdir(os.path.join(cal_dir, '30_Days'))
+                os.mkdir(os.path.join(cal_dir, TODAY_STR))
+                os.mkdir(os.path.join(cal_dir, SEV_DAYS_STR))
+                os.mkdir(os.path.join(cal_dir, THIRTY_DAYS_STR))
             today_feed = self.client.calendar_entry_feed_today(cal)
-            write_cal_entries(self.client, cal_dir, 'Today', today_feed)
+            write_cal_entries(self.client, cal_dir, TODAY_STR, today_feed)
             week_feed = self.client.calendar_entry_feed_7_days(cal)
-            write_cal_entries(self.client, cal_dir, '7_Days', week_feed)
+            write_cal_entries(self.client, cal_dir, SEV_DAYS_STR, week_feed)
             month_feed = self.client.calendar_entry_feed_30_days(cal)
-            write_cal_entries(self.client, cal_dir, '30_Days', month_feed)
+            write_cal_entries(self.client, cal_dir, THIRTY_DAYS_STR, month_feed)
             last_updated = self.client.get_entry_updated_epoch(cal)
             os.utime(cal_dir, (last_updated, last_updated) )
 
@@ -815,31 +838,28 @@ class CalendarCleanupThread(TaskThread):
         for entry in os.listdir(dir):            
             if os.path.isdir(os.path.join(dir, entry)):
                 if os.path.exists(os.path.join(dir, entry + '.self')):
-                    try:
-                        cal = self.client.get_calendar(read(os.path.join(dir, entry + '.self')))
-                        if cal is None:
-                            remove_dir_and_metadata(os.path.join(dir, entry))
-                            continue
-                    except RequestError, ex:
-                        if ex.args[0]['status'] == 404 or ex.args[0]['status'] == 400:
-                            remove_dir_and_metadata(os.path.join(dir, entry))
-                            continue
+                    cal = self.client.get_calendar(read(os.path.join(dir, entry + '.self')))
+                    if cal is None:
+                        remove_dir_and_metadata(os.path.join(dir, entry))
+                        continue
                 for f in os.listdir(os.path.join(dir, entry)):
                     if os.path.isdir(os.path.join(dir, entry, f)):
                         for e in os.listdir(os.path.join(dir, entry, f)):
                             if os.path.isdir(os.path.join(dir, entry, f, e)):
                                 try:
                                     event = self.client.get_calendar_event(read(os.path.join(dir, entry, f, e + '.self')))
-                                    cal = self.client.get_calendar(read(os.path.join(dir, entry + '.self')))
-                                    if f == 'Today' and not self.client.event_is_today(cal, event):
-                                        remove_dir_and_metadata(os.path.join(dir, entry, f, e))
-                                        continue
-                                    elif f == '7_Days' and not self.client.event_is_7_days_from_now(cal, event):
-                                        remove_dir_and_metadata(os.path.join(dir, entry, f, e))
-                                        continue
-                                    elif f == '30_Days' and not self.client.event_is_30_days_from_now(cal, event):
-                                        remove_dir_and_metadata(os.path.join(dir, entry, f, e))
-                                        continue
+                                    if f == TODAY_STR:
+                                        if not self.client.event_is_today(cal, event):
+                                            remove_dir_and_metadata(os.path.join(dir, entry, f, e))
+                                            continue
+                                    elif f == SEV_DAYS_STR:
+                                        if not self.client.event_is_7_days_from_now(cal, event):
+                                            remove_dir_and_metadata(os.path.join(dir, entry, f, e))
+                                            continue
+                                    elif f == THIRTY_DAYS_STR:
+                                        if not self.client.event_is_30_days_from_now(cal, event):
+                                            remove_dir_and_metadata(os.path.join(dir, entry, f, e))
+                                            continue
                                     elif is_date_range(f):
                                         start, end = f.split('-')
                                         d1 = start[0:4] + '-' + start[4:6] + '-' + start[6:8]
@@ -853,4 +873,4 @@ class CalendarCleanupThread(TaskThread):
                                 except RequestError, ex:
                                     if ex.args[0]['status'] == 404 or ex.args[0]['status'] == 400:
                                         remove_dir_and_metadata(os.path.join(dir, entry, f, e))
-                                        continue      
+                                        continue    
