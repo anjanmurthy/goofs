@@ -10,6 +10,7 @@ import datetime, time
 import os
 import urllib2, httplib
 import atom
+from gdata.calendar import Recurrence
 
 class GPhotosService(gdata.photos.service.PhotosService):
     def __init__(self, email, password):
@@ -88,6 +89,9 @@ class GClient:
     
     def get_calendar_event(self, uri):
         return self.cal_client.GetCalendarEventEntry(uri)
+    
+    def get_recurrence_from_string(self, xml_string):
+        return atom.CreateClassFromXMLString(Recurrence, xml_string)
     
     def update_calendar_event(self, event):
         return self.cal_client.UpdateEvent(event.GetEditLink().href, event)
