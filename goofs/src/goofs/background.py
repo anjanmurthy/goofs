@@ -257,7 +257,7 @@ class RenameEventHandler(EventHandler):
             elif os.path.basename(event.dest_path) == 'where':
                 if os.path.exists(os.path.dirname(event.dest_path) + '.self'):
                     cevent = self.client.get_calendar_event(read(os.path.dirname(event.dest_path) + '.self'))
-                    cevent.where[0] = atom.Content(text=read(event.src_path))
+                    cevent.where[0] = gdata.calendar.Where(value_string=read(event.src_path))
                     self.client.update_calendar_event(cevent)
             elif os.path.basename(event.dest_path) == 'recurrence':
                 if os.path.exists(os.path.dirname(event.dest_path) + '.self'):
@@ -458,7 +458,7 @@ class ReleaseEventHandler(EventHandler):
             elif os.path.basename(event.path) == 'where':
                 if os.path.exists(os.path.dirname(event.path) + '.self'):
                     cevent = self.client.get_calendar_event(read(os.path.dirname(event.path) + '.self'))
-                    cevent.where[0] = atom.Content(text=read(event.path))
+                    cevent.where[0] = gdata.calendar.Where(value_string=read(event.path))
                     self.client.update_calendar_event(cevent)
             elif os.path.basename(event.path) == 'recurrence':
                 if os.path.exists(os.path.dirname(event.path) + '.self'):
