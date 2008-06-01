@@ -254,6 +254,16 @@ class RenameEventHandler(EventHandler):
                     start_time, end_time = read(event.src_path).split()
                     cevent.when[0] = gdata.calendar.When(start_time=start_time, end_time=end_time)
                     self.client.update_calendar_event(cevent)
+            elif os.path.basename(event.dest_path) == 'where':
+                if os.path.exists(os.path.dirname(event.dest_path) + '.self'):
+                    cevent = self.client.get_calendar_event(read(os.path.dirname(event.dest_path) + '.self'))
+                    cevent.where[0] = atom.Content(text=read(event.src_path))
+                    self.client.update_calendar_event(cevent)
+            elif os.path.basename(event.dest_path) == 'recurrence':
+                if os.path.exists(os.path.dirname(event.dest_path) + '.self'):
+                    cevent = self.client.get_calendar_event(read(os.path.dirname(event.dest_path) + '.self'))
+                    cevent.recurrence = self.client.get_recurrence_from_string(read(event.src_path))
+                    self.client.update_calendar_event(cevent)
 
 class MkdirEventHandler(EventHandler):
     def __init__(self, client):
@@ -444,6 +454,16 @@ class ReleaseEventHandler(EventHandler):
                     cevent = self.client.get_calendar_event(read(os.path.dirname(event.path) + '.self'))
                     start_time, end_time = read(event.path).split()
                     cevent.when[0] = gdata.calendar.When(start_time=start_time, end_time=end_time)
+                    self.client.update_calendar_event(cevent)
+            elif os.path.basename(event.path) == 'where':
+                if os.path.exists(os.path.dirname(event.path) + '.self'):
+                    cevent = self.client.get_calendar_event(read(os.path.dirname(event.path) + '.self'))
+                    cevent.where[0] = atom.Content(text=read(event.path))
+                    self.client.update_calendar_event(cevent)
+            elif os.path.basename(event.path) == 'recurrence':
+                if os.path.exists(os.path.dirname(event.path) + '.self'):
+                    cevent = self.client.get_calendar_event(read(os.path.dirname(event.path) + '.self'))
+                    cevent.recurrence = self.client.get_recurrence_from_string(read(event.path))
                     self.client.update_calendar_event(cevent)
             
 class TaskThread(threading.Thread):
