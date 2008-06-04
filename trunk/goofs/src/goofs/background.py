@@ -202,7 +202,7 @@ class RenameEventHandler(EventHandler):
         if service == 'photos':
             album_self = os.path.dirname(event.src_path) + '.self'
             album = self.client.get_album_or_photo_by_uri(read(album_self))
-            photo = self.client.upload_photo_with_path(album, event.src_path, event.dest_path)
+            photo = self.client.upload_photo(album, event.dest_path)
             write(event.dest_path + '.self', photo.GetSelfLink().href)
             if photo.GetEditLink() is not None:
                 write(event.dest_path + '.edit', photo.GetEditLink().href)
@@ -218,6 +218,9 @@ class RenameEventHandler(EventHandler):
                 if contact.GetEditLink() is not None:
                     write(event.dest_path + '.edit', contact.GetEditLink().href)
                 remove_metadata(event.src_path)
+            else:
+                ev = ReleaseEventHandler(self.client)
+                ev.consume(ReleaseEvent(event.dest_path))
         elif service == 'blogs':
             if os.path.dirname(os.path.dirname(event.src_path)).endswith('/blogs') and os.path.dirname(os.path.dirname(event.dest_path)).endswith('/blogs'):
                 post = self.client.get_blog_post(read(event.src_path + '.self'))
@@ -227,6 +230,9 @@ class RenameEventHandler(EventHandler):
                 if new_post.GetEditLink() is not None:
                     write(event.dest_path + '.edit', new_post.GetEditLink().href)
                 remove_metadata(event.src_path)
+            else:
+                ev = ReleaseEventHandler(self.client)
+                ev.consume(ReleaseEvent(event.dest_path))
         elif service in ['documents', 'spreadsheets', 'presentations']:
             doc = self.client.get_document(read(event.src_path + '.self'))
             doc.title = atom.Title('xhtml', os.path.basename(event.dest_path))

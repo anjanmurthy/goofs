@@ -134,10 +134,10 @@ class Goofs(Fuse):
         if os.path.dirname(path) in ['/', '/documents', '/spreadsheets', '/presentations'] and os.path.isdir("." + path):
             return -errno.EACCES
         else:
+            os.rename("." + path, "." + path1)
             ev = RenameEventHandler(CLIENT)
             ev.consume(RenameEvent(GOOFS_CACHE + path, GOOFS_CACHE + path1))
-            os.rename("." + path, "." + path1)
-        
+            
     def link(self, path, path1):
         os.link("." + path, "." + path1)
 
