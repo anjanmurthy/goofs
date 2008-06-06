@@ -213,7 +213,7 @@ class RenameEventHandler(EventHandler):
                 contact_self = event.src_path + '.self'
                 contact = self.client.get_contact_by_uri(read(contact_self))
                 contact.title.text = os.path.basename(event.dest_path)
-                self.client.update_contact(contact.GetEditLink().href, contact)
+                self.client.update_contact(contact)
                 write(event.dest_path + '.self', contact.GetSelfLink().href)
                 if contact.GetEditLink() is not None:
                     write(event.dest_path + '.edit', contact.GetEditLink().href)
@@ -236,7 +236,7 @@ class RenameEventHandler(EventHandler):
         elif service in ['documents', 'spreadsheets', 'presentations']:
             doc = self.client.get_document(read(event.src_path + '.self'))
             doc.title = atom.Title('xhtml', os.path.basename(event.dest_path))
-            content_type = gdata.docs.service.SUPPORTED_FILETYPES[get_file_ext(event.src_path)]
+            content_type = gdata.docs.service.SUPPORTED_FILETYPES[get_file_ext(event.dest_path)]
             ms = gdata.MediaSource(file_path=event.src_path, content_type=content_type)
             new_doc = self.client.update_document(doc, ms)
             write(event.dest_path + '.self', new_doc.GetSelfLink().href)
@@ -244,32 +244,8 @@ class RenameEventHandler(EventHandler):
                 write(event.dest_path + '.edit', new_doc.GetEditLink().href)
             remove_metadata(event.src_path)
         elif service == 'calendars':
-            if os.path.basename(event.dest_path) == 'quick':
-                if os.path.exists(os.path.dirname(event.dest_path) + '.self'):
-                    cal = self.client.get_calendar(read(os.path.dirname(event.dest_path) + '.self'))
-                    content = read(event.src_path)
-                    self.client.calendar_quick_add(cal, content)
-            elif os.path.basename(event.dest_path) == 'content':
-                if os.path.exists(os.path.dirname(event.dest_path) + '.self'):
-                    cevent = self.client.get_calendar_event(read(os.path.dirname(event.dest_path) + '.self'))
-                    cevent.content = atom.Content(text=read(event.src_path))
-                    self.client.update_calendar_event(cevent)
-            elif os.path.basename(event.dest_path) == 'when':
-                if os.path.exists(os.path.dirname(event.dest_path) + '.self'):
-                    cevent = self.client.get_calendar_event(read(os.path.dirname(event.dest_path) + '.self'))
-                    start_time, end_time = read(event.src_path).split()
-                    cevent.when[0] = gdata.calendar.When(start_time=start_time, end_time=end_time)
-                    self.client.update_calendar_event(cevent)
-            elif os.path.basename(event.dest_path) == 'where':
-                if os.path.exists(os.path.dirname(event.dest_path) + '.self'):
-                    cevent = self.client.get_calendar_event(read(os.path.dirname(event.dest_path) + '.self'))
-                    cevent.where[0] = gdata.calendar.Where(value_string=read(event.src_path))
-                    self.client.update_calendar_event(cevent)
-            elif os.path.basename(event.dest_path) == 'recurrence':
-                if os.path.exists(os.path.dirname(event.dest_path) + '.self'):
-                    cevent = self.client.get_calendar_event(read(os.path.dirname(event.dest_path) + '.self'))
-                    cevent.recurrence = self.client.get_recurrence_from_string(read(event.src_path))
-                    self.client.update_calendar_event(cevent)
+            ev = ReleaseEventHandler(self.client)
+            ev.consume(ReleaseEvent(event.dest_path))
 
 class MkdirEventHandler(EventHandler):
     def __init__(self, client):
@@ -491,10 +467,10 @@ class TaskThread(threading.Thread):
     def run(self):
        while 1:
             if self._finished.isSet(): return
-            #try:
-            self.task()
-            #except Exception, ex:
-            #    logging.debug(ex)
+            try:
+                self.task()
+            except Exception, ex:
+                logging.debug(ex)
             # sleep for interval or until shutdown
             self._finished.wait(self._interval)
     
