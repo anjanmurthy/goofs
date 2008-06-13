@@ -96,12 +96,6 @@ class Goofs(Fuse):
                 print 'Password cannot be blank.'
         init(self.user, self.pw)
         self.root = GOOFS_CACHE
-
-    def getattr(self, path):
-        return os.lstat(self.root + path)
-    
-    def readlink(self, path):
-        return os.readlink(self.root + path)
                 
     def getattr(self, path):
         return os.lstat("." + path)
