@@ -4,7 +4,6 @@
 = goofs-0.6 is available =
 goofs-0.6 is available now.  There are now 5 backends complete: calendar, documents, picasa, contacts, and blogger.
 
-
 = details =
 
 calendar backend supports:
