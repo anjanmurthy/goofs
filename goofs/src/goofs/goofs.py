@@ -182,7 +182,7 @@ class Goofs(Fuse):
             
     def fsdestroy(self):
         for thread in self.threads:
-            thread.shutdown();
+            thread.shutdown()
         
     class GoofsFile(object):
 
