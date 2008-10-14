@@ -12,7 +12,7 @@ import gdata.docs.service
 import gdata.calendar
 from gdata.contacts import ContactEntry
 from gdata.service import RequestError
-import logging
+import logging, sys, traceback
 
 REGEX_DF = '(19|20)\d\d(0[1-9]|1[012])(0[1-9]|[12][0-9]|3[01])'
 TODAY_STR = 'Today'
@@ -145,9 +145,11 @@ class UnlinkEventHandler(EventHandler):
         EventHandler.__init__(self, client)
     
     def consumes(self, event):
-        return event.name == 'unlink'
+        return event.name == 'unlink' and not event.path.endswith('~')
 
     def consume(self, event):
+        if not self.consumes(event):
+            return
         service = service_from_path(event.path, self.client.get_username())
         if service == 'photos':
             uri = read(event.path + '.edit')
@@ -167,9 +169,11 @@ class RmdirEventHandler(EventHandler):
         EventHandler.__init__(self, client)
         
     def consumes(self, event):
-        return event.name == 'rmdir'
+        return event.name == 'rmdir' and not event.path.endswith('~')
 
     def consume(self, event):
+        if not self.consumes(event):
+            return
         service = service_from_path(event.path, self.client.get_username())
         if service == 'photos':
             uri = read(event.path + '.edit')
@@ -195,9 +199,11 @@ class RenameEventHandler(EventHandler):
         EventHandler.__init__(self, client)
         
     def consumes(self, event):
-        return event.name == 'rename'
+        return event.name == 'rename' and not event.dest_path.endswith('~')
         
     def consume(self, event):
+        if not self.consumes(event):
+            return
         service = service_from_path(event.dest_path, self.client.get_username())
         if service == 'photos':
             album_self = os.path.dirname(event.src_path) + '.self'
@@ -252,9 +258,11 @@ class MkdirEventHandler(EventHandler):
         EventHandler.__init__(self, client)
         
     def consumes(self, event):
-        return event.name == 'mkdir'
+        return event.name == 'mkdir' and not event.path.endswith('~')
         
     def consume(self, event):
+        if not self.consumes(event):
+            return
         service = service_from_path(event.path, self.client.get_username())
         if service == 'photos':
             album = None
@@ -302,9 +310,11 @@ class ReleaseEventHandler(EventHandler):
         EventHandler.__init__(self, client)
 
     def consumes(self, event):
-        return event.name == 'release'
+        return event.name == 'release' and not event.path.endswith('~')
         
     def consume(self, event):
+        if not self.consumes(event):
+            return
         service = service_from_path(event.path, self.client.get_username())
         if service == 'photos':       
             if os.path.exists(event.path + '.self'):
@@ -470,7 +480,11 @@ class TaskThread(threading.Thread):
             try:
                 self.task()
             except Exception, ex:
-                logging.debug(ex)
+                print "Exception in user code:"
+                print '-'*60
+                traceback.print_exc(file=sys.stdout)
+                print '-'*60
+
             # sleep for interval or until shutdown
             self._finished.wait(self._interval)
     
