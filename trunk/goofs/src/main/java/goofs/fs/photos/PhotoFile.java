@@ -2,22 +2,22 @@ package goofs.fs.photos;
 
 import fuse.Errno;
 import goofs.fs.Dir;
-import goofs.fs.File;
+import goofs.fs.DiskFile;
 import goofs.photos.Picasa;
 
 import com.google.gdata.data.photos.AlbumEntry;
 import com.google.gdata.data.photos.PhotoEntry;
 
-public class PhotoFile extends File {
+public class PhotoFile extends DiskFile {
 
 	protected PhotoEntry photo;
 
 	public PhotoFile(Dir parent, PhotoEntry photo) throws Exception {
 
-		super(parent, photo.getTitle().getPlainText(), 0755, "");
+		super(parent, photo.getTitle().getPlainText(), 0755);
 
 		try {
-			this.content = getPicasa().getPhotoContent(photo);
+			setContent(getPicasa().getPhotoContent(photo));
 		} catch (Exception e) {
 		}
 
@@ -27,7 +27,7 @@ public class PhotoFile extends File {
 
 	public PhotoFile(Dir parent, String name) throws Exception {
 
-		super(parent, name, 0755, "");
+		super(parent, name, 0755);
 
 	}
 

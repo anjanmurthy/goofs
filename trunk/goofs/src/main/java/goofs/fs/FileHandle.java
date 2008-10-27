@@ -9,6 +9,8 @@ public class FileHandle {
 
 	protected Node node;
 
+	protected boolean dirty = false;
+
 	public FileHandle(Node node) {
 		this.node = node;
 		log.debug("  " + this + " created");
@@ -22,8 +24,18 @@ public class FileHandle {
 		this.node = node;
 	}
 
+	public boolean isDirty() {
+		return dirty;
+	}
+
+	public void setDirty(boolean dirty) {
+		this.dirty = dirty;
+	}
+
 	public int release() {
-		int result = ((File) getNode()).save();
+		int result = isDirty() ? ((File) getNode()).save() : 0;
+
+		setDirty(false);
 
 		log.debug("  " + this + " released");
 
