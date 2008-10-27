@@ -4,9 +4,11 @@ import fuse.Errno;
 import goofs.fs.Dir;
 import goofs.fs.DiskFile;
 
+import java.io.InputStream;
+
 public class ContactPhotoFile extends DiskFile {
 
-	public ContactPhotoFile(Dir parent, String name, byte[] photo)
+	public ContactPhotoFile(Dir parent, String name, InputStream photo)
 			throws Exception {
 
 		super(parent, name, 0755);

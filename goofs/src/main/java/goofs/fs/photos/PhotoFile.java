@@ -17,8 +17,9 @@ public class PhotoFile extends DiskFile {
 		super(parent, photo.getTitle().getPlainText(), 0755);
 
 		try {
-			setContent(getPicasa().getPhotoContent(photo));
+			setContent(getPicasa().getPhotoInputStream(photo));
 		} catch (Exception e) {
+			e.printStackTrace();
 		}
 
 		setPhoto(photo);
