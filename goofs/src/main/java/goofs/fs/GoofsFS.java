@@ -98,7 +98,7 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 		} else if (n instanceof File) {
 			File f = (File) n;
 			getattrSetter.set(f.hashCode(), FuseFtypeConstants.TYPE_FILE
-					| f.mode, 1, 0, 0, 0, f.content.length, (f.content.length
+					| f.mode, 1, 0, 0, 0, f.getSize(), (f.getSize()
 					+ BLOCK_SIZE - 1)
 					/ BLOCK_SIZE, n.getAccessTime(), n.getModifyTime(), n
 					.getCreateTime());
@@ -258,6 +258,7 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 	public int write(String path, Object fh, boolean isWritepage,
 			ByteBuffer buf, long offset) throws FuseException {
 		if (fh instanceof FileHandle) {
+			((FileHandle) fh).setDirty(true);
 			File f = (File) ((FileHandle) fh).getNode();
 			return f.write(isWritepage, buf, offset);
 		}

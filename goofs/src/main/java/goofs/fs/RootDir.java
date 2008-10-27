@@ -2,6 +2,7 @@ package goofs.fs;
 
 import fuse.Errno;
 import goofs.fs.blogger.BlogsDir;
+import goofs.fs.contacts.ContactsDir;
 import goofs.fs.photos.PhotosDir;
 
 public class RootDir extends Dir {
@@ -16,6 +17,9 @@ public class RootDir extends Dir {
 		t.start();
 
 		t = new AddDirThread(this, PhotosDir.class);
+		t.start();
+
+		t = new AddDirThread(this, ContactsDir.class);
 		t.start();
 
 	}
@@ -48,7 +52,5 @@ public class RootDir extends Dir {
 	public int createChildFromExisting(String name, Node child) {
 		return Errno.EROFS;
 	}
-	
-	
 
 }

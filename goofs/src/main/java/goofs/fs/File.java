@@ -21,6 +21,15 @@ public abstract class File extends Node {
 		return content;
 	}
 
+	public int getSize() {
+
+		return getContent().length;
+	}
+
+	public void setContent(byte[] content) {
+		this.content = content;
+	}
+
 	public Dir getParent() {
 		return parent;
 	}
@@ -56,7 +65,7 @@ public abstract class File extends Node {
 
 	public int read(ByteBuffer buf, long offset) {
 
-		buf.put(content, (int) offset, Math.min(buf.remaining(), content.length
+		buf.put(getContent(), (int) offset, Math.min(buf.remaining(), getSize()
 				- (int) offset));
 
 		return 0;
@@ -67,11 +76,12 @@ public abstract class File extends Node {
 		int length = ((int) offset) + buf.remaining();
 
 		if (content == null) {
+
 			content = new byte[length];
 
 		}
 
-		else if (content.length < length) {
+		else if (getSize() < length) {
 
 			byte[] ncontent = new byte[length];
 
