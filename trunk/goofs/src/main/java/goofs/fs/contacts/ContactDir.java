@@ -23,8 +23,9 @@ public class ContactDir extends Dir {
 		try {
 			if (getContacts().hasPhotoContent(contact)) {
 
-				ContactPhotoFile photoFile = new ContactPhotoFile(this, getName()
-						+ ".jpg", getContacts().getContactPhotoContent(contact));
+				ContactPhotoFile photoFile = new ContactPhotoFile(this,
+						getName() + ".jpg", getContacts()
+								.getContactPhotoInputStream(contact));
 
 				add(photoFile);
 

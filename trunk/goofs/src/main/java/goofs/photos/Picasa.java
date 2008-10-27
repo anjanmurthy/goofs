@@ -25,9 +25,9 @@ public class Picasa implements GoofsService {
 
 	public Picasa(String userName, String password)
 			throws AuthenticationException {
-		
-		//MediaMultipart.loadMimeMappings();
-		
+
+		// MediaMultipart.loadMimeMappings();
+
 		realService = new PicasawebService(APP_NAME);
 		realService.setUserCredentials(userName, password);
 	}
@@ -169,6 +169,15 @@ public class Picasa implements GoofsService {
 		}
 
 		return baos.toByteArray();
+	}
+
+	public InputStream getPhotoInputStream(PhotoEntry photo) throws Exception {
+
+		URL contentUrl = new URL(photo.getMediaContents().get(0).getUrl());
+		InputStream in = contentUrl.openStream();
+
+		return in;
+
 	}
 
 }

@@ -121,4 +121,15 @@ public class Contacts implements GoofsService {
 		}
 		return baos.toByteArray();
 	}
+
+	public InputStream getContactPhotoInputStream(ContactEntry entry)
+			throws Exception {
+		Link photoLink = entry.getContactPhotoLink();
+		if (photoLink != null) {
+			return getRealService().getStreamFromLink(photoLink);
+
+		} else {
+			return null;
+		}
+	}
 }

@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 public abstract class DiskFile extends File {
@@ -74,6 +75,27 @@ public abstract class DiskFile extends File {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+
+	}
+
+	public void setContent(InputStream is) throws Exception {
+
+		FileOutputStream fos = new FileOutputStream(getDisk());
+
+		try {
+
+			byte[] buff = new byte[256];
+			int bytesRead = 0;
+			
+			while ((bytesRead = is.read(buff)) != -1) {
+				fos.write(buff, 0, bytesRead);
+				
+			}
+		} finally {
+
+			fos.close();
+			is.close();
 		}
 
 	}
