@@ -250,8 +250,10 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 
 	public int utime(String path, int arg1, int arg2) throws FuseException {
 		Node n = lookup(path);
-		n.updateAccessTime();
-		n.updateModifyTime();
+		if (n != null) {
+			n.updateAccessTime();
+			n.updateModifyTime();
+		}
 		return 0;
 	}
 

@@ -30,6 +30,9 @@ public class ContactDir extends Dir {
 				add(photoFile);
 
 			}
+
+			add(new ContactEmailDir(this));
+
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -39,6 +42,10 @@ public class ContactDir extends Dir {
 
 	public ContactEntry getContact() {
 		return contact;
+	}
+
+	public void setContact(ContactEntry contact) {
+		this.contact = contact;
 	}
 
 	protected Contacts getContacts() {
