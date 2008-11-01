@@ -6,7 +6,9 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gdata.client.Query;
 import com.google.gdata.client.photos.PicasawebService;
@@ -22,6 +24,18 @@ import com.google.gdata.util.AuthenticationException;
 public class Picasa implements GoofsService {
 
 	protected PicasawebService realService;
+
+	protected static Map<String, String> mediaTypeMap = new HashMap<String, String>();
+
+	static {
+
+		mediaTypeMap.put("jpg", "image/jpeg");
+		mediaTypeMap.put("jpeg", "image/jpeg");
+		mediaTypeMap.put("bmp", "image/bmp");
+		mediaTypeMap.put("gif", "image/gif");
+		mediaTypeMap.put("png", "image/png");
+
+	}
 
 	public Picasa(String userName, String password)
 			throws AuthenticationException {
@@ -112,6 +126,12 @@ public class Picasa implements GoofsService {
 
 	}
 
+	protected String getPhotoExtensionByName(String name) {
+		String[] parts = name.split("\\.");
+		return parts[parts.length - 1];
+
+	}
+
 	public PhotoEntry createPhoto(AlbumEntry album, String title,
 			String description, byte[] contents) throws Exception {
 
@@ -123,7 +143,13 @@ public class Picasa implements GoofsService {
 		myPhoto.setDescription(new PlainTextConstruct(description));
 		myPhoto.setClient(APP_NAME);
 
-		MediaSource myMedia = new MediaByteArraySource(contents, "image/jpeg");
+		String mediaType = mediaTypeMap.get(getPhotoExtensionByName(title));
+		if (mediaType == null) {
+			throw new IllegalArgumentException("unsupported photo name "
+					+ title);
+		}
+
+		MediaSource myMedia = new MediaByteArraySource(contents, mediaType);
 		myPhoto.setMediaSource(myMedia);
 
 		return getRealService().insert(albumPostUrl, myPhoto);

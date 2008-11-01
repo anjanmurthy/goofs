@@ -19,7 +19,7 @@
 	<classpathentry kind="lib" path="lib/gdata-client-meta-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/gdata-codesearch-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/gdata-codesearch-meta-1.0.jar"/>
-	<classpathentry kind="lib" path="lib/gdata-contacts-1.0.jar" sourcepath="/home/rwynn/gdata/java/src"/>
+	<classpathentry kind="lib" path="lib/gdata-contacts-1.0.jar" sourcepath="/home/rwynn/gdata/gdata-src/java/src"/>
 	<classpathentry kind="lib" path="lib/gdata-contacts-meta-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/gdata-core-1.0.jar" sourcepath="/home/rwynn/gdata/java/src"/>
 	<classpathentry kind="lib" path="lib/gdata-docs-1.0.jar"/>
@@ -29,15 +29,15 @@
 	<classpathentry kind="lib" path="lib/gdata-health-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/gdata-health-meta-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/gdata-media-1.0.jar"/>
-	<classpathentry kind="lib" path="lib/gdata-photos-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/gdata-photos-1.0.jar" sourcepath="/home/rwynn/gdata/gdata-src/java/src"/>
 	<classpathentry kind="lib" path="lib/gdata-photos-meta-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/gdata-spreadsheet-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/gdata-spreadsheet-meta-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/gdata-webmastertools-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/gdata-webmastertools-meta-1.0.jar"/>
-	<classpathentry kind="lib" path="lib/gdata-youtube-1.0.jar"/>
-	<classpathentry kind="lib" path="lib/gdata-youtube-meta-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/mail.jar"/>
 	<classpathentry kind="lib" path="lib/junit.jar"/>
+	<classpathentry kind="lib" path="lib/gdata-youtube-2.0.jar"/>
+	<classpathentry kind="lib" path="lib/gdata-youtube-meta-2.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

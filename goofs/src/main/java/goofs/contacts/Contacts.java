@@ -52,6 +52,13 @@ public class Contacts implements GoofsService {
 
 	}
 
+	public ContactEntry getContactById(String id) throws Exception {
+
+		return getRealService().getEntry(
+				new URL(id.replace("/base/", "/full/")), ContactEntry.class);
+
+	}
+
 	public ContactEntry createContact(String name) throws ServiceException,
 			IOException {
 		// Create the entry to insert
