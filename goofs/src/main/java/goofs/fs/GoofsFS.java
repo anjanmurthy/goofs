@@ -238,7 +238,7 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 	}
 
 	public int truncate(String arg0, long arg1) throws FuseException {
-		return Errno.EROFS;
+		return 0;
 	}
 
 	public int unlink(String path) throws FuseException {

@@ -15,7 +15,7 @@
 	<classpathentry kind="lib" path="lib/gdata-books-meta-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/gdata-calendar-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/gdata-calendar-meta-1.0.jar"/>
-	<classpathentry kind="lib" path="lib/gdata-client-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/gdata-client-1.0.jar" sourcepath="/home/rwynn/gdata/gdata-src/java/src"/>
 	<classpathentry kind="lib" path="lib/gdata-client-meta-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/gdata-codesearch-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/gdata-codesearch-meta-1.0.jar"/>
