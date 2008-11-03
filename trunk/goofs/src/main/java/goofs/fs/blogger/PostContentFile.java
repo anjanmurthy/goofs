@@ -37,8 +37,7 @@ public class PostContentFile extends File {
 	public int save() {
 
 		try {
-			getBlogger().updatePost(getPost(), getName(),
-					new String(getContent()));
+			Post p = getBlogger().updatePost(getPost(), null, new String(getContent()));
 
 			return 0;
 		} catch (Exception e) {

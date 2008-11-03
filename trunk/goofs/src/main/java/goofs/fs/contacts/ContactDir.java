@@ -4,6 +4,7 @@ import fuse.Errno;
 import goofs.contacts.Contacts;
 import goofs.fs.Dir;
 import goofs.fs.Node;
+import goofs.fs.SimpleFile;
 
 import com.google.gdata.data.PlainTextConstruct;
 import com.google.gdata.data.contacts.ContactEntry;
@@ -32,6 +33,8 @@ public class ContactDir extends Dir {
 			}
 
 			add(new ContactEmailDir(this));
+
+			add(new ContactNotesFile(this, contact));
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -65,7 +68,16 @@ public class ContactDir extends Dir {
 
 	@Override
 	public int createTempChild(String name) {
-		return Errno.EROFS;
+		try {
+			SimpleFile f = new SimpleFile(this, name);
+
+			add(f);
+
+			return 0;
+
+		} catch (Exception e) {
+			return Errno.EROFS;
+		}
 	}
 
 	@Override

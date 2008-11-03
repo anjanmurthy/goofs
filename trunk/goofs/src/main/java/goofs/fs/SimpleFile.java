@@ -16,12 +16,21 @@ public class SimpleFile extends File {
 
 	@Override
 	public int delete() {
-		return Errno.EROFS;
+
+		remove();
+
+		return 0;
 	}
 
 	@Override
 	public int rename(Dir newParent, String name) {
-		return Errno.EROFS;
+
+		if (getParent() == newParent) {
+
+			setName(name);
+		}
+
+		return 0;
 	}
 
 }

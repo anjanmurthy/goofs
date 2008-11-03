@@ -4,6 +4,7 @@ import fuse.Errno;
 import goofs.contacts.Contacts;
 import goofs.fs.Dir;
 import goofs.fs.Node;
+import goofs.fs.SimpleFile;
 
 import java.util.List;
 
@@ -41,6 +42,31 @@ public class ContactEmailDir extends Dir {
 
 	@Override
 	public int createChild(String name, boolean isDir) {
+
+		if (!isDir) {
+			try {
+				Email email = new Email();
+				if ("work".equals(name)) {
+					email.setRel(Email.Rel.WORK);
+
+				} else if ("home".equals(name)) {
+					email.setRel(Email.Rel.HOME);
+				} else {
+					email.setRel(Email.Rel.OTHER);
+					email.setLabel(name);
+				}
+
+				add(new ContactEmailFile(this, email));
+
+				return 0;
+
+			} catch (Exception e) {
+
+				e.printStackTrace();
+			}
+
+		}
+
 		return Errno.EROFS;
 	}
 
@@ -51,7 +77,16 @@ public class ContactEmailDir extends Dir {
 
 	@Override
 	public int createTempChild(String name) {
-		return Errno.EROFS;
+		try {
+			SimpleFile f = new SimpleFile(this, name);
+
+			add(f);
+
+			return 0;
+
+		} catch (Exception e) {
+			return Errno.EROFS;
+		}
 	}
 
 	@Override
