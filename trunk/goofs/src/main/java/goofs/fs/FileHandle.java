@@ -32,8 +32,14 @@ public class FileHandle {
 		this.dirty = dirty;
 	}
 
+	public boolean isTempFile() {
+
+		return getNode() instanceof SimpleFile;
+	}
+
 	public int release() {
-		int result = isDirty() ? ((File) getNode()).save() : 0;
+		int result = isTempFile() ? 0 : isDirty() ? ((File) getNode()).save()
+				: 0;
 
 		setDirty(false);
 

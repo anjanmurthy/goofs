@@ -28,10 +28,6 @@ public class ContactEmailFile extends File {
 		return ((ContactEmailDir) getParent()).getContact();
 	}
 
-	public void setContact(ContactEntry contact) {
-		((ContactEmailDir) getParent()).setContact(contact);
-	}
-
 	protected Contacts getContacts() {
 
 		return ((ContactEmailDir) getParent()).getContacts();
@@ -49,13 +45,15 @@ public class ContactEmailFile extends File {
 	public int save() {
 		try {
 
+			ContactEntry contact = getContact();
+
 			if (getEmail().getAddress() == null) {
-				getContact().getEmailAddresses().add(getEmail());
+				contact.getEmailAddresses().add(getEmail());
 			}
 
 			getEmail().setAddress(new String(getContent()));
 
-			setContact(getContacts().updateContact(getContact()));
+			getContacts().updateContact(contact);
 
 			return 0;
 		} catch (Exception e) {
@@ -71,9 +69,11 @@ public class ContactEmailFile extends File {
 	public int delete() {
 		try {
 
+			ContactEntry contact = getContact();
+
 			if (getEmail().getAddress() != null) {
 
-				List<Email> emails = getContact().getEmailAddresses();
+				List<Email> emails = contact.getEmailAddresses();
 
 				List<Email> newEmails = new ArrayList<Email>();
 
@@ -87,10 +87,10 @@ public class ContactEmailFile extends File {
 
 				}
 
-				getContact().getEmailAddresses().clear();
-				getContact().getEmailAddresses().addAll(newEmails);
+				contact.getEmailAddresses().clear();
+				contact.getEmailAddresses().addAll(newEmails);
 
-				setContact(getContacts().updateContact(getContact()));
+				getContacts().updateContact(contact);
 			}
 
 			remove();
