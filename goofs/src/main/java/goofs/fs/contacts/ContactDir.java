@@ -11,7 +11,7 @@ import com.google.gdata.data.contacts.ContactEntry;
 
 public class ContactDir extends Dir {
 
-	protected ContactEntry contact;
+	protected String contactId;
 
 	public ContactDir(Dir parent, ContactEntry contact) {
 
@@ -19,7 +19,7 @@ public class ContactDir extends Dir {
 				.getEmailAddresses().get(0).getAddress() : contact.getTitle()
 				.getPlainText(), 0755);
 
-		this.contact = contact;
+		setContactId(contact.getId());
 
 		try {
 			if (getContacts().hasPhotoContent(contact)) {
@@ -43,12 +43,25 @@ public class ContactDir extends Dir {
 
 	}
 
-	public ContactEntry getContact() {
-		return contact;
+	public String getContactId() {
+		return contactId;
 	}
 
-	public void setContact(ContactEntry contact) {
-		this.contact = contact;
+	public void setContactId(String contactId) {
+		this.contactId = contactId;
+	}
+
+	public ContactEntry getContact() {
+
+		try {
+			return getContacts().getContactById(getContactId());
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return null;
+		}
+
 	}
 
 	protected Contacts getContacts() {

@@ -58,7 +58,7 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 	}
 
 	public int chmod(String arg0, int arg1) throws FuseException {
-		return Errno.ENOENT;
+		return 0;
 	}
 
 	public int chown(String arg0, int arg1, int arg2) throws FuseException {
@@ -156,7 +156,7 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 
 			java.io.File f = new java.io.File(path);
 
-			if (f.getName().endsWith("~")) {
+			if (f.getName().startsWith(".") || f.getName().endsWith("~")) {
 
 				return parent.createTempChild(f.getName());
 			}
@@ -237,8 +237,17 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 		return Errno.EROFS;
 	}
 
-	public int truncate(String arg0, long arg1) throws FuseException {
-		return 0;
+	public int truncate(String path, long size) throws FuseException {
+
+		Node n = lookup(path);
+
+		if (n instanceof File) {
+			((File) n).truncate(size);
+			return 0;
+		}
+
+		return Errno.ENOENT;
+
 	}
 
 	public int unlink(String path) throws FuseException {
@@ -315,12 +324,26 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 	}
 
 	public int removexattr(String path, String name) throws FuseException {
-		return Errno.EROFS;
+		Node n = lookup(path);
+
+		if (n == null)
+			return Errno.ENOENT;
+
+		n.xattrs.remove(name);
+
+		return 0;
 	}
 
 	public int setxattr(String path, String name, ByteBuffer value, int flags)
 			throws FuseException {
-		return Errno.EROFS;
+		Node n = lookup(path);
+
+		if (n == null)
+			return Errno.ENOENT;
+
+		n.xattrs.put(name, value.array());
+
+		return 0;
 	}
 
 	public static void main(String[] args) {

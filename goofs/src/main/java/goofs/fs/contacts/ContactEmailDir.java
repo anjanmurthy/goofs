@@ -31,10 +31,6 @@ public class ContactEmailDir extends Dir {
 		return ((ContactDir) getParent()).getContact();
 	}
 
-	public void setContact(ContactEntry contact) {
-		((ContactDir) getParent()).setContact(contact);
-	}
-
 	protected Contacts getContacts() {
 
 		return ((ContactDir) getParent()).getContacts();

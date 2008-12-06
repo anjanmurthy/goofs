@@ -47,6 +47,25 @@ public abstract class File extends Node {
 
 	}
 
+	public void truncate(long size) {
+
+		int sizeInt = (int) size;
+
+		if (sizeInt == 0) {
+			setContent(new byte[] {});
+		}
+
+		else {
+			byte[] content = getContent();
+
+			byte[] ncontent = new byte[(int) size];
+
+			System.arraycopy(content, 0, ncontent, 0, (int) size);
+
+			setContent(ncontent);
+		}
+	}
+
 	@Override
 	public void setName(String name) {
 

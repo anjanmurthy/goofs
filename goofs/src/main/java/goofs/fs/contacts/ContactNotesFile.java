@@ -26,24 +26,21 @@ public class ContactNotesFile extends File {
 		return ((ContactDir) getParent()).getContact();
 	}
 
-	public void setContact(ContactEntry contact) {
-		((ContactDir) getParent()).setContact(contact);
-	}
-
 	@Override
 	public int save() {
 
-		getContact().setContent(
-				new PlainTextConstruct(new String(getContent())));
+		ContactEntry contact = getContact();
+
+		contact.setContent(new PlainTextConstruct(new String(getContent())));
 
 		try {
-			setContact(getContacts().updateContact(getContact()));
+			getContacts().updateContact(contact);
 
 			return 0;
 		} catch (Exception e) {
-			
+
 			e.printStackTrace();
-			
+
 			return Errno.EROFS;
 		}
 
