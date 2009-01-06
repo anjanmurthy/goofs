@@ -1,29 +1,32 @@
 package goofs.blogger;
 
-import goofs.AbstractGoogleService;
+import goofs.GoofsService;
 
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gdata.client.Query;
+import com.google.gdata.client.blogger.BloggerService;
 import com.google.gdata.data.DateTime;
 import com.google.gdata.data.Entry;
 import com.google.gdata.data.Feed;
 import com.google.gdata.data.PlainTextConstruct;
 import com.google.gdata.util.AuthenticationException;
 
-public class Blogger extends AbstractGoogleService {
+public class Blogger implements GoofsService {
+
+	protected BloggerService realService;
 
 	public Blogger(String userName, String password)
 			throws AuthenticationException {
-		super(userName, password);
-		// TODO Auto-generated constructor stub
+
+		realService = new BloggerService(APP_NAME);
+		realService.setUserCredentials(userName, password);
 	}
 
-	@Override
-	protected String getGoogleServiceName() {
-		return "blogger";
+	protected BloggerService getRealService() {
+		return realService;
 	}
 
 	public List<Blog> getBlogs() throws Exception {
@@ -39,6 +42,24 @@ public class Blogger extends AbstractGoogleService {
 		}
 
 		return blogs;
+	}
+
+	public Blog getBlogById(String blogId) throws Exception {
+
+		return new Blog(getRealService().getEntry(new URL(blogId), Entry.class));
+
+	}
+
+	public Post getPostById(String postId) throws Exception {
+
+		return new Post(getRealService().getEntry(new URL(postId), Entry.class));
+
+	}
+
+	public Comment getCommentById(String commentId) throws Exception {
+
+		return new Comment(getRealService().getEntry(new URL(commentId),
+				Entry.class));
 	}
 
 	public List<Post> getPosts(Blog blog) throws Exception {
@@ -150,6 +171,19 @@ public class Blogger extends AbstractGoogleService {
 
 		getRealService().delete(
 				new URL(comment.getEntry().getEditLink().getHref()));
+	}
+
+	public Comment updateComment(Comment comment, String content)
+			throws Exception {
+
+		if (content != null) {
+			comment.getEntry().setContent(new PlainTextConstruct(content));
+		}
+
+		URL editUrl = new URL(comment.getEntry().getEditLink().getHref());
+
+		return new Comment(getRealService().update(editUrl, comment.getEntry()));
+
 	}
 
 }

@@ -4,7 +4,6 @@ import fuse.Errno;
 import goofs.contacts.Contacts;
 import goofs.fs.Dir;
 import goofs.fs.Node;
-import goofs.fs.SimpleFile;
 
 import com.google.gdata.data.PlainTextConstruct;
 import com.google.gdata.data.contacts.ContactEntry;
@@ -24,11 +23,15 @@ public class ContactDir extends Dir {
 		try {
 			if (getContacts().hasPhotoContent(contact)) {
 
-				ContactPhotoFile photoFile = new ContactPhotoFile(this,
-						getName() + ".jpg", getContacts()
-								.getContactPhotoInputStream(contact));
+				try {
+					ContactPhotoFile photoFile = new ContactPhotoFile(this,
+							getName() + ".jpg", getContacts()
+									.getContactPhotoInputStream(contact));
 
-				add(photoFile);
+					add(photoFile);
+
+				} catch (Exception e) {
+				}
 
 			}
 
@@ -71,7 +74,9 @@ public class ContactDir extends Dir {
 
 	@Override
 	public int createChild(String name, boolean isDir) {
+
 		return Errno.EROFS;
+
 	}
 
 	@Override
@@ -82,7 +87,7 @@ public class ContactDir extends Dir {
 	@Override
 	public int createTempChild(String name) {
 		try {
-			SimpleFile f = new SimpleFile(this, name);
+			ContactNotesTempFile f = new ContactNotesTempFile(this, name);
 
 			add(f);
 

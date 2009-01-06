@@ -34,9 +34,11 @@ public class ContactNotesFile extends File {
 		contact.setContent(new PlainTextConstruct(new String(getContent())));
 
 		try {
+
 			getContacts().updateContact(contact);
 
 			return 0;
+
 		} catch (Exception e) {
 
 			e.printStackTrace();
@@ -53,7 +55,14 @@ public class ContactNotesFile extends File {
 
 	@Override
 	public int rename(Dir newParent, String name) {
-		return Errno.EROFS;
+
+		if (getParent() == newParent) {
+
+			setName(name);
+		}
+
+		return 0;
+
 	}
 
 }
