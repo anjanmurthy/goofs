@@ -9,14 +9,22 @@ import goofs.fs.File;
 
 public class CommentFile extends File {
 
-	protected Comment comment;
+	private String commentId;
 
 	public CommentFile(Dir parent, Comment comment) throws Exception {
 
 		super(parent, comment.getEntry().getTitle().getPlainText(), 0755,
 				comment.getContent());
 
-		this.comment = comment;
+		setCommentId(comment.getEntry().getSelfLink().getHref());
+	}
+
+	protected String getCommentId() {
+		return commentId;
+	}
+
+	protected void setCommentId(String commentId) {
+		this.commentId = commentId;
 	}
 
 	protected Blogger getBlogger() {
@@ -33,11 +41,14 @@ public class CommentFile extends File {
 	}
 
 	public Comment getComment() {
-		return comment;
-	}
 
-	public void setComment(Comment comment) {
-		this.comment = comment;
+		try {
+			return getBlogger().getCommentById(getCommentId());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	@Override
@@ -64,7 +75,14 @@ public class CommentFile extends File {
 	@Override
 	public int save() {
 
-		return Errno.EROFS;
+		try {
+
+			getBlogger().updateComment(getComment(), new String(getContent()));
+
+			return 0;
+		} catch (Exception e) {
+			return Errno.ENOENT;
+		}
 
 	}
 }

@@ -15,6 +15,14 @@ public class Comment {
 		return entry;
 	}
 
+	public String getCommentId() {
+
+		// String[] tokens = entry.getSelfLink().getHref().split("/");
+		// return tokens[tokens.length - 1];
+
+		return getEntry().getId().split("comment-")[1];
+	}
+
 	public String getContent() {
 
 		return ((TextContent) getEntry().getContent()).getContent()

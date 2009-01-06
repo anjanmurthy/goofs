@@ -12,13 +12,13 @@ import java.util.List;
 
 public class BlogDir extends Dir {
 
-	private Blog blog;
+	private String blogId;
 
 	public BlogDir(Dir parent, Blog blog) throws Exception {
 
 		super(parent, blog.getBlogTitle(), 0755);
 
-		this.blog = blog;
+		setBlogId(blog.getEntry().getSelfLink().getHref());
 
 		List<Post> posts = getBlogger().getPosts(blog);
 
@@ -31,6 +31,14 @@ public class BlogDir extends Dir {
 
 	}
 
+	protected String getBlogId() {
+		return blogId;
+	}
+
+	protected void setBlogId(String blogId) {
+		this.blogId = blogId;
+	}
+
 	protected Blogger getBlogger() {
 
 		BlogsDir parentDir = (BlogsDir) getParent();
@@ -39,11 +47,15 @@ public class BlogDir extends Dir {
 	}
 
 	public Blog getBlog() {
-		return blog;
-	}
 
-	public void setBlog(Blog blog) {
-		this.blog = blog;
+		try {
+			return getBlogger().getBlogById(getBlogId());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+
+			return null;
+		}
 	}
 
 	@Override
@@ -91,7 +103,7 @@ public class BlogDir extends Dir {
 		}
 
 	}
-	
+
 	@Override
 	public int createChildFromExisting(String name, Node child) {
 		return Errno.EROFS;

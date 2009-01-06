@@ -3,21 +3,19 @@ package goofs.fs.blogger;
 import fuse.Errno;
 import goofs.blogger.Blog;
 import goofs.blogger.Blogger;
-import goofs.blogger.Comment;
 import goofs.blogger.Post;
 import goofs.fs.Dir;
 import goofs.fs.Node;
-import goofs.fs.SimpleFile;
 
 public class PostDir extends Dir {
 
-	private Post post;
+	private String postId;
 
 	public PostDir(Dir parent, Post post) throws Exception {
 
 		super(parent, post.getEntry().getTitle().getPlainText(), 0755);
 
-		this.post = post;
+		setPostId(post.getEntry().getSelfLink().getHref());
 
 		CommentsDir commentsDir = new CommentsDir(this);
 
@@ -29,12 +27,24 @@ public class PostDir extends Dir {
 
 	}
 
-	public Post getPost() {
-		return post;
+	protected String getPostId() {
+		return postId;
 	}
 
-	public void setPost(Post post) {
-		this.post = post;
+	protected void setPostId(String postId) {
+		this.postId = postId;
+	}
+
+	public Post getPost() {
+
+		try {
+			return getBlogger().getPostById(getPostId());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+
+			return null;
+		}
 	}
 
 	protected Blogger getBlogger() {
@@ -67,7 +77,7 @@ public class PostDir extends Dir {
 	public int rename(Dir newParent, String name) {
 
 		try {
-			setPost(getBlogger().updatePost(getPost(), name, null));
+			getBlogger().updatePost(getPost(), name, null);
 
 			return 0;
 		} catch (Exception e) {
@@ -80,28 +90,15 @@ public class PostDir extends Dir {
 	@Override
 	public int createChild(String name, boolean isDir) {
 
-		if (isDir)
-			return Errno.EROFS;
+		return Errno.EROFS;
 
-		try {
-			Comment comment = getBlogger().createComment(getBlog(), getPost(),
-					name);
-
-			CommentFile commentFile = new CommentFile(this, comment);
-
-			add(commentFile);
-
-			return 0;
-		} catch (Exception e) {
-			return Errno.EROFS;
-		}
 	}
 
 	@Override
 	public int createTempChild(String name) {
 
 		try {
-			SimpleFile f = new SimpleFile(this, name);
+			PostContentTempFile f = new PostContentTempFile(this, name);
 
 			add(f);
 

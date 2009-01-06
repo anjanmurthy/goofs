@@ -51,6 +51,26 @@ public class CommentsDir extends SimpleDir {
 	}
 
 	@Override
+	public int createChild(String name, boolean isDir) {
+		if (isDir)
+			return Errno.EROFS;
+
+		try {
+			Comment comment = getBlogger().createComment(getBlog(), getPost(),
+					name);
+
+			CommentFile commentFile = new CommentFile(this, comment);
+
+			add(commentFile);
+
+			return 0;
+		} catch (Exception e) {
+			return Errno.EROFS;
+		}
+
+	}
+
+	@Override
 	public int createTempChild(String name) {
 		try {
 			SimpleFile f = new SimpleFile(this, name);

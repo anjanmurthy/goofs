@@ -4,7 +4,6 @@ import fuse.Errno;
 import goofs.contacts.Contacts;
 import goofs.fs.Dir;
 import goofs.fs.Node;
-import goofs.fs.SimpleFile;
 
 import java.util.List;
 
@@ -42,10 +41,10 @@ public class ContactEmailDir extends Dir {
 		if (!isDir) {
 			try {
 				Email email = new Email();
-				if ("work".equals(name)) {
+				if (Email.Rel.WORK.split("#")[1].equals(name)) {
 					email.setRel(Email.Rel.WORK);
 
-				} else if ("home".equals(name)) {
+				} else if (Email.Rel.HOME.split("#")[1].equals(name)) {
 					email.setRel(Email.Rel.HOME);
 				} else {
 					email.setRel(Email.Rel.OTHER);
@@ -74,7 +73,7 @@ public class ContactEmailDir extends Dir {
 	@Override
 	public int createTempChild(String name) {
 		try {
-			SimpleFile f = new SimpleFile(this, name);
+			ContactEmailTempFile f = new ContactEmailTempFile(this, name);
 
 			add(f);
 

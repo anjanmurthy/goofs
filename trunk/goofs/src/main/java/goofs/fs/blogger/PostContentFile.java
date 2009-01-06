@@ -53,7 +53,13 @@ public class PostContentFile extends File {
 
 	@Override
 	public int rename(Dir newParent, String name) {
-		return Errno.ENOENT;
+
+		if (getParent() == newParent) {
+
+			setName(name);
+		}
+
+		return 0;
 	}
 
 }
