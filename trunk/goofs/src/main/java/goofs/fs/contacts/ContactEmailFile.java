@@ -106,7 +106,14 @@ public class ContactEmailFile extends File {
 
 	@Override
 	public int rename(Dir newParent, String name) {
-		return Errno.EROFS;
+
+		if (getParent() == newParent) {
+
+			setName(name);
+		}
+
+		return 0;
+
 	}
 
 }
