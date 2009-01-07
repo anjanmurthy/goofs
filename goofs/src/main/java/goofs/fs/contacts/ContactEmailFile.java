@@ -5,7 +5,7 @@ import goofs.contacts.Contacts;
 import goofs.fs.Dir;
 import goofs.fs.File;
 
-import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import com.google.gdata.data.contacts.ContactEntry;
@@ -17,9 +17,8 @@ public class ContactEmailFile extends File {
 
 	public ContactEmailFile(Dir parent, Email email) throws Exception {
 
-		super(parent, email.getPrimary() ? "primary" : email.getRel()
-				.split("#")[1], 0755, email.getAddress() != null ? email
-				.getAddress() : "");
+		super(parent, email.getRel().split("#")[1], 0755,
+				email.getAddress() != null ? email.getAddress() : "");
 
 		this.email = email;
 	}
@@ -43,15 +42,34 @@ public class ContactEmailFile extends File {
 
 	@Override
 	public int save() {
+
 		try {
 
 			ContactEntry contact = getContact();
 
-			if (getEmail().getAddress() == null) {
-				contact.getEmailAddresses().add(getEmail());
+			List<Email> emails = contact.getEmailAddresses();
+
+			boolean found = false;
+
+			for (Email e : emails) {
+
+				if (e.getRel().equals(getEmail().getRel())) {
+
+					e.setAddress(new String(getContent()));
+
+					found = true;
+
+					break;
+				}
+
 			}
 
-			getEmail().setAddress(new String(getContent()));
+			if (!found) {
+
+				getEmail().setAddress(new String(getContent()));
+
+				emails.add(getEmail());
+			}
 
 			getContacts().updateContact(contact);
 
@@ -71,27 +89,22 @@ public class ContactEmailFile extends File {
 
 			ContactEntry contact = getContact();
 
-			if (getEmail().getAddress() != null) {
+			Iterator<Email> emails = contact.getEmailAddresses().iterator();
 
-				List<Email> emails = contact.getEmailAddresses();
+			while (emails.hasNext()) {
 
-				List<Email> newEmails = new ArrayList<Email>();
+				Email next = emails.next();
 
-				for (Email e : emails) {
+				if (next.getRel().equals(getEmail().getRel())) {
 
-					if (!getEmail().getAddress().equals(e.getAddress())) {
+					emails.remove();
 
-						newEmails.add(email);
-
-					}
+					break;
 
 				}
 
-				contact.getEmailAddresses().clear();
-				contact.getEmailAddresses().addAll(newEmails);
-
-				getContacts().updateContact(contact);
 			}
+			getContacts().updateContact(contact);
 
 			remove();
 

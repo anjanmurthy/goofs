@@ -17,6 +17,21 @@ public abstract class File extends Node {
 		this.parent = parent;
 	}
 
+	public static boolean isTempFile(String name) {
+
+		boolean isTmp = false;
+
+		isTmp = (name.charAt(0) == '.')
+				|| (name.charAt(name.length() - 1) == '~');
+
+		if (!isTmp) {
+			isTmp = name.matches("\\d{4}");
+		}
+
+		return isTmp;
+
+	}
+
 	public byte[] getContent() {
 		return content;
 	}

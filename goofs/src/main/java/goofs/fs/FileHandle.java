@@ -34,7 +34,7 @@ public class FileHandle {
 
 	public boolean isTempFile() {
 
-		return getNode() instanceof SimpleFile;
+		return File.isTempFile(getNode().getName());
 	}
 
 	public int release() {

@@ -44,10 +44,6 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 		Node node = (parent instanceof Dir) ? ((Dir) parent).files.get(f
 				.getName()) : null;
 
-		// if (log.isDebugEnabled()) {
-		// log.debug(" lookup(\"" + path + "\") returning: " + node);
-		// }
-
 		return node;
 	}
 
@@ -110,7 +106,7 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 	}
 
 	public int getdir(String path, FuseDirFiller filler) throws FuseException {
-		log.info("in getdir");
+		// log.info("in getdir");
 
 		Node n = lookup(path);
 
@@ -156,7 +152,7 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 
 			java.io.File f = new java.io.File(path);
 
-			if (f.getName().startsWith(".") || f.getName().endsWith("~")) {
+			if (File.isTempFile(f.getName())) {
 
 				return parent.createTempChild(f.getName());
 			}
@@ -223,6 +219,7 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 		Node n = lookup(path);
 
 		return n.delete();
+
 	}
 
 	public int statfs(FuseStatfsSetter statfsSetter) throws FuseException {
@@ -254,7 +251,14 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 
 		Node n = lookup(path);
 
-		return n.delete();
+		java.io.File f = new java.io.File(path);
+
+		if (File.isTempFile(f.getName())) {
+			n.remove();
+			return 0;
+		} else {
+			return n.delete();
+		}
 	}
 
 	public int utime(String path, int arg1, int arg2) throws FuseException {
@@ -341,13 +345,17 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 		if (n == null)
 			return Errno.ENOENT;
 
-		n.xattrs.put(name, value.array());
+		byte[] dest = new byte[256];
+
+		value.get(dest, 0, value.remaining());
+
+		n.xattrs.put(name, dest);
 
 		return 0;
 	}
 
 	public static void main(String[] args) {
-		log.info("entering");
+		// log.info("entering");
 
 		try {
 

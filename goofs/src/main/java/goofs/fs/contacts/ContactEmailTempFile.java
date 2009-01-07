@@ -17,7 +17,7 @@ public class ContactEmailTempFile extends SimpleFile {
 	private static Set<String> RELS = new HashSet<String>();
 
 	static {
-		RELS.add("primary");
+
 		RELS.add(Email.Rel.WORK.split("#")[1]);
 		RELS.add(Email.Rel.HOME.split("#")[1]);
 		RELS.add(Email.Rel.OTHER.split("#")[1]);
@@ -26,6 +26,14 @@ public class ContactEmailTempFile extends SimpleFile {
 	public ContactEmailTempFile(Dir parent, String name) throws Exception {
 		super(parent, name);
 
+	}
+
+	@Override
+	public int save() {
+
+		System.out.println("Save called on " + toString());
+
+		return super.save();
 	}
 
 	@Override
@@ -76,11 +84,7 @@ public class ContactEmailTempFile extends SimpleFile {
 	protected Email findMatch(List<Email> emails) {
 		for (Email e : emails) {
 
-			if ("primary".equals(getName()) && e.getPrimary()) {
-				return e;
-			}
-
-			else if (e.getRel().equals(getName())) {
+			if (e.getRel().endsWith(getName())) {
 				return e;
 			}
 
