@@ -1,7 +1,5 @@
 package goofs.fs;
 
-import fuse.Errno;
-
 public class SimpleFile extends File {
 
 	public SimpleFile(Dir parent, String name) throws Exception {
@@ -11,7 +9,7 @@ public class SimpleFile extends File {
 
 	@Override
 	public int save() {
-		return Errno.EROFS;
+		return 0;
 	}
 
 	@Override

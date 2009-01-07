@@ -47,6 +47,15 @@ public class ContactEmailDir extends Dir {
 				} else if (Email.Rel.HOME.split("#")[1].equals(name)) {
 					email.setRel(Email.Rel.HOME);
 				} else {
+					
+					try {
+						throw new Exception(name);
+					}
+					catch (Exception e) {
+						e.printStackTrace();
+					}
+					
+					
 					email.setRel(Email.Rel.OTHER);
 					email.setLabel(name);
 				}
