@@ -1,13 +1,16 @@
 package goofs.fs.blogger;
 
 import fuse.Errno;
+import goofs.Fetchable;
+import goofs.Identifiable;
+import goofs.NotFoundException;
 import goofs.blogger.Blog;
 import goofs.blogger.Blogger;
 import goofs.blogger.Comment;
 import goofs.fs.Dir;
 import goofs.fs.File;
 
-public class CommentFile extends File {
+public class CommentFile extends File implements Identifiable, Fetchable {
 
 	private String commentId;
 
@@ -17,6 +20,10 @@ public class CommentFile extends File {
 				comment.getContent());
 
 		setCommentId(comment.getEntry().getSelfLink().getHref());
+	}
+
+	public String getId() {
+		return getCommentId();
 	}
 
 	protected String getCommentId() {
@@ -49,6 +56,14 @@ public class CommentFile extends File {
 			e.printStackTrace();
 			return null;
 		}
+	}
+
+	public Object fetch() throws NotFoundException {
+		Object o = getComment();
+		if (o == null) {
+			throw new NotFoundException(toString());
+		}
+		return o;
 	}
 
 	@Override

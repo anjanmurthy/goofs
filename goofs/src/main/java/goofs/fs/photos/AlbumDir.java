@@ -1,6 +1,9 @@
 package goofs.fs.photos;
 
 import fuse.Errno;
+import goofs.Fetchable;
+import goofs.Identifiable;
+import goofs.NotFoundException;
 import goofs.fs.Dir;
 import goofs.fs.Node;
 import goofs.fs.SimpleFile;
@@ -11,7 +14,7 @@ import java.util.List;
 import com.google.gdata.data.photos.AlbumEntry;
 import com.google.gdata.data.photos.PhotoEntry;
 
-public class AlbumDir extends Dir {
+public class AlbumDir extends Dir implements Identifiable, Fetchable {
 
 	protected String albumId;
 
@@ -29,6 +32,10 @@ public class AlbumDir extends Dir {
 
 			add(photoFile);
 		}
+	}
+
+	public String getId() {
+		return getAlbumId();
 	}
 
 	protected String getAlbumId() {
@@ -55,6 +62,15 @@ public class AlbumDir extends Dir {
 
 			return null;
 		}
+	}
+
+	public Object fetch() throws NotFoundException {
+
+		Object o = getAlbum();
+		if (o == null) {
+			throw new NotFoundException(toString());
+		}
+		return o;
 	}
 
 	@Override

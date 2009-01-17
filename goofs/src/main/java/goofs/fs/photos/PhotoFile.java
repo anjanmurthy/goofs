@@ -1,6 +1,9 @@
 package goofs.fs.photos;
 
 import fuse.Errno;
+import goofs.Fetchable;
+import goofs.Identifiable;
+import goofs.NotFoundException;
 import goofs.fs.Dir;
 import goofs.fs.DiskFile;
 import goofs.photos.Picasa;
@@ -8,7 +11,7 @@ import goofs.photos.Picasa;
 import com.google.gdata.data.photos.AlbumEntry;
 import com.google.gdata.data.photos.PhotoEntry;
 
-public class PhotoFile extends DiskFile {
+public class PhotoFile extends DiskFile implements Identifiable, Fetchable {
 
 	protected String photoId;
 
@@ -32,6 +35,10 @@ public class PhotoFile extends DiskFile {
 
 	}
 
+	public String getId() {
+		return getPhotoId();
+	}
+
 	protected String getPhotoId() {
 		return photoId;
 	}
@@ -50,6 +57,15 @@ public class PhotoFile extends DiskFile {
 
 			return null;
 		}
+	}
+
+	public Object fetch() throws NotFoundException {
+
+		Object o = getPhoto();
+		if (o == null) {
+			throw new NotFoundException(toString());
+		}
+		return o;
 	}
 
 	protected Picasa getPicasa() {
