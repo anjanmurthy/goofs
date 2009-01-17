@@ -1,13 +1,16 @@
 package goofs.fs.blogger;
 
 import fuse.Errno;
+import goofs.Fetchable;
+import goofs.Identifiable;
+import goofs.NotFoundException;
 import goofs.blogger.Blog;
 import goofs.blogger.Blogger;
 import goofs.blogger.Post;
 import goofs.fs.Dir;
 import goofs.fs.Node;
 
-public class PostDir extends Dir {
+public class PostDir extends Dir implements Identifiable, Fetchable {
 
 	private String postId;
 
@@ -25,6 +28,11 @@ public class PostDir extends Dir {
 
 		add(contentFile);
 
+	}
+
+	public String getId() {
+
+		return getPostId();
 	}
 
 	protected String getPostId() {
@@ -45,6 +53,16 @@ public class PostDir extends Dir {
 
 			return null;
 		}
+	}
+
+	public Object fetch() throws NotFoundException {
+
+		Object o = getPost();
+		if (o == null) {
+			throw new NotFoundException(toString());
+		}
+		return o;
+
 	}
 
 	protected Blogger getBlogger() {

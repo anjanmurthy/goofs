@@ -1,6 +1,9 @@
 package goofs.fs.contacts;
 
 import fuse.Errno;
+import goofs.Fetchable;
+import goofs.Identifiable;
+import goofs.NotFoundException;
 import goofs.contacts.Contacts;
 import goofs.fs.Dir;
 import goofs.fs.Node;
@@ -8,7 +11,7 @@ import goofs.fs.Node;
 import com.google.gdata.data.PlainTextConstruct;
 import com.google.gdata.data.contacts.ContactEntry;
 
-public class ContactDir extends Dir {
+public class ContactDir extends Dir implements Identifiable, Fetchable {
 
 	protected String contactId;
 
@@ -46,6 +49,10 @@ public class ContactDir extends Dir {
 
 	}
 
+	public String getId() {
+		return getContactId();
+	}
+
 	public String getContactId() {
 		return contactId;
 	}
@@ -65,6 +72,15 @@ public class ContactDir extends Dir {
 			return null;
 		}
 
+	}
+
+	public Object fetch() throws NotFoundException {
+
+		Object o = getContact();
+		if (o == null) {
+			throw new NotFoundException(toString());
+		}
+		return o;
 	}
 
 	protected Contacts getContacts() {

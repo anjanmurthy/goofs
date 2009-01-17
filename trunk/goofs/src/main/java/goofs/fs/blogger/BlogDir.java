@@ -1,6 +1,9 @@
 package goofs.fs.blogger;
 
 import fuse.Errno;
+import goofs.Fetchable;
+import goofs.Identifiable;
+import goofs.NotFoundException;
 import goofs.blogger.Blog;
 import goofs.blogger.Blogger;
 import goofs.blogger.Post;
@@ -10,7 +13,7 @@ import goofs.fs.SimpleFile;
 
 import java.util.List;
 
-public class BlogDir extends Dir {
+public class BlogDir extends Dir implements Identifiable, Fetchable {
 
 	private String blogId;
 
@@ -29,6 +32,10 @@ public class BlogDir extends Dir {
 			add(postDir);
 		}
 
+	}
+
+	public String getId() {
+		return getBlogId();
 	}
 
 	protected String getBlogId() {
@@ -56,6 +63,15 @@ public class BlogDir extends Dir {
 
 			return null;
 		}
+	}
+
+	public Object fetch() throws NotFoundException {
+
+		Object o = getBlog();
+		if (o == null) {
+			throw new NotFoundException(toString());
+		}
+		return o;
 	}
 
 	@Override
