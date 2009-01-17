@@ -61,6 +61,18 @@ public class Picasa implements GoofsService {
 
 	}
 
+	public AlbumEntry getAlbumById(String id) throws Exception {
+
+		return (AlbumEntry) getRealService().getEntry(new URL(id),
+				AlbumEntry.class);
+	}
+
+	public PhotoEntry getPhotoById(String id) throws Exception {
+
+		return (PhotoEntry) getRealService().getEntry(new URL(id),
+				PhotoEntry.class);
+	}
+
 	public AlbumEntry createAlbum(String title, String description)
 			throws Exception {
 		return createAlbum(title, description, false);

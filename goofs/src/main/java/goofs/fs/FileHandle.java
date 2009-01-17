@@ -48,6 +48,15 @@ public class FileHandle {
 		return result;
 	}
 
+	public int flush() {
+
+		if (getNode() instanceof DiskFile) {
+			((DiskFile) getNode()).flush();
+		}
+
+		return 0;
+	}
+
 	protected void finalize() {
 		log.debug("  " + this + " finalized");
 	}

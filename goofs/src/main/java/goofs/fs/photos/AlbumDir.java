@@ -10,17 +10,16 @@ import java.util.List;
 
 import com.google.gdata.data.photos.AlbumEntry;
 import com.google.gdata.data.photos.PhotoEntry;
-import com.google.gdata.util.VersionConflictException;
 
 public class AlbumDir extends Dir {
 
-	private AlbumEntry album;
+	protected String albumId;
 
 	public AlbumDir(Dir parent, AlbumEntry album) throws Exception {
 
 		super(parent, album.getTitle().getPlainText(), 0755);
 
-		this.album = album;
+		setAlbumId(album.getId());
 
 		List<PhotoEntry> photos = getPicasa().getPhotos(album);
 
@@ -32,17 +31,30 @@ public class AlbumDir extends Dir {
 		}
 	}
 
+	protected String getAlbumId() {
+		return albumId;
+	}
+
+	protected void setAlbumId(String albumId) {
+		this.albumId = albumId;
+	}
+
 	protected Picasa getPicasa() {
 
 		return ((PhotosDir) getParent().getParent()).getPicasa();
 	}
 
 	public AlbumEntry getAlbum() {
-		return album;
-	}
+		try {
+			return getPicasa().getAlbumById(getAlbumId());
+		}
 
-	public void setAlbum(AlbumEntry album) {
-		this.album = album;
+		catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+
+			return null;
+		}
 	}
 
 	@Override
@@ -103,35 +115,11 @@ public class AlbumDir extends Dir {
 
 		if (newParent == getParent()) {
 			try {
-				setAlbum(getPicasa().updateAlbum(getAlbum(), name, name));
+				getPicasa().updateAlbum(getAlbum(), name, name);
 
 				setName(name);
 
 				return 0;
-			} catch (VersionConflictException e) {
-
-				try {
-					List<AlbumEntry> albums = getPicasa().getAlbums();
-
-					for (AlbumEntry album : albums) {
-
-						if (album.getId().equals(getAlbum().getId())) {
-
-							setAlbum(getPicasa().updateAlbum(album, name, name));
-
-							setName(name);
-
-							return 0;
-						}
-
-					}
-
-					return Errno.EROFS;
-
-				} catch (Exception e1) {
-					return Errno.EROFS;
-				}
-
 			}
 
 			catch (Exception e) {

@@ -10,7 +10,7 @@ import com.google.gdata.data.photos.PhotoEntry;
 
 public class PhotoFile extends DiskFile {
 
-	protected PhotoEntry photo;
+	protected String photoId;
 
 	public PhotoFile(Dir parent, PhotoEntry photo) throws Exception {
 
@@ -22,7 +22,7 @@ public class PhotoFile extends DiskFile {
 			e.printStackTrace();
 		}
 
-		setPhoto(photo);
+		setPhotoId(photo.getId());
 
 	}
 
@@ -32,12 +32,24 @@ public class PhotoFile extends DiskFile {
 
 	}
 
-	public PhotoEntry getPhoto() {
-		return photo;
+	protected String getPhotoId() {
+		return photoId;
 	}
 
-	public void setPhoto(PhotoEntry photo) {
-		this.photo = photo;
+	protected void setPhotoId(String photoId) {
+		this.photoId = photoId;
+	}
+
+	public PhotoEntry getPhoto() {
+
+		try {
+			return (PhotoEntry) getPicasa().getPhotoById(getPhotoId());
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return null;
+		}
 	}
 
 	protected Picasa getPicasa() {
@@ -54,12 +66,13 @@ public class PhotoFile extends DiskFile {
 	public int save() {
 		try {
 
-			if (getPhoto() == null) {
-				setPhoto(getPicasa().createPhoto(getAlbum(), name, name,
-						getContent()));
+			if (getPhotoId() == null) {
+				PhotoEntry e = getPicasa().createPhoto(getAlbum(), name, name,
+						getContent());
+				setPhotoId(e.getId());
+
 			} else {
-				setPhoto(getPicasa().updatePhotoContent(getPhoto(),
-						getContent()));
+				getPicasa().updatePhotoContent(getPhoto(), getContent());
 			}
 
 			return 0;
@@ -98,7 +111,7 @@ public class PhotoFile extends DiskFile {
 		try {
 			if (getParent() == newParent) {
 
-				setPhoto(getPicasa().updatePhoto(getPhoto(), name, name));
+				getPicasa().updatePhoto(getPhoto(), name, name);
 
 				setName(name);
 

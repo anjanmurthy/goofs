@@ -5,7 +5,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 
 public abstract class DiskFile extends File {
 
@@ -33,16 +32,13 @@ public abstract class DiskFile extends File {
 		return (int) getDisk().length();
 	}
 
-	@Override
-	public int write(boolean isWritepage, ByteBuffer buf, long offset) {
+	public void flush() {
 
-		super.write(isWritepage, buf, offset);
+		if (this.content != null) {
+			setContent(this.content);
+			this.content = null;
+		}
 
-		setContent(this.content);
-
-		this.content = null;
-
-		return 0;
 	}
 
 	@Override
@@ -69,7 +65,8 @@ public abstract class DiskFile extends File {
 	public void setContent(byte[] content) {
 
 		try {
-			FileOutputStream fos = new FileOutputStream(getDisk());
+			FileOutputStream fos = new FileOutputStream(getDisk(), getDisk()
+					.length() > 0);
 			fos.write(content);
 			fos.close();
 		} catch (IOException e) {
@@ -87,10 +84,10 @@ public abstract class DiskFile extends File {
 
 			byte[] buff = new byte[256];
 			int bytesRead = 0;
-			
+
 			while ((bytesRead = is.read(buff)) != -1) {
 				fos.write(buff, 0, bytesRead);
-				
+
 			}
 		} finally {
 
