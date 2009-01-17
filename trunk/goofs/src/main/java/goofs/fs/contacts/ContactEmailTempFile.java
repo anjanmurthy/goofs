@@ -31,8 +31,6 @@ public class ContactEmailTempFile extends SimpleFile {
 	@Override
 	public int save() {
 
-		System.out.println("Save called on " + toString());
-
 		return super.save();
 	}
 

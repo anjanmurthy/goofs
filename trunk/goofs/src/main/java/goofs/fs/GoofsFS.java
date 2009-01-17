@@ -62,17 +62,16 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 	}
 
 	public int flush(String path, Object fh) throws FuseException {
-		System.out.println("flush called on " + path);
+		
 		if (fh instanceof FileHandle)
-			return 0;
+			return ((FileHandle) fh).flush();
 
 		return Errno.EBADF;
 	}
 
 	public int fsync(String path, Object arg1, boolean arg2)
 			throws FuseException {
-		// TODO Auto-generated method stub
-		System.out.println("fsynch called on " + path);
+		
 		return 0;
 	}
 
@@ -224,7 +223,7 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 
 	public int statfs(FuseStatfsSetter statfsSetter) throws FuseException {
 
-		statfsSetter.set(BLOCK_SIZE, 1000, 200, 180, Node.nfiles, 0,
+		statfsSetter.set(BLOCK_SIZE, 10000, 2000, 1800, Node.nfiles, 0,
 				NAME_LENGTH);
 
 		return 0;

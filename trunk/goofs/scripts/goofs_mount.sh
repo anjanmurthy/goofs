@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Adjust this to point to the home directory of a java 1.5 jre
-JAVA_HOME=/usr/lib/jvm/java-1.6.0-sun-1.6.0.u11
+JAVA_HOME=/usr/lib/jvm/java-1.5.0-sun-1.5.0_update17/jre
 
 # Adjust this to point to the directory containing the version of libjavafs.so corresponding to your version of fuse
 JNI_LIB=/home/rwynn/workspace/goofs/jni/fuse-2.7.2
