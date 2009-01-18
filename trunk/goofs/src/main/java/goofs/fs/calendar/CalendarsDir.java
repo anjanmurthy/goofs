@@ -15,7 +15,8 @@ public class CalendarsDir extends Dir {
 
 	public CalendarsDir(Dir parent) throws Exception {
 
-		super(parent, "calendars", 0755);
+		super(parent, resourceBundle.getString("goofs.calendar.calendars"),
+				0755);
 
 		calendarService = new Calendar(System.getProperty("username"), System
 				.getProperty("password"));

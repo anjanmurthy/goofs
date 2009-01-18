@@ -1,9 +1,11 @@
 package goofs.fs.calendar;
 
+import fuse.Errno;
 import goofs.calendar.Calendar;
 import goofs.fs.Dir;
 import goofs.fs.Node;
 
+import com.google.gdata.data.PlainTextConstruct;
 import com.google.gdata.data.calendar.CalendarEventEntry;
 
 public class CalendarEventDir extends Dir {
@@ -17,6 +19,13 @@ public class CalendarEventDir extends Dir {
 
 		setCalendarEventId(event.getSelfLink().getHref());
 
+		if (event.getTimes() != null && !event.getTimes().isEmpty()) {
+			add(new CalendarEventWhenFile(this, event));
+		}
+
+		if (event.getRecurrence() != null) {
+			add(new CalendarEventRecurrenceFile(this, event));
+		}
 	}
 
 	protected CalendarEventEntry getCalendarEvent() {
@@ -47,32 +56,51 @@ public class CalendarEventDir extends Dir {
 
 	@Override
 	public int createChild(String name, boolean isDir) {
-		// TODO Auto-generated method stub
-		return 0;
+		return Errno.EROFS;
 	}
 
 	@Override
 	public int createChildFromExisting(String name, Node child) {
-		// TODO Auto-generated method stub
-		return 0;
+		return Errno.EROFS;
 	}
 
 	@Override
 	public int createTempChild(String name) {
-		// TODO Auto-generated method stub
-		return 0;
+		return Errno.EROFS;
 	}
 
 	@Override
 	public int delete() {
-		// TODO Auto-generated method stub
-		return 0;
+		try {
+			getCalendarService().deleteCalendarEvent(getCalendarEventId());
+
+			remove();
+
+			return 0;
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return Errno.EROFS;
 	}
 
 	@Override
 	public int rename(Dir newParent, String name) {
-		// TODO Auto-generated method stub
-		return 0;
+		if (getParent() == newParent) {
+			try {
+				CalendarEventEntry e = new CalendarEventEntry();
+				e.setTitle(new PlainTextConstruct(name));
+				getCalendarService().updateCalendarEvent(getCalendarEventId(),
+						e);
+				setName(name);
+				return 0;
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return Errno.EROFS;
 	}
 
 }

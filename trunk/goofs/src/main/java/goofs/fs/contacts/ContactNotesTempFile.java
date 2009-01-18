@@ -22,7 +22,8 @@ public class ContactNotesTempFile extends SimpleFile {
 
 		if (rt == 0) {
 
-			if ("notes".equals(getName())) {
+			if (resourceBundle.getString("goofs.contacts.notes").equals(
+					getName())) {
 
 				Contacts contacts = ((ContactsDir) getParent().getParent())
 						.getContacts();

@@ -11,7 +11,7 @@ public class PhotosDir extends Dir {
 
 	public PhotosDir(Dir parent) throws Exception {
 
-		super(parent, "photos", 0755);
+		super(parent, resourceBundle.getString("goofs.photos.photos"), 0755);
 
 		picasa = new Picasa(System.getProperty("username"), System
 				.getProperty("password"));

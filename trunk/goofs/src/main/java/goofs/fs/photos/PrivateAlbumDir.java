@@ -12,7 +12,8 @@ import com.google.gdata.data.photos.AlbumEntry;
 public class PrivateAlbumDir extends SimpleDir {
 
 	public PrivateAlbumDir(Dir parent) throws Exception {
-		super(parent, "private");
+
+		super(parent, resourceBundle.getString("goofs.photos.private"));
 
 		List<AlbumEntry> albums = getPicasa().getAlbums();
 

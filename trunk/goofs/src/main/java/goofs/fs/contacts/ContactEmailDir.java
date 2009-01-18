@@ -14,7 +14,7 @@ public class ContactEmailDir extends Dir {
 
 	public ContactEmailDir(Dir parent) throws Exception {
 
-		super(parent, "email", 0755);
+		super(parent, resourceBundle.getString("goofs.contacts.email"), 0755);
 
 		List<Email> emails = getContact().getEmailAddresses();
 
@@ -47,15 +47,13 @@ public class ContactEmailDir extends Dir {
 				} else if (Email.Rel.HOME.split("#")[1].equals(name)) {
 					email.setRel(Email.Rel.HOME);
 				} else {
-					
+
 					try {
 						throw new Exception(name);
-					}
-					catch (Exception e) {
+					} catch (Exception e) {
 						e.printStackTrace();
 					}
-					
-					
+
 					email.setRel(Email.Rel.OTHER);
 					email.setLabel(name);
 				}

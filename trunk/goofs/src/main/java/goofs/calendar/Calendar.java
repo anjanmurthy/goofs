@@ -9,11 +9,14 @@ import java.util.List;
 import com.google.gdata.client.calendar.CalendarQuery;
 import com.google.gdata.client.calendar.CalendarService;
 import com.google.gdata.data.DateTime;
+import com.google.gdata.data.ExtensionProfile;
 import com.google.gdata.data.PlainTextConstruct;
 import com.google.gdata.data.calendar.CalendarEntry;
 import com.google.gdata.data.calendar.CalendarEventEntry;
 import com.google.gdata.data.calendar.CalendarEventFeed;
 import com.google.gdata.data.calendar.CalendarFeed;
+import com.google.gdata.data.extensions.Reminder;
+import com.google.gdata.data.extensions.Reminder.Method;
 import com.google.gdata.util.AuthenticationException;
 
 public class Calendar implements GoofsService {
@@ -116,6 +119,13 @@ public class Calendar implements GoofsService {
 		current.delete();
 	}
 
+	public void deleteCalendarEvent(String id) throws Exception {
+
+		CalendarEventEntry current = getCalendarEventById(id);
+
+		current.delete();
+	}
+
 	public CalendarEntry subscribeToCalendar(String id) throws Exception {
 
 		CalendarEntry calendar = new CalendarEntry();
@@ -161,7 +171,7 @@ public class Calendar implements GoofsService {
 			throws Exception {
 
 		CalendarQuery q = new CalendarQuery(getCalendarEventUrl(cal));
-		q.setFullTextQuery("Tennis");
+		q.setFullTextQuery(query);
 		CalendarEventFeed feed = getRealService().query(q,
 				CalendarEventFeed.class);
 		return feed.getEntries();
@@ -172,9 +182,17 @@ public class Calendar implements GoofsService {
 			throws Exception {
 
 		CalendarEventEntry e = new CalendarEventEntry();
+		Reminder reminder = new Reminder();
+		reminder.setMethod(Method.ALL);
+		e.getReminder().add(reminder);
 		e.setContent(new PlainTextConstruct(event));
 		e.setQuickAdd(true);
 		return getRealService().insert(getCalendarEventUrl(cal), e);
+	}
+
+	public ExtensionProfile getExtensionProfile() {
+
+		return getRealService().getExtensionProfile();
 	}
 
 }
