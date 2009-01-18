@@ -7,7 +7,7 @@ import goofs.NotFoundException;
 import goofs.fs.Dir;
 import goofs.fs.Node;
 import goofs.fs.SimpleFile;
-import goofs.photos.Picasa;
+import goofs.photos.IPicasa;
 
 import java.util.List;
 
@@ -46,7 +46,7 @@ public class AlbumDir extends Dir implements Identifiable, Fetchable {
 		this.albumId = albumId;
 	}
 
-	protected Picasa getPicasa() {
+	protected IPicasa getPicasa() {
 
 		return ((PhotosDir) getParent().getParent()).getPicasa();
 	}

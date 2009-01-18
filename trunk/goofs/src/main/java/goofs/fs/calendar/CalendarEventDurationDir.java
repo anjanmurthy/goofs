@@ -1,7 +1,7 @@
 package goofs.fs.calendar;
 
 import fuse.Errno;
-import goofs.calendar.Calendar;
+import goofs.calendar.ICalendar;
 import goofs.fs.Dir;
 import goofs.fs.Node;
 
@@ -38,7 +38,7 @@ public class CalendarEventDurationDir extends Dir {
 
 	}
 
-	protected Calendar getCalendarService() {
+	protected ICalendar getCalendarService() {
 
 		return ((CalendarsDir) getParent().getParent()).getCalendarService();
 	}

@@ -4,8 +4,8 @@ import java.util.List;
 
 import fuse.Errno;
 import goofs.blogger.Blog;
-import goofs.blogger.Blogger;
 import goofs.blogger.Comment;
+import goofs.blogger.IBlogger;
 import goofs.blogger.Post;
 import goofs.fs.Dir;
 import goofs.fs.SimpleDir;
@@ -33,7 +33,7 @@ public class CommentsDir extends SimpleDir {
 
 	}
 
-	protected Blogger getBlogger() {
+	protected IBlogger getBlogger() {
 
 		BlogsDir parentDir = (BlogsDir) getParent().getParent().getParent();
 

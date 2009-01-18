@@ -1,6 +1,6 @@
 package goofs.fs.calendar;
 
-import goofs.calendar.Calendar;
+import goofs.calendar.ICalendar;
 import goofs.fs.Dir;
 import goofs.fs.Node;
 
@@ -28,7 +28,7 @@ public class CalendarEventByTextDir extends Dir {
 
 	}
 
-	protected Calendar getCalendarService() {
+	protected ICalendar getCalendarService() {
 
 		return ((CalendarsDir) getParent().getParent()).getCalendarService();
 	}

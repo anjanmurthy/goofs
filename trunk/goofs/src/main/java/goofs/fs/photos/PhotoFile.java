@@ -6,7 +6,7 @@ import goofs.Identifiable;
 import goofs.NotFoundException;
 import goofs.fs.Dir;
 import goofs.fs.DiskFile;
-import goofs.photos.Picasa;
+import goofs.photos.IPicasa;
 
 import com.google.gdata.data.photos.AlbumEntry;
 import com.google.gdata.data.photos.PhotoEntry;
@@ -68,7 +68,7 @@ public class PhotoFile extends DiskFile implements Identifiable, Fetchable {
 		return o;
 	}
 
-	protected Picasa getPicasa() {
+	protected IPicasa getPicasa() {
 
 		return ((PhotosDir) getParent().getParent().getParent()).getPicasa();
 	}

@@ -6,7 +6,7 @@ import java.util.List;
 
 public class BloggerTestCase extends BaseTestCase {
 
-	protected Blogger blogger;
+	protected IBlogger blogger;
 
 	protected void setUp() throws Exception {
 		super.setUp();

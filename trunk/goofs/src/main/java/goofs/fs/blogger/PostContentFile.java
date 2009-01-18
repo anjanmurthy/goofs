@@ -2,7 +2,7 @@ package goofs.fs.blogger;
 
 import fuse.Errno;
 import goofs.blogger.Blog;
-import goofs.blogger.Blogger;
+import goofs.blogger.IBlogger;
 import goofs.blogger.Post;
 import goofs.fs.Dir;
 import goofs.fs.File;
@@ -16,7 +16,7 @@ public class PostContentFile extends File {
 
 	}
 
-	protected Blogger getBlogger() {
+	protected IBlogger getBlogger() {
 
 		BlogsDir parentDir = (BlogsDir) getParent().getParent().getParent();
 

@@ -4,7 +4,7 @@ import fuse.Errno;
 import goofs.Fetchable;
 import goofs.Identifiable;
 import goofs.NotFoundException;
-import goofs.contacts.Contacts;
+import goofs.contacts.IContacts;
 import goofs.fs.Dir;
 import goofs.fs.Node;
 
@@ -83,7 +83,7 @@ public class ContactDir extends Dir implements Identifiable, Fetchable {
 		return o;
 	}
 
-	protected Contacts getContacts() {
+	protected IContacts getContacts() {
 
 		return ((ContactsDir) getParent()).getContacts();
 	}

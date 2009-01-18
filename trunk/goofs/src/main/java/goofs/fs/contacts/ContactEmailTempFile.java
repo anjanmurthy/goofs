@@ -1,7 +1,7 @@
 package goofs.fs.contacts;
 
 import fuse.Errno;
-import goofs.contacts.Contacts;
+import goofs.contacts.IContacts;
 import goofs.fs.Dir;
 import goofs.fs.SimpleFile;
 
@@ -43,7 +43,7 @@ public class ContactEmailTempFile extends SimpleFile {
 
 			if (RELS.contains(getName())) {
 
-				Contacts contacts = ((ContactEmailDir) getParent())
+				IContacts contacts = ((ContactEmailDir) getParent())
 						.getContacts();
 				ContactEntry contact = ((ContactEmailDir) getParent())
 						.getContact();

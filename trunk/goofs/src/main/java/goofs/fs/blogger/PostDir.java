@@ -5,7 +5,7 @@ import goofs.Fetchable;
 import goofs.Identifiable;
 import goofs.NotFoundException;
 import goofs.blogger.Blog;
-import goofs.blogger.Blogger;
+import goofs.blogger.IBlogger;
 import goofs.blogger.Post;
 import goofs.fs.Dir;
 import goofs.fs.Node;
@@ -65,7 +65,7 @@ public class PostDir extends Dir implements Identifiable, Fetchable {
 
 	}
 
-	protected Blogger getBlogger() {
+	protected IBlogger getBlogger() {
 
 		BlogsDir parentDir = (BlogsDir) getParent().getParent();
 

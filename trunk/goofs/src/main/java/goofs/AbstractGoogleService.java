@@ -15,7 +15,7 @@ public abstract class AbstractGoogleService implements GoofsService {
 
 	protected abstract String getGoogleServiceName();
 
-	protected GoogleService getRealService() {
+	public GoogleService getRealService() {
 		return realService;
 	}
 

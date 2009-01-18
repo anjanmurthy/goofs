@@ -1,20 +1,20 @@
 package goofs.fs.photos;
 
 import fuse.Errno;
+import goofs.ServiceFactory;
 import goofs.fs.Dir;
 import goofs.fs.Node;
-import goofs.photos.Picasa;
+import goofs.photos.IPicasa;
 
 public class PhotosDir extends Dir {
 
-	Picasa picasa;
+	IPicasa picasa;
 
 	public PhotosDir(Dir parent) throws Exception {
 
 		super(parent, resourceBundle.getString("goofs.photos.photos"), 0755);
 
-		picasa = new Picasa(System.getProperty("username"), System
-				.getProperty("password"));
+		picasa = (IPicasa) ServiceFactory.getService(IPicasa.class);
 
 		PublicAlbumDir publicDir = new PublicAlbumDir(this);
 
@@ -25,11 +25,11 @@ public class PhotosDir extends Dir {
 		add(privateDir);
 	}
 
-	public Picasa getPicasa() {
+	public IPicasa getPicasa() {
 		return picasa;
 	}
 
-	public void setPicasa(Picasa picasa) {
+	public void setPicasa(IPicasa picasa) {
 		this.picasa = picasa;
 	}
 

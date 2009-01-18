@@ -1,7 +1,7 @@
 package goofs.fs.calendar;
 
 import fuse.Errno;
-import goofs.calendar.Calendar;
+import goofs.calendar.ICalendar;
 import goofs.fs.Dir;
 import goofs.fs.File;
 
@@ -22,7 +22,7 @@ public class CalendarEventRecurrenceFile extends File {
 
 	}
 
-	protected Calendar getCalendarService() {
+	protected ICalendar getCalendarService() {
 
 		return ((CalendarEventDir) getParent()).getCalendarService();
 	}
