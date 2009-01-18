@@ -4,6 +4,7 @@ import fuse.Errno;
 import goofs.fs.blogger.BlogsDir;
 import goofs.fs.contacts.ContactsDir;
 import goofs.fs.photos.PhotosDir;
+import goofs.fs.calendar.CalendarsDir;
 
 public class RootDir extends Dir {
 
@@ -20,6 +21,9 @@ public class RootDir extends Dir {
 		t.start();
 
 		t = new AddDirThread(this, ContactsDir.class);
+		t.start();
+
+		t = new AddDirThread(this, CalendarsDir.class);
 		t.start();
 
 	}
