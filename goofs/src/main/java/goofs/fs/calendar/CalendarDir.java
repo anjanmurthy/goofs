@@ -5,12 +5,17 @@ import goofs.calendar.Calendar;
 import goofs.fs.Dir;
 import goofs.fs.Node;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+
 import com.google.gdata.data.PlainTextConstruct;
 import com.google.gdata.data.calendar.CalendarEntry;
 
 public class CalendarDir extends Dir {
 
 	protected String calendarId;
+
+	protected static final DateFormat DF = new SimpleDateFormat("yyyyMMdd");
 
 	public CalendarDir(Dir parent, CalendarEntry cal) throws Exception {
 
@@ -27,23 +32,26 @@ public class CalendarDir extends Dir {
 		end.set(java.util.Calendar.MILLISECOND, 999);
 
 		CalendarEventDurationDir next = new CalendarEventDurationDir(this,
-				"Today", cal, start.getTime(), end.getTime());
+				resourceBundle.getString("goofs.calendar.today"), cal, start
+						.getTime(), end.getTime());
 
 		add(next);
 
 		start.setTime(end.getTime());
 		end.add(java.util.Calendar.DATE, 6);
 
-		next = new CalendarEventDurationDir(this, "Next 7 Days", cal, start
-				.getTime(), end.getTime());
+		next = new CalendarEventDurationDir(this, resourceBundle
+				.getString("goofs.calendar.next7"), cal, start.getTime(), end
+				.getTime());
 
 		add(next);
 
 		start.setTime(end.getTime());
 		end.add(java.util.Calendar.DATE, 23);
 
-		next = new CalendarEventDurationDir(this, "Next 30 Days", cal, start
-				.getTime(), end.getTime());
+		next = new CalendarEventDurationDir(this, resourceBundle
+				.getString("goofs.calendar.next30"), cal, start.getTime(), end
+				.getTime());
 
 		add(next);
 
@@ -88,6 +96,53 @@ public class CalendarDir extends Dir {
 
 				e.printStackTrace();
 			}
+		} else if (isDir) {
+
+			// check for a date range
+			// the format is yyyyMMdd-yyyyMMdd
+			if (name.length() == 17 && name.indexOf('-') == 8) {
+
+				try {
+					String s1 = name.substring(0, 8);
+					String s2 = name.substring(9, 17);
+					java.util.Calendar start = java.util.Calendar.getInstance();
+					java.util.Calendar end = java.util.Calendar.getInstance();
+					start.setTime(DF.parse(s1));
+					end.setTime(DF.parse(s2));
+					start.set(java.util.Calendar.HOUR_OF_DAY, 0);
+					start.set(java.util.Calendar.MINUTE, 0);
+					start.set(java.util.Calendar.SECOND, 0);
+					start.set(java.util.Calendar.MILLISECOND, 0);
+					end.set(java.util.Calendar.HOUR_OF_DAY, 23);
+					end.set(java.util.Calendar.MINUTE, 59);
+					end.set(java.util.Calendar.SECOND, 59);
+					end.set(java.util.Calendar.MILLISECOND, 999);
+
+					add(new CalendarEventDurationDir(this, name, getCalendar(),
+							start.getTime(), end.getTime()));
+
+					return 0;
+
+				} catch (Exception e) {
+
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+			}
+
+			// otherwise do a text search
+			try {
+
+				add(new CalendarEventByTextDir(this, name, getCalendar()));
+
+				return 0;
+
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
 		}
 
 		return Errno.EROFS;

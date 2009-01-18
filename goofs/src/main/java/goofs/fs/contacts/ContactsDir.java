@@ -15,7 +15,7 @@ public class ContactsDir extends Dir {
 
 	public ContactsDir(Dir parent) throws Exception {
 
-		super(parent, "contacts", 0755);
+		super(parent, resourceBundle.getString("goofs.contacts.contacts"), 0755);
 
 		contacts = new Contacts(System.getProperty("username"), System
 				.getProperty("password"));
@@ -30,7 +30,7 @@ public class ContactsDir extends Dir {
 		}
 
 	}
-	
+
 	public Contacts getContacts() {
 		return contacts;
 	}

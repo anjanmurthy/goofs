@@ -2,8 +2,10 @@ package goofs.fs;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ResourceBundle;
 
 public abstract class Node {
+
 	protected static int nfiles = 0;
 	protected String name;
 	protected int mode;
@@ -12,6 +14,8 @@ public abstract class Node {
 	protected int modifyTime;
 	protected int accessTime;
 	protected Object lock = new Object();
+	protected static ResourceBundle resourceBundle = ResourceBundle
+			.getBundle("goofs");
 
 	public abstract Node getParent();
 

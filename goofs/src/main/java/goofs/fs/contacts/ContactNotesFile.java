@@ -12,8 +12,9 @@ public class ContactNotesFile extends File {
 
 	public ContactNotesFile(Dir parent, ContactEntry contact) throws Exception {
 
-		super(parent, "notes", 0755, (contact.getContent() == null) ? ""
-				: contact.getTextContent().getContent().getPlainText());
+		super(parent, resourceBundle.getString("goofs.contacts.notes"), 0755,
+				(contact.getContent() == null) ? "" : contact.getTextContent()
+						.getContent().getPlainText());
 
 	}
 

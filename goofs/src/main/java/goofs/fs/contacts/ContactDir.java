@@ -135,9 +135,12 @@ public class ContactDir extends Dir implements Identifiable, Fetchable {
 		if (getParent() == newParent) {
 
 			try {
-				getContact().setTitle(new PlainTextConstruct(name));
 
-				getContacts().updateContact(getContact());
+				ContactEntry current = getContact();
+
+				current.setTitle(new PlainTextConstruct(name));
+
+				getContacts().updateContact(current);
 
 				setName(name);
 

@@ -1,33 +1,23 @@
 package goofs.fs.calendar;
 
-import fuse.Errno;
 import goofs.calendar.Calendar;
 import goofs.fs.Dir;
 import goofs.fs.Node;
 
-import java.util.Date;
 import java.util.List;
 
 import com.google.gdata.data.calendar.CalendarEntry;
 import com.google.gdata.data.calendar.CalendarEventEntry;
 
-public class CalendarEventDurationDir extends Dir {
+public class CalendarEventByTextDir extends Dir {
 
-	protected Date start;
-
-	protected Date end;
-
-	public CalendarEventDurationDir(Dir parent, String name, CalendarEntry cal,
-			Date start, Date end) throws Exception {
+	public CalendarEventByTextDir(Dir parent, String name, CalendarEntry cal)
+			throws Exception {
 
 		super(parent, name, 0755);
 
-		setStart(start);
-
-		setEnd(end);
-
 		List<CalendarEventEntry> events = getCalendarService().getEvents(cal,
-				start, end);
+				getName());
 
 		for (CalendarEventEntry event : events) {
 
@@ -49,40 +39,28 @@ public class CalendarEventDurationDir extends Dir {
 
 	}
 
-	protected Date getStart() {
-		return start;
-	}
-
-	protected void setStart(Date start) {
-		this.start = start;
-	}
-
-	protected Date getEnd() {
-		return end;
-	}
-
-	protected void setEnd(Date end) {
-		this.end = end;
-	}
-
 	@Override
 	public int createChild(String name, boolean isDir) {
-		return Errno.EROFS;
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
 	@Override
 	public int createChildFromExisting(String name, Node child) {
-		return Errno.EROFS;
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
 	@Override
 	public int createTempChild(String name) {
-		return Errno.EROFS;
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
 	@Override
 	public int delete() {
-		return Errno.EROFS;
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
 	@Override

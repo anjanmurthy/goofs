@@ -14,7 +14,7 @@ import goofs.fs.SimpleFile;
 public class CommentsDir extends SimpleDir {
 
 	public CommentsDir(Dir parent) {
-		super(parent, "comments");
+		super(parent, resourceBundle.getString("goofs.blogger.comments"));
 
 		try {
 			List<Comment> comments = getBlogger().getComments(getBlog(),

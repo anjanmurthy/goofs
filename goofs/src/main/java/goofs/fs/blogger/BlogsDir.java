@@ -14,7 +14,7 @@ public class BlogsDir extends Dir {
 
 	public BlogsDir(Dir parent) throws Exception {
 
-		super(parent, "blogs", 0755);
+		super(parent, resourceBundle.getString("goofs.blogger.blogs"), 0755);
 
 		blogger = new Blogger(System.getProperty("username"), System
 				.getProperty("password"));
