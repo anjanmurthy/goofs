@@ -30,11 +30,11 @@ public class BlogsDir extends Dir {
 
 	}
 
-	public Blogger getBlogger() {
+	protected Blogger getBlogger() {
 		return blogger;
 	}
 
-	public void setBlogger(Blogger blogger) {
+	protected void setBlogger(Blogger blogger) {
 		this.blogger = blogger;
 	}
 
