@@ -5,8 +5,8 @@ import goofs.Fetchable;
 import goofs.Identifiable;
 import goofs.NotFoundException;
 import goofs.blogger.Blog;
-import goofs.blogger.Blogger;
 import goofs.blogger.Comment;
+import goofs.blogger.IBlogger;
 import goofs.fs.Dir;
 import goofs.fs.File;
 
@@ -34,7 +34,7 @@ public class CommentFile extends File implements Identifiable, Fetchable {
 		this.commentId = commentId;
 	}
 
-	protected Blogger getBlogger() {
+	protected IBlogger getBlogger() {
 
 		BlogsDir parentDir = (BlogsDir) getParent().getParent().getParent()
 				.getParent();

@@ -1,7 +1,5 @@
 package goofs.blogger;
 
-import goofs.GoofsService;
-
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +12,7 @@ import com.google.gdata.data.Feed;
 import com.google.gdata.data.PlainTextConstruct;
 import com.google.gdata.util.AuthenticationException;
 
-public class Blogger implements GoofsService {
+public class Blogger implements IBlogger {
 
 	protected BloggerService realService;
 
@@ -25,10 +23,13 @@ public class Blogger implements GoofsService {
 		realService.setUserCredentials(userName, password);
 	}
 
-	protected BloggerService getRealService() {
+	public BloggerService getRealService() {
 		return realService;
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.blogger.IBlogger#getBlogs()
+	 */
 	public List<Blog> getBlogs() throws Exception {
 		List<Blog> blogs = new ArrayList<Blog>();
 
@@ -44,30 +45,45 @@ public class Blogger implements GoofsService {
 		return blogs;
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.blogger.IBlogger#getBlogById(java.lang.String)
+	 */
 	public Blog getBlogById(String blogId) throws Exception {
 
 		return new Blog(getRealService().getEntry(new URL(blogId), Entry.class));
 
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.blogger.IBlogger#getPostById(java.lang.String)
+	 */
 	public Post getPostById(String postId) throws Exception {
 
 		return new Post(getRealService().getEntry(new URL(postId), Entry.class));
 
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.blogger.IBlogger#getCommentById(java.lang.String)
+	 */
 	public Comment getCommentById(String commentId) throws Exception {
 
 		return new Comment(getRealService().getEntry(new URL(commentId),
 				Entry.class));
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.blogger.IBlogger#getPosts(goofs.blogger.Blog)
+	 */
 	public List<Post> getPosts(Blog blog) throws Exception {
 
 		return getPosts(blog, null);
 
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.blogger.IBlogger#getPosts(goofs.blogger.Blog, com.google.gdata.client.Query)
+	 */
 	public List<Post> getPosts(Blog blog, Query query) throws Exception {
 		List<Post> posts = new ArrayList<Post>();
 
@@ -86,6 +102,9 @@ public class Blogger implements GoofsService {
 
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.blogger.IBlogger#getPosts(goofs.blogger.Blog, com.google.gdata.data.DateTime, com.google.gdata.data.DateTime)
+	 */
 	public List<Post> getPosts(Blog blog, DateTime start, DateTime end)
 			throws Exception {
 
@@ -98,11 +117,17 @@ public class Blogger implements GoofsService {
 		return getPosts(blog, myQuery);
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.blogger.IBlogger#createPost(goofs.blogger.Blog, java.lang.String, java.lang.String)
+	 */
 	public Post createPost(Blog blog, String title, String content)
 			throws Exception {
 		return createPost(blog, title, content, false);
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.blogger.IBlogger#createPost(goofs.blogger.Blog, java.lang.String, java.lang.String, boolean)
+	 */
 	public Post createPost(Blog blog, String title, String content,
 			boolean isDraft) throws Exception {
 		// Create the entry to insert
@@ -117,6 +142,9 @@ public class Blogger implements GoofsService {
 		return new Post(getRealService().insert(postUrl, myEntry));
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.blogger.IBlogger#updatePost(goofs.blogger.Post, java.lang.String, java.lang.String)
+	 */
 	public Post updatePost(Post post, String title, String content)
 			throws Exception {
 
@@ -132,6 +160,9 @@ public class Blogger implements GoofsService {
 
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.blogger.IBlogger#deletePost(goofs.blogger.Post)
+	 */
 	public void deletePost(Post post) throws Exception {
 
 		getRealService().delete(
@@ -139,6 +170,9 @@ public class Blogger implements GoofsService {
 
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.blogger.IBlogger#createComment(goofs.blogger.Blog, goofs.blogger.Post, java.lang.String)
+	 */
 	public Comment createComment(Blog blog, Post post, String comment)
 			throws Exception {
 
@@ -153,6 +187,9 @@ public class Blogger implements GoofsService {
 		return new Comment(getRealService().insert(feedUrl, myEntry));
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.blogger.IBlogger#getComments(goofs.blogger.Blog, goofs.blogger.Post)
+	 */
 	public List<Comment> getComments(Blog blog, Post post) throws Exception {
 		List<Comment> comments = new ArrayList<Comment>();
 		String commentsFeedUri = "http://www.blogger.com/feeds/"
@@ -167,12 +204,18 @@ public class Blogger implements GoofsService {
 		return comments;
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.blogger.IBlogger#deleteComment(goofs.blogger.Comment)
+	 */
 	public void deleteComment(Comment comment) throws Exception {
 
 		getRealService().delete(
 				new URL(comment.getEntry().getEditLink().getHref()));
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.blogger.IBlogger#updateComment(goofs.blogger.Comment, java.lang.String)
+	 */
 	public Comment updateComment(Comment comment, String content)
 			throws Exception {
 

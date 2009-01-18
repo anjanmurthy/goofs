@@ -1,7 +1,5 @@
 package goofs.contacts;
 
-import goofs.GoofsService;
-
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -21,7 +19,7 @@ import com.google.gdata.util.AuthenticationException;
 import com.google.gdata.util.ContentType;
 import com.google.gdata.util.ServiceException;
 
-public class Contacts implements GoofsService {
+public class Contacts implements IContacts {
 
 	protected ContactsService realService;
 
@@ -33,10 +31,13 @@ public class Contacts implements GoofsService {
 
 	}
 
-	protected ContactsService getRealService() {
+	public ContactsService getRealService() {
 		return realService;
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.contacts.IContacts#getContacts()
+	 */
 	public List<ContactEntry> getContacts() throws Exception {
 
 		URL feedUrl = new URL(
@@ -52,6 +53,9 @@ public class Contacts implements GoofsService {
 
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.contacts.IContacts#getContactById(java.lang.String)
+	 */
 	public ContactEntry getContactById(String id) throws Exception {
 
 		return getRealService().getEntry(
@@ -59,6 +63,9 @@ public class Contacts implements GoofsService {
 
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.contacts.IContacts#createContact(java.lang.String)
+	 */
 	public ContactEntry createContact(String name) throws ServiceException,
 			IOException {
 		// Create the entry to insert
@@ -70,6 +77,9 @@ public class Contacts implements GoofsService {
 		return getRealService().insert(postUrl, contact);
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.contacts.IContacts#deleteContact(com.google.gdata.data.contacts.ContactEntry)
+	 */
 	public void deleteContact(ContactEntry entry) throws Exception {
 
 		URL deleteUrl = new URL(entry.getEditLink().getHref());
@@ -77,12 +87,18 @@ public class Contacts implements GoofsService {
 
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.contacts.IContacts#updateContact(com.google.gdata.data.contacts.ContactEntry)
+	 */
 	public ContactEntry updateContact(ContactEntry entry) throws Exception {
 
 		URL editUrl = new URL(entry.getEditLink().getHref());
 		return getRealService().update(editUrl, entry);
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.contacts.IContacts#addContactPhoto(com.google.gdata.data.contacts.ContactEntry, byte[])
+	 */
 	public void addContactPhoto(ContactEntry entry, byte[] photoData)
 			throws ServiceException, IOException {
 
@@ -100,11 +116,17 @@ public class Contacts implements GoofsService {
 
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.contacts.IContacts#hasPhotoContent(com.google.gdata.data.contacts.ContactEntry)
+	 */
 	public boolean hasPhotoContent(ContactEntry entry) {
 
 		return entry.getContactPhotoLink() != null;
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.contacts.IContacts#getContactPhotoContent(com.google.gdata.data.contacts.ContactEntry)
+	 */
 	public byte[] getContactPhotoContent(ContactEntry entry) throws Exception {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		Link photoLink = entry.getContactPhotoLink();
@@ -129,6 +151,9 @@ public class Contacts implements GoofsService {
 		return baos.toByteArray();
 	}
 
+	/* (non-Javadoc)
+	 * @see goofs.contacts.IContacts#getContactPhotoInputStream(com.google.gdata.data.contacts.ContactEntry)
+	 */
 	public InputStream getContactPhotoInputStream(ContactEntry entry)
 			throws Exception {
 		Link photoLink = entry.getContactPhotoLink();

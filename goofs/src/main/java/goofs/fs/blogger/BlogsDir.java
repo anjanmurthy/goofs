@@ -1,8 +1,9 @@
 package goofs.fs.blogger;
 
 import fuse.Errno;
+import goofs.ServiceFactory;
 import goofs.blogger.Blog;
-import goofs.blogger.Blogger;
+import goofs.blogger.IBlogger;
 import goofs.fs.Dir;
 import goofs.fs.Node;
 
@@ -10,14 +11,13 @@ import java.util.List;
 
 public class BlogsDir extends Dir {
 
-	private Blogger blogger;
+	private IBlogger blogger;
 
 	public BlogsDir(Dir parent) throws Exception {
 
 		super(parent, resourceBundle.getString("goofs.blogger.blogs"), 0755);
 
-		blogger = new Blogger(System.getProperty("username"), System
-				.getProperty("password"));
+		blogger = (IBlogger) ServiceFactory.getService(IBlogger.class);
 
 		List<Blog> blogs = blogger.getBlogs();
 
@@ -30,11 +30,11 @@ public class BlogsDir extends Dir {
 
 	}
 
-	protected Blogger getBlogger() {
+	protected IBlogger getBlogger() {
 		return blogger;
 	}
 
-	protected void setBlogger(Blogger blogger) {
+	protected void setBlogger(IBlogger blogger) {
 		this.blogger = blogger;
 	}
 

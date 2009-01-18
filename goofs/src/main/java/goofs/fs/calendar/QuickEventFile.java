@@ -2,7 +2,7 @@ package goofs.fs.calendar;
 
 import com.google.gdata.data.calendar.CalendarEntry;
 
-import goofs.calendar.Calendar;
+import goofs.calendar.ICalendar;
 import goofs.fs.Dir;
 import goofs.fs.SimpleFile;
 
@@ -14,7 +14,7 @@ public class QuickEventFile extends SimpleFile {
 
 	}
 
-	protected Calendar getCalendarService() {
+	protected ICalendar getCalendarService() {
 
 		return ((CalendarsDir) getParent().getParent()).getCalendarService();
 	}

@@ -1,7 +1,8 @@
 package goofs.fs.calendar;
 
 import fuse.Errno;
-import goofs.calendar.Calendar;
+import goofs.ServiceFactory;
+import goofs.calendar.ICalendar;
 import goofs.fs.Dir;
 import goofs.fs.Node;
 
@@ -11,15 +12,15 @@ import com.google.gdata.data.calendar.CalendarEntry;
 
 public class CalendarsDir extends Dir {
 
-	private Calendar calendarService;
+	private ICalendar calendarService;
 
 	public CalendarsDir(Dir parent) throws Exception {
 
 		super(parent, resourceBundle.getString("goofs.calendar.calendars"),
 				0755);
 
-		calendarService = new Calendar(System.getProperty("username"), System
-				.getProperty("password"));
+		calendarService = (ICalendar) ServiceFactory
+				.getService(ICalendar.class);
 
 		List<CalendarEntry> cals = calendarService.getCalendars();
 
@@ -30,11 +31,11 @@ public class CalendarsDir extends Dir {
 
 	}
 
-	protected Calendar getCalendarService() {
+	protected ICalendar getCalendarService() {
 		return calendarService;
 	}
 
-	protected void setCalendarService(Calendar calendarService) {
+	protected void setCalendarService(ICalendar calendarService) {
 		this.calendarService = calendarService;
 	}
 

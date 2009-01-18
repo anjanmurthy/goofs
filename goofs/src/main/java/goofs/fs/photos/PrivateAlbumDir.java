@@ -3,7 +3,7 @@ package goofs.fs.photos;
 import fuse.Errno;
 import goofs.fs.Dir;
 import goofs.fs.SimpleDir;
-import goofs.photos.Picasa;
+import goofs.photos.IPicasa;
 
 import java.util.List;
 
@@ -28,7 +28,7 @@ public class PrivateAlbumDir extends SimpleDir {
 
 	}
 
-	protected Picasa getPicasa() {
+	protected IPicasa getPicasa() {
 
 		return ((PhotosDir) getParent()).getPicasa();
 	}

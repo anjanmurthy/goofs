@@ -1,7 +1,7 @@
 package goofs.fs.contacts;
 
 import fuse.Errno;
-import goofs.contacts.Contacts;
+import goofs.contacts.IContacts;
 import goofs.fs.Dir;
 import goofs.fs.File;
 
@@ -18,7 +18,7 @@ public class ContactNotesFile extends File {
 
 	}
 
-	protected Contacts getContacts() {
+	protected IContacts getContacts() {
 
 		return ((ContactsDir) getParent().getParent()).getContacts();
 	}

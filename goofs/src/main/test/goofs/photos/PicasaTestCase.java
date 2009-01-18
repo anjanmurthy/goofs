@@ -8,7 +8,7 @@ import com.google.gdata.data.photos.AlbumEntry;
 
 public class PicasaTestCase extends BaseTestCase {
 	
-	protected Picasa picasa;
+	protected IPicasa picasa;
 	
 
 	protected void setUp() throws Exception {

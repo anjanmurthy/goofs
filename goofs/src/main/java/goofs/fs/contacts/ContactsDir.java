@@ -1,7 +1,8 @@
 package goofs.fs.contacts;
 
 import fuse.Errno;
-import goofs.contacts.Contacts;
+import goofs.ServiceFactory;
+import goofs.contacts.IContacts;
 import goofs.fs.Dir;
 import goofs.fs.Node;
 
@@ -11,14 +12,13 @@ import com.google.gdata.data.contacts.ContactEntry;
 
 public class ContactsDir extends Dir {
 
-	protected Contacts contacts;
+	protected IContacts contacts;
 
 	public ContactsDir(Dir parent) throws Exception {
 
 		super(parent, resourceBundle.getString("goofs.contacts.contacts"), 0755);
 
-		contacts = new Contacts(System.getProperty("username"), System
-				.getProperty("password"));
+		contacts = (IContacts) ServiceFactory.getService(IContacts.class);
 
 		List<ContactEntry> entries = contacts.getContacts();
 
@@ -31,7 +31,7 @@ public class ContactsDir extends Dir {
 
 	}
 
-	public Contacts getContacts() {
+	public IContacts getContacts() {
 		return contacts;
 	}
 

@@ -1,7 +1,7 @@
 package goofs.fs.blogger;
 
 import fuse.Errno;
-import goofs.blogger.Blogger;
+import goofs.blogger.IBlogger;
 import goofs.blogger.Post;
 import goofs.fs.Dir;
 import goofs.fs.SimpleFile;
@@ -22,7 +22,7 @@ public class PostContentTempFile extends SimpleFile {
 
 			Post post = ((PostDir) getParent()).getPost();
 
-			Blogger blogger = ((PostDir) getParent()).getBlogger();
+			IBlogger blogger = ((PostDir) getParent()).getBlogger();
 
 			try {
 
