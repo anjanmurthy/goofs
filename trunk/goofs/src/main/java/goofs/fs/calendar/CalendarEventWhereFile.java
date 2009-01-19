@@ -8,17 +8,18 @@ import goofs.fs.File;
 import java.io.StringWriter;
 
 import com.google.gdata.data.calendar.CalendarEventEntry;
-import com.google.gdata.data.extensions.When;
+import com.google.gdata.data.extensions.Where;
 import com.google.gdata.util.common.xml.XmlWriter;
 
-public class CalendarEventWhenFile extends File {
+public class CalendarEventWhereFile extends File {
 
-	public CalendarEventWhenFile(Dir parent, CalendarEventEntry event)
+	public CalendarEventWhereFile(Dir parent, CalendarEventEntry event)
 			throws Exception {
 
-		super(parent, resourceBundle.getString("goofs.calendar.when"), 0755, "");
+		super(parent, resourceBundle.getString("goofs.calendar.where"), 0755,
+				"");
 
-		setContent(getWhen(event).getBytes());
+		setContent(getWhere(event).getBytes());
 
 	}
 
@@ -27,14 +28,14 @@ public class CalendarEventWhenFile extends File {
 		return ((CalendarEventDir) getParent()).getCalendarService();
 	}
 
-	protected String getWhen(CalendarEventEntry event) throws Exception {
+	protected String getWhere(CalendarEventEntry event) throws Exception {
 
 		StringWriter sw = new StringWriter();
 		XmlWriter writer = new XmlWriter(sw);
 
-		if (event.getTimes() != null) {
+		if (event.getLocations() != null) {
 
-			for (When w : event.getTimes()) {
+			for (Where w : event.getLocations()) {
 
 				w.generate(writer, getCalendarService().getExtensionProfile());
 

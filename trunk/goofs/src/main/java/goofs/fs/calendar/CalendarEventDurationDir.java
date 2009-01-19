@@ -1,21 +1,26 @@
 package goofs.fs.calendar;
 
 import fuse.Errno;
+import goofs.EntryContainer;
 import goofs.calendar.ICalendar;
 import goofs.fs.Dir;
 import goofs.fs.Node;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.google.gdata.data.calendar.CalendarEntry;
 import com.google.gdata.data.calendar.CalendarEventEntry;
 
-public class CalendarEventDurationDir extends Dir {
+public class CalendarEventDurationDir extends Dir implements EntryContainer {
 
 	protected Date start;
 
 	protected Date end;
+
+	protected Set<String> entryIds = new HashSet<String>();
 
 	public CalendarEventDurationDir(Dir parent, String name, CalendarEntry cal,
 			Date start, Date end) throws Exception {
@@ -34,8 +39,41 @@ public class CalendarEventDurationDir extends Dir {
 			CalendarEventDir eventDir = new CalendarEventDir(this, event);
 
 			add(eventDir);
+
+			getEntryIds().add(event.getSelfLink().getHref());
+
 		}
 
+	}
+
+	public Set<String> getEntryIds() {
+		return entryIds;
+	}
+
+	public void addNewEntryById(String entryId) throws Exception {
+
+		CalendarEventEntry event = getCalendarService().getCalendarEventById(
+				entryId);
+
+		CalendarEventDir eventDir = new CalendarEventDir(this, event);
+
+		add(eventDir);
+
+		getEntryIds().add(event.getSelfLink().getHref());
+
+	}
+
+	public Set<String> getCurrentEntryIds() throws Exception {
+		Set<String> ids = new HashSet<String>();
+
+		List<CalendarEventEntry> events = getCalendarService().getEvents(
+				getCalendar(), start, end);
+
+		for (CalendarEventEntry event : events) {
+			ids.add(event.getSelfLink().getHref());
+		}
+
+		return ids;
 	}
 
 	protected ICalendar getCalendarService() {
