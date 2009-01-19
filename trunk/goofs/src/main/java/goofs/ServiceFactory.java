@@ -1,34 +1,38 @@
 package goofs;
 
-import java.lang.reflect.Proxy;
-
 import goofs.blogger.Blogger;
 import goofs.blogger.IBlogger;
 import goofs.calendar.Calendar;
 import goofs.calendar.ICalendar;
 import goofs.contacts.Contacts;
 import goofs.contacts.IContacts;
+import goofs.docs.Documents;
+import goofs.docs.IDocuments;
 import goofs.photos.IPicasa;
 import goofs.photos.Picasa;
 
+import java.lang.reflect.Proxy;
+
 public class ServiceFactory {
 
-	public static Object getService(Class clazz) throws Exception {
+	public static <T extends GoofsService> Object getService(Class<T> clazz)
+			throws Exception {
 
 		GoofsService gs = null;
 
+		String u = System.getProperty("username");
+		String p = System.getProperty("password");
+
 		if (clazz == IBlogger.class) {
-			gs = new Blogger(System.getProperty("username"), System
-					.getProperty("password"));
+			gs = new Blogger(u, p);
 		} else if (clazz == ICalendar.class) {
-			gs = new Calendar(System.getProperty("username"), System
-					.getProperty("password"));
+			gs = new Calendar(u, p);
 		} else if (clazz == IContacts.class) {
-			gs = new Contacts(System.getProperty("username"), System
-					.getProperty("password"));
+			gs = new Contacts(u, p);
 		} else if (clazz == IPicasa.class) {
-			gs = new Picasa(System.getProperty("username"), System
-					.getProperty("password"));
+			gs = new Picasa(u, p);
+		} else if (clazz == IDocuments.class) {
+			gs = new Documents(u, p);
 		} else {
 			throw new IllegalArgumentException(clazz.getName());
 		}
