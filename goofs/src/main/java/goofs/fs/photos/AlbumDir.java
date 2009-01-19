@@ -1,6 +1,7 @@
 package goofs.fs.photos;
 
 import fuse.Errno;
+import goofs.EntryContainer;
 import goofs.Fetchable;
 import goofs.Identifiable;
 import goofs.NotFoundException;
@@ -9,14 +10,19 @@ import goofs.fs.Node;
 import goofs.fs.SimpleFile;
 import goofs.photos.IPicasa;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.google.gdata.data.photos.AlbumEntry;
 import com.google.gdata.data.photos.PhotoEntry;
 
-public class AlbumDir extends Dir implements Identifiable, Fetchable {
+public class AlbumDir extends Dir implements Identifiable, Fetchable,
+		EntryContainer {
 
 	protected String albumId;
+
+	protected Set<String> entryIds = new HashSet<String>();
 
 	public AlbumDir(Dir parent, AlbumEntry album) throws Exception {
 
@@ -31,7 +37,39 @@ public class AlbumDir extends Dir implements Identifiable, Fetchable {
 			PhotoFile photoFile = new PhotoFile(this, photo);
 
 			add(photoFile);
+
+			getEntryIds().add(photo.getId());
 		}
+	}
+
+	public Set<String> getEntryIds() {
+		return entryIds;
+	}
+
+	public void addNewEntryById(String entryId) throws Exception {
+
+		PhotoEntry photo = getPicasa().getPhotoById(entryId);
+
+		PhotoFile photoFile = new PhotoFile(this, photo);
+
+		add(photoFile);
+
+		getEntryIds().add(photo.getId());
+
+	}
+
+	public Set<String> getCurrentEntryIds() throws Exception {
+
+		Set<String> ids = new HashSet<String>();
+
+		List<PhotoEntry> photos = getPicasa().getPhotos(getAlbum());
+
+		for (PhotoEntry photo : photos) {
+
+			ids.add(photo.getId());
+
+		}
+		return ids;
 	}
 
 	public String getId() {

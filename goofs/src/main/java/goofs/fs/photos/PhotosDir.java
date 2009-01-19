@@ -8,7 +8,7 @@ import goofs.photos.IPicasa;
 
 public class PhotosDir extends Dir {
 
-	IPicasa picasa;
+	protected IPicasa picasa;
 
 	public PhotosDir(Dir parent) throws Exception {
 

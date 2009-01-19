@@ -3,6 +3,7 @@ package goofs.fs;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.util.Timer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -20,7 +21,7 @@ import fuse.FuseStatfsSetter;
 import fuse.XattrLister;
 import fuse.XattrSupport;
 
-public class GoofsFS implements Filesystem3, XattrSupport {
+public class GoofsFS implements Filesystem3, XattrSupport, ResourceAware {
 
 	protected static final Log log = LogFactory.getLog(GoofsFS.class);
 
@@ -29,9 +30,25 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 
 	protected Dir root;
 
+	protected Timer cleanupTimer;
+
+	protected Timer discoverTimer;
+
 	public GoofsFS() throws Exception {
 
 		root = new RootDir();
+
+		cleanupTimer = new Timer(true);
+		cleanupTimer.schedule(new CleanupTask(root), Integer
+				.parseInt(resourceBundle.getString("goofs.cleanup.delay")),
+				Integer.parseInt(resourceBundle
+						.getString("goofs.cleanup.period")));
+
+		discoverTimer = new Timer(true);
+		discoverTimer.schedule(new DiscoverTask(root), Integer
+				.parseInt(resourceBundle.getString("goofs.discover.delay")),
+				Integer.parseInt(resourceBundle
+						.getString("goofs.discover.period")));
 
 	}
 
@@ -62,7 +79,7 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 	}
 
 	public int flush(String path, Object fh) throws FuseException {
-		
+
 		if (fh instanceof FileHandle)
 			return ((FileHandle) fh).flush();
 
@@ -71,7 +88,7 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 
 	public int fsync(String path, Object arg1, boolean arg2)
 			throws FuseException {
-		
+
 		return 0;
 	}
 

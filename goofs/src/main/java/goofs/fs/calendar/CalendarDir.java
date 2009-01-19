@@ -1,6 +1,9 @@
 package goofs.fs.calendar;
 
 import fuse.Errno;
+import goofs.Fetchable;
+import goofs.Identifiable;
+import goofs.NotFoundException;
 import goofs.calendar.ICalendar;
 import goofs.fs.Dir;
 import goofs.fs.Node;
@@ -11,7 +14,7 @@ import java.text.SimpleDateFormat;
 import com.google.gdata.data.PlainTextConstruct;
 import com.google.gdata.data.calendar.CalendarEntry;
 
-public class CalendarDir extends Dir {
+public class CalendarDir extends Dir implements Identifiable, Fetchable {
 
 	protected String calendarId;
 
@@ -55,6 +58,18 @@ public class CalendarDir extends Dir {
 
 		add(next);
 
+	}
+
+	public Object fetch() throws NotFoundException {
+		Object o = getCalendar();
+		if (o == null) {
+			throw new NotFoundException(toString());
+		}
+		return o;
+	}
+
+	public String getId() {
+		return getCalendarId();
 	}
 
 	protected ICalendar getCalendarService() {

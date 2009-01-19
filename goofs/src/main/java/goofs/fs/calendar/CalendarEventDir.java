@@ -1,6 +1,9 @@
 package goofs.fs.calendar;
 
 import fuse.Errno;
+import goofs.Fetchable;
+import goofs.Identifiable;
+import goofs.NotFoundException;
 import goofs.calendar.ICalendar;
 import goofs.fs.Dir;
 import goofs.fs.Node;
@@ -8,7 +11,7 @@ import goofs.fs.Node;
 import com.google.gdata.data.PlainTextConstruct;
 import com.google.gdata.data.calendar.CalendarEventEntry;
 
-public class CalendarEventDir extends Dir {
+public class CalendarEventDir extends Dir implements Identifiable, Fetchable {
 
 	protected String calendarEventId;
 
@@ -26,6 +29,26 @@ public class CalendarEventDir extends Dir {
 		if (event.getRecurrence() != null) {
 			add(new CalendarEventRecurrenceFile(this, event));
 		}
+
+		if (event.getLocations() != null) {
+			add(new CalendarEventWhereFile(this, event));
+		}
+
+		if (event.getSummary() != null) {
+			add(new CalendarEventSummaryFile(this, event));
+		}
+	}
+
+	public String getId() {
+		return getCalendarEventId();
+	}
+
+	public Object fetch() throws NotFoundException {
+		Object o = getCalendarEvent();
+		if (o == null) {
+			throw new NotFoundException(toString());
+		}
+		return o;
 	}
 
 	protected CalendarEventEntry getCalendarEvent() {
