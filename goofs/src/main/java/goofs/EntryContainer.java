@@ -10,6 +10,7 @@ public interface EntryContainer {
 	// fresh from the back end
 	public Set<String> getCurrentEntryIds() throws Exception;
 
+	// get this entry from the back end and add it to the fs tree
 	public void addNewEntryById(String entryId) throws Exception;
 
 }

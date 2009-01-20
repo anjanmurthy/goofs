@@ -5,6 +5,7 @@ import goofs.GoofsService;
 import java.io.File;
 import java.util.List;
 
+import com.google.gdata.data.Link;
 import com.google.gdata.data.docs.DocumentEntry;
 import com.google.gdata.data.docs.DocumentListEntry;
 import com.google.gdata.data.docs.FolderEntry;
@@ -14,6 +15,9 @@ import com.google.gdata.data.docs.SpreadsheetEntry;
 public interface IDocuments extends GoofsService {
 
 	public abstract List<DocumentListEntry> getDocuments() throws Exception;
+
+	public abstract List<DocumentListEntry> getDocumentsInFolder(String folderId)
+			throws Exception;
 
 	public abstract List<FolderEntry> getFolders() throws Exception;
 
@@ -28,16 +32,19 @@ public interface IDocuments extends GoofsService {
 
 	public abstract FolderEntry getFolderById(String id) throws Exception;
 
+	public abstract List<Link> getFolderParentLinks(String folderId)
+			throws Exception;
+
 	public abstract void deleteDocument(String id) throws Exception;
 
-	public abstract void removeDocumentFromFolder(String docId, String folderId)
+	public abstract void removeDocumentFromFolder(String folderId, String docId)
 			throws Exception;
 
-	public abstract void addDocumentToFolder(String docId, String folderId)
+	public abstract void addDocumentToFolder(String folderId, String docId)
 			throws Exception;
 
-	public abstract void moveFolderToFolder(String fromFolderId,
-			String toFolderId) throws Exception;
+	public abstract void moveFolderToFolder(String toFolderId,
+			String fromFolderId) throws Exception;
 
 	public abstract DocumentEntry createWPDocument(String name, File contents,
 			String folderName) throws Exception;
