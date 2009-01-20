@@ -5,7 +5,7 @@ import java.net.URL;
 import java.util.List;
 
 import com.google.gdata.client.docs.DocsService;
-import com.google.gdata.data.Person;
+import com.google.gdata.data.Link;
 import com.google.gdata.data.PlainTextConstruct;
 import com.google.gdata.data.docs.DocumentEntry;
 import com.google.gdata.data.docs.DocumentListEntry;
@@ -39,9 +39,25 @@ public class Documents implements IDocuments {
 	 */
 	public List<DocumentListEntry> getDocuments() throws Exception {
 
+		DocumentListFeed feed = getRealService()
+				.getFeed(
+						new URL(
+								"http://docs.google.com/feeds/documents/private/full?showfolders=true"),
+						DocumentListFeed.class);
+
+		return feed.getEntries();
+
+	}
+
+	public List<DocumentListEntry> getDocumentsInFolder(String folderId)
+			throws Exception {
+
+		String folderIdShort = folderId.split("%3A")[1];
+
 		DocumentListFeed feed = getRealService().getFeed(
-				new URL("/feeds/documents/private/full?showfolders=true"),
-				DocumentListFeed.class);
+				new URL(
+						"http://docs.google.com/feeds/folders/private/full/folder%3A"
+								+ folderIdShort), DocumentListFeed.class);
 
 		return feed.getEntries();
 
@@ -57,7 +73,7 @@ public class Documents implements IDocuments {
 		DocumentListFeed feed = getRealService()
 				.getFeed(
 						new URL(
-								"/feeds/documents/private/full/-/folder?showfolders=true"),
+								"http://docs.google.com/feeds/documents/private/full/-/folder?showfolders=true"),
 						DocumentListFeed.class);
 
 		return feed.getEntries(FolderEntry.class);
@@ -73,7 +89,7 @@ public class Documents implements IDocuments {
 		DocumentListFeed feed = getRealService()
 				.getFeed(
 						new URL(
-								"/feeds/documents/private/full/-/document?showfolders=true"),
+								"http://docs.google.com/feeds/documents/private/full/-/document?showfolders=true"),
 						DocumentListFeed.class);
 
 		return feed.getEntries();
@@ -90,7 +106,7 @@ public class Documents implements IDocuments {
 		DocumentListFeed feed = getRealService()
 				.getFeed(
 						new URL(
-								"/feeds/documents/private/full/-/spreadsheet?showfolders=true"),
+								"http://docs.google.com/feeds/documents/private/full/-/spreadsheet?showfolders=true"),
 						DocumentListFeed.class);
 
 		return feed.getEntries();
@@ -107,7 +123,7 @@ public class Documents implements IDocuments {
 		DocumentListFeed feed = getRealService()
 				.getFeed(
 						new URL(
-								"/feeds/documents/private/full/-/presentation?showfolders=true"),
+								"http://docs.google.com/feeds/documents/private/full/-/presentation?showfolders=true"),
 						DocumentListFeed.class);
 
 		return feed.getEntries();
@@ -135,6 +151,12 @@ public class Documents implements IDocuments {
 		return getRealService().getEntry(new URL(id), FolderEntry.class);
 	}
 
+	public List<Link> getFolderParentLinks(String folderId) throws Exception {
+
+		return getFolderById(folderId).getParentLinks();
+
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -153,11 +175,16 @@ public class Documents implements IDocuments {
 	 * @see goofs.docs.IDocuments#removeDocumentFromFolder(java.lang.String,
 	 * java.lang.String)
 	 */
-	public void removeDocumentFromFolder(String docId, String folderId)
+	public void removeDocumentFromFolder(String folderId, String docId)
 			throws Exception {
 
-		URL deleteUrl = new URL("/feeds/folders/private/full/folder%3A"
-				+ folderId + "/document%3A" + docId);
+		String folderIdShort = folderId.split("%3A")[1];
+
+		String docIdShort = docId.split("%3A")[1];
+
+		URL deleteUrl = new URL(
+				"http://docs.google.com/feeds/folders/private/full/folder%3A"
+						+ folderIdShort + "/document%3A" + docIdShort);
 
 		getRealService().delete(deleteUrl);
 
@@ -169,13 +196,22 @@ public class Documents implements IDocuments {
 	 * @see goofs.docs.IDocuments#addDocumentToFolder(java.lang.String,
 	 * java.lang.String)
 	 */
-	public void addDocumentToFolder(String docId, String folderId)
+	public void addDocumentToFolder(String folderId, String docId)
 			throws Exception {
 
-		URL postUrl = new URL("/feeds/folders/private/full/folder%3A"
-				+ folderId);
-
 		DocumentListEntry doc = getDocumentById(docId);
+
+		addDocumentToFolder(folderId, doc);
+	}
+
+	protected void addDocumentToFolder(String folderId, DocumentListEntry doc)
+			throws Exception {
+
+		String urlBase = "http://docs.google.com/feeds/folders/private/full/folder%3A";
+
+		String shortId = folderId.split("%3A")[1];
+
+		URL postUrl = new URL(urlBase + shortId);
 
 		getRealService().insert(postUrl, doc);
 
@@ -187,11 +223,14 @@ public class Documents implements IDocuments {
 	 * @see goofs.docs.IDocuments#moveFolderToFolder(java.lang.String,
 	 * java.lang.String)
 	 */
-	public void moveFolderToFolder(String fromFolderId, String toFolderId)
+	public void moveFolderToFolder(String toFolderId, String fromFolderId)
 			throws Exception {
 
-		URL postUrl = new URL("/feeds/folders/private/full/folder%3A"
-				+ toFolderId);
+		String urlBase = "http://docs.google.com/feeds/folders/private/full/folder%3A";
+
+		String shortId = toFolderId.split("%3A")[1];
+
+		URL postUrl = new URL(urlBase + shortId);
 
 		FolderEntry folder = getFolderById(fromFolderId);
 
@@ -200,22 +239,20 @@ public class Documents implements IDocuments {
 	}
 
 	protected <T extends DocumentListEntry> T createDocument(String name,
-			File contents, String folderName, T newDocument) throws Exception {
+			File contents, String folderId, T newDocument) throws Exception {
 
 		newDocument.setFile(contents, MediaType.fromFileName(name)
 				.getMimeType());
 		newDocument.setTitle(new PlainTextConstruct(name.split("\\.")[0]));
 
-		if (folderName != null) {
+		T created = getRealService().insert(
+				new URL("http://docs.google.com/feeds/documents/private/full"),
+				newDocument);
 
-			Person owner = new Person();
-			owner.setEmail(System.getProperty("username"));
-			newDocument.addFolder(owner, folderName);
-
+		if (folderId != null) {
+			addDocumentToFolder(folderId, created);
 		}
-
-		return getRealService().insert(
-				new URL("/feeds/documents/private/full"), newDocument);
+		return created;
 
 	}
 
