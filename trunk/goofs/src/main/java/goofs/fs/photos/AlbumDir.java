@@ -195,7 +195,7 @@ public class AlbumDir extends Dir implements Identifiable, Fetchable,
 				PhotoFile photoFile = (PhotoFile) child;
 
 				PhotoEntry newPhoto = getPicasa().createPhoto(getAlbum(), name,
-						name, photoFile.getContent());
+						name, photoFile.getDisk());
 
 				PhotoFile newChild = new PhotoFile(this, newPhoto);
 

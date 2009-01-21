@@ -240,7 +240,7 @@ public class GoofsFS implements Filesystem3, XattrSupport, ResourceAware {
 
 	public int statfs(FuseStatfsSetter statfsSetter) throws FuseException {
 
-		statfsSetter.set(BLOCK_SIZE, 10000, 2000, 1800, Node.nfiles, 0,
+		statfsSetter.set(BLOCK_SIZE, 100000, 20000, 18000, Node.nfiles, 0,
 				NAME_LENGTH);
 
 		return 0;
