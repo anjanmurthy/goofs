@@ -84,11 +84,11 @@ public class PhotoFile extends DiskFile implements Identifiable, Fetchable {
 
 			if (getPhotoId() == null) {
 				PhotoEntry e = getPicasa().createPhoto(getAlbum(), name, name,
-						getContent());
+						getDisk());
 				setPhotoId(e.getId());
 
 			} else {
-				getPicasa().updatePhotoContent(getPhoto(), getContent());
+				getPicasa().updatePhotoContent(getPhoto(), getDisk());
 			}
 
 			return 0;

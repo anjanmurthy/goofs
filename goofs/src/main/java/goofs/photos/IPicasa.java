@@ -34,13 +34,13 @@ public interface IPicasa extends GoofsService {
 			throws Exception;
 
 	public abstract PhotoEntry createPhoto(AlbumEntry album, String title,
-			String description, byte[] contents) throws Exception;
+			String description, java.io.File contents) throws Exception;
 
 	public abstract PhotoEntry updatePhoto(PhotoEntry photo, String title,
 			String description) throws Exception;
 
 	public abstract PhotoEntry updatePhotoContent(PhotoEntry photo,
-			byte[] contents) throws Exception;
+			java.io.File contents) throws Exception;
 
 	public abstract byte[] getPhotoContent(PhotoEntry photo) throws Exception;
 

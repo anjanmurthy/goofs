@@ -11,7 +11,7 @@ import java.util.Map;
 import com.google.gdata.client.Query;
 import com.google.gdata.client.photos.PicasawebService;
 import com.google.gdata.data.PlainTextConstruct;
-import com.google.gdata.data.media.MediaByteArraySource;
+import com.google.gdata.data.media.MediaFileSource;
 import com.google.gdata.data.media.MediaSource;
 import com.google.gdata.data.photos.AlbumEntry;
 import com.google.gdata.data.photos.AlbumFeed;
@@ -44,14 +44,18 @@ public class Picasa implements IPicasa {
 		realService.setUserCredentials(userName, password);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.photos.IPicasa#getRealService()
 	 */
 	public PicasawebService getRealService() {
 		return realService;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.photos.IPicasa#getAlbums()
 	 */
 	public List<AlbumEntry> getAlbums() throws Exception {
@@ -65,7 +69,9 @@ public class Picasa implements IPicasa {
 
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.photos.IPicasa#getAlbumById(java.lang.String)
 	 */
 	public AlbumEntry getAlbumById(String id) throws Exception {
@@ -74,7 +80,9 @@ public class Picasa implements IPicasa {
 				AlbumEntry.class);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.photos.IPicasa#getPhotoById(java.lang.String)
 	 */
 	public PhotoEntry getPhotoById(String id) throws Exception {
@@ -83,7 +91,9 @@ public class Picasa implements IPicasa {
 				PhotoEntry.class);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.photos.IPicasa#createAlbum(java.lang.String, java.lang.String)
 	 */
 	public AlbumEntry createAlbum(String title, String description)
@@ -91,8 +101,11 @@ public class Picasa implements IPicasa {
 		return createAlbum(title, description, false);
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.photos.IPicasa#createAlbum(java.lang.String, java.lang.String, boolean)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see goofs.photos.IPicasa#createAlbum(java.lang.String, java.lang.String,
+	 * boolean)
 	 */
 	public AlbumEntry createAlbum(String title, String description,
 			boolean isPublic) throws Exception {
@@ -110,8 +123,12 @@ public class Picasa implements IPicasa {
 						myAlbum);
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.photos.IPicasa#updateAlbum(com.google.gdata.data.photos.AlbumEntry, java.lang.String, java.lang.String)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * goofs.photos.IPicasa#updateAlbum(com.google.gdata.data.photos.AlbumEntry,
+	 * java.lang.String, java.lang.String)
 	 */
 	public AlbumEntry updateAlbum(AlbumEntry album, String title,
 			String description) throws Exception {
@@ -121,8 +138,11 @@ public class Picasa implements IPicasa {
 		return album.update();
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.photos.IPicasa#deleteAlbum(com.google.gdata.data.photos.AlbumEntry)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * goofs.photos.IPicasa#deleteAlbum(com.google.gdata.data.photos.AlbumEntry)
 	 */
 	public void deleteAlbum(AlbumEntry album) throws Exception {
 
@@ -134,8 +154,11 @@ public class Picasa implements IPicasa {
 		return parts[parts.length - 1];
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.photos.IPicasa#getPhotos(com.google.gdata.data.photos.AlbumEntry)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * goofs.photos.IPicasa#getPhotos(com.google.gdata.data.photos.AlbumEntry)
 	 */
 	public List<PhotoEntry> getPhotos(AlbumEntry album) throws Exception {
 
@@ -149,7 +172,9 @@ public class Picasa implements IPicasa {
 
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.photos.IPicasa#getPhotosByTag(java.lang.String)
 	 */
 	public List<PhotoEntry> getPhotosByTag(String tag) throws Exception {
@@ -172,11 +197,15 @@ public class Picasa implements IPicasa {
 
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.photos.IPicasa#createPhoto(com.google.gdata.data.photos.AlbumEntry, java.lang.String, java.lang.String, byte[])
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * goofs.photos.IPicasa#createPhoto(com.google.gdata.data.photos.AlbumEntry,
+	 * java.lang.String, java.lang.String, byte[])
 	 */
 	public PhotoEntry createPhoto(AlbumEntry album, String title,
-			String description, byte[] contents) throws Exception {
+			String description, java.io.File contents) throws Exception {
 
 		URL albumPostUrl = new URL(
 				"http://picasaweb.google.com/data/feed/api/user/default/albumid/"
@@ -192,14 +221,18 @@ public class Picasa implements IPicasa {
 					+ title);
 		}
 
-		MediaSource myMedia = new MediaByteArraySource(contents, mediaType);
+		MediaSource myMedia = new MediaFileSource(contents, mediaType);
 		myPhoto.setMediaSource(myMedia);
 
 		return getRealService().insert(albumPostUrl, myPhoto);
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.photos.IPicasa#updatePhoto(com.google.gdata.data.photos.PhotoEntry, java.lang.String, java.lang.String)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * goofs.photos.IPicasa#updatePhoto(com.google.gdata.data.photos.PhotoEntry,
+	 * java.lang.String, java.lang.String)
 	 */
 	public PhotoEntry updatePhoto(PhotoEntry photo, String title,
 			String description) throws Exception {
@@ -210,20 +243,28 @@ public class Picasa implements IPicasa {
 		return photo.update();
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.photos.IPicasa#updatePhotoContent(com.google.gdata.data.photos.PhotoEntry, byte[])
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * goofs.photos.IPicasa#updatePhotoContent(com.google.gdata.data.photos.
+	 * PhotoEntry, byte[])
 	 */
-	public PhotoEntry updatePhotoContent(PhotoEntry photo, byte[] contents)
+	public PhotoEntry updatePhotoContent(PhotoEntry photo, java.io.File contents)
 			throws Exception {
-		MediaSource myMedia = new MediaByteArraySource(contents, "image/jpeg");
+		MediaSource myMedia = new MediaFileSource(contents, "image/jpeg");
 
 		photo.setMediaSource(myMedia);
 
 		return photo.updateMedia(true);
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.photos.IPicasa#getPhotoContent(com.google.gdata.data.photos.PhotoEntry)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * goofs.photos.IPicasa#getPhotoContent(com.google.gdata.data.photos.PhotoEntry
+	 * )
 	 */
 	public byte[] getPhotoContent(PhotoEntry photo) throws Exception {
 
@@ -249,8 +290,12 @@ public class Picasa implements IPicasa {
 		return baos.toByteArray();
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.photos.IPicasa#getPhotoInputStream(com.google.gdata.data.photos.PhotoEntry)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * goofs.photos.IPicasa#getPhotoInputStream(com.google.gdata.data.photos
+	 * .PhotoEntry)
 	 */
 	public InputStream getPhotoInputStream(PhotoEntry photo) throws Exception {
 
