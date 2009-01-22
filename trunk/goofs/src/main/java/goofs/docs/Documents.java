@@ -1,7 +1,10 @@
 package goofs.docs;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gdata.client.docs.DocsService;
@@ -25,7 +28,6 @@ public class Documents implements IDocuments {
 
 		realService = new DocsService(APP_NAME);
 		realService.setUserCredentials(username, password);
-
 	}
 
 	public DocsService getRealService() {
@@ -141,6 +143,17 @@ public class Documents implements IDocuments {
 
 	}
 
+	public InputStream getDocumentContents(DocumentListEntry e)
+			throws Exception {
+
+		// need to do this one when
+		// http://code.google.com/p/gdata-issues/issues/detail?id=70
+		// is solved
+
+		return new ByteArrayInputStream(new byte[] {});
+
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -157,6 +170,54 @@ public class Documents implements IDocuments {
 
 	}
 
+	public List<DocumentListEntry> getRootDocuments() throws Exception {
+
+		List<DocumentListEntry> roots = new ArrayList<DocumentListEntry>();
+		for (DocumentListEntry next : getDocuments()) {
+
+			if (next.getFolders().isEmpty()) {
+				roots.add(next);
+			}
+		}
+		return roots;
+	}
+
+	public List<FolderEntry> getRootFolders() throws Exception {
+
+		List<FolderEntry> roots = new ArrayList<FolderEntry>();
+		for (FolderEntry next : getFolders()) {
+
+			if (next.getParentLinks().isEmpty()) {
+				roots.add(next);
+			}
+		}
+
+		return roots;
+
+	}
+
+	public List<FolderEntry> getChildFolders(String parentFolderId)
+			throws Exception {
+
+		return getChildFolders(getFolderById(parentFolderId));
+
+	}
+
+	public List<FolderEntry> getChildFolders(FolderEntry parent)
+			throws Exception {
+
+		List<FolderEntry> childs = new ArrayList<FolderEntry>();
+		for (FolderEntry next : getFolders()) {
+			for (Link link : next.getParentLinks()) {
+				if (link.getHref().equals(parent.getSelfLink().getHref())) {
+					childs.add(next);
+				}
+			}
+		}
+		return childs;
+
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -167,6 +228,32 @@ public class Documents implements IDocuments {
 		DocumentListEntry doc = getDocumentById(id);
 
 		doc.delete();
+	}
+
+	public void deleteFolder(String id) throws Exception {
+
+		FolderEntry folder = getFolderById(id);
+
+		folder.delete();
+	}
+
+	public void renameDocument(String id, String name) throws Exception {
+
+		DocumentListEntry doc = getDocumentById(id);
+
+		doc.setTitle(new PlainTextConstruct(name));
+
+		doc.update();
+
+	}
+
+	public void renameFolder(String id, String name) throws Exception {
+
+		FolderEntry folder = getFolderById(id);
+
+		folder.setTitle(new PlainTextConstruct(name));
+
+		folder.update();
 	}
 
 	/*
@@ -238,6 +325,17 @@ public class Documents implements IDocuments {
 
 	}
 
+	public FolderEntry creatFolder(String name) throws Exception {
+
+		FolderEntry folder = new FolderEntry();
+		folder.setTitle(new PlainTextConstruct(name));
+
+		return getRealService().insert(
+				new URL("http://docs.google.com/feeds/documents/private/full"),
+				folder);
+
+	}
+
 	protected <T extends DocumentListEntry> T createDocument(String name,
 			File contents, String folderId, T newDocument) throws Exception {
 
@@ -252,7 +350,49 @@ public class Documents implements IDocuments {
 		if (folderId != null) {
 			addDocumentToFolder(folderId, created);
 		}
+
 		return created;
+
+	}
+
+	public boolean isWPDocument(String fileName) {
+
+		MediaType m = MediaType.fromFileName(fileName);
+
+		return (m != null && (m.equals(MediaType.DOC)
+				|| m.equals(MediaType.RTF) || m.equals(MediaType.ODT)
+				|| m.equals(MediaType.TXT) || m.equals(MediaType.HTM) || m
+				.equals(MediaType.HTML)));
+	}
+
+	public boolean isSpreadSheet(String fileName) {
+
+		MediaType m = MediaType.fromFileName(fileName);
+
+		return (m != null && (m.equals(MediaType.XLS)
+				|| m.equals(MediaType.CSV) || m.equals(MediaType.ODS)
+				|| m.equals(MediaType.TAB) || m.equals(MediaType.TSV)));
+
+	}
+
+	public boolean isPresentation(String fileName) {
+
+		MediaType m = MediaType.fromFileName(fileName);
+
+		return (m != null && (m.equals(MediaType.PPT) || m
+				.equals(MediaType.PPS)));
+
+	}
+
+	public void updateDocumentContent(String id, File contents)
+			throws Exception {
+
+		DocumentListEntry doc = getDocumentById(id);
+
+		doc.setFile(contents, MediaType.fromFileName(
+				doc.getTitle().getPlainText()).getMimeType());
+
+		doc.updateMedia(false);
 
 	}
 

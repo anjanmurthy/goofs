@@ -4,6 +4,7 @@ import fuse.Errno;
 import goofs.fs.blogger.BlogsDir;
 import goofs.fs.calendar.CalendarsDir;
 import goofs.fs.contacts.ContactsDir;
+import goofs.fs.docs.DocsDir;
 import goofs.fs.photos.PhotosDir;
 
 public class RootDir extends Dir implements ResourceAware {
@@ -36,6 +37,12 @@ public class RootDir extends Dir implements ResourceAware {
 		if (Boolean.TRUE.toString().equals(
 				resourceBundle.getString("goofs.calendar.enabled"))) {
 			t = new AddDirThread(this, CalendarsDir.class);
+			t.start();
+		}
+		
+		if (Boolean.TRUE.toString().equals(
+				resourceBundle.getString("goofs.docs.enabled"))) {
+			t = new AddDirThread(this, DocsDir.class);
 			t.start();
 		}
 

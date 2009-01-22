@@ -33,6 +33,7 @@ public class DiscoverTask extends TimerTask {
 	protected void discover(Dir root) {
 
 		try {
+
 			Iterator<Node> it = root.getFiles().values().iterator();
 
 			while (it.hasNext()) {
@@ -58,6 +59,7 @@ public class DiscoverTask extends TimerTask {
 				}
 
 			}
+
 		} catch (Exception e) {
 
 			e.printStackTrace();

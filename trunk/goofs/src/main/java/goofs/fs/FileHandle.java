@@ -50,9 +50,7 @@ public class FileHandle {
 
 	public int flush() {
 
-		if (getNode() instanceof DiskFile) {
-			((DiskFile) getNode()).flush();
-		}
+		((File) getNode()).flush();
 
 		return 0;
 	}

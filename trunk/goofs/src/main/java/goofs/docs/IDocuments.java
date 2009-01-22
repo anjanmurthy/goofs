@@ -3,6 +3,7 @@ package goofs.docs;
 import goofs.GoofsService;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.List;
 
 import com.google.gdata.data.Link;
@@ -30,12 +31,32 @@ public interface IDocuments extends GoofsService {
 	public abstract DocumentListEntry getDocumentById(String id)
 			throws Exception;
 
+	public abstract InputStream getDocumentContents(DocumentListEntry e)
+			throws Exception;
+
 	public abstract FolderEntry getFolderById(String id) throws Exception;
 
 	public abstract List<Link> getFolderParentLinks(String folderId)
 			throws Exception;
 
+	public abstract List<DocumentListEntry> getRootDocuments() throws Exception;
+
+	public abstract List<FolderEntry> getRootFolders() throws Exception;
+
+	public abstract List<FolderEntry> getChildFolders(String parentFolderId)
+			throws Exception;
+
+	public abstract List<FolderEntry> getChildFolders(FolderEntry parent)
+			throws Exception;
+
 	public abstract void deleteDocument(String id) throws Exception;
+
+	public abstract void deleteFolder(String id) throws Exception;
+
+	public abstract void renameDocument(String id, String name)
+			throws Exception;
+
+	public abstract void renameFolder(String id, String name) throws Exception;
 
 	public abstract void removeDocumentFromFolder(String folderId, String docId)
 			throws Exception;
@@ -46,6 +67,8 @@ public interface IDocuments extends GoofsService {
 	public abstract void moveFolderToFolder(String toFolderId,
 			String fromFolderId) throws Exception;
 
+	public abstract FolderEntry creatFolder(String name) throws Exception;
+
 	public abstract DocumentEntry createWPDocument(String name, File contents,
 			String folderName) throws Exception;
 
@@ -54,5 +77,14 @@ public interface IDocuments extends GoofsService {
 
 	public abstract PresentationEntry createPresentation(String name,
 			File contents, String folderName) throws Exception;
+
+	public abstract void updateDocumentContent(String id, File contents)
+			throws Exception;
+
+	public abstract boolean isWPDocument(String fileName);
+
+	public abstract boolean isSpreadSheet(String fileName);
+
+	public abstract boolean isPresentation(String fileName);
 
 }
