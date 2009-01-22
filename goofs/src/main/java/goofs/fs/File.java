@@ -32,6 +32,10 @@ public abstract class File extends Node {
 
 	}
 
+	public void flush() {
+		// no need here
+	}
+
 	public byte[] getContent() {
 		return content;
 	}

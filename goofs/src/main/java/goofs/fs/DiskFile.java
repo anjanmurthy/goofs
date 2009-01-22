@@ -1,5 +1,6 @@
 package goofs.fs;
 
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -32,15 +33,11 @@ public abstract class DiskFile extends File {
 
 	}
 
-	public void flush() {
-
-	}
-
 	public byte[] getContent() {
 
 		byte[] result = null;
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		byte[] buf = new byte[256];
+		byte[] buf = new byte[1024];
 
 		try {
 			FileInputStream fis = new FileInputStream(getDisk());
@@ -89,9 +86,10 @@ public abstract class DiskFile extends File {
 	public void setContent(byte[] content) {
 
 		try {
-			FileOutputStream fos = new FileOutputStream(getDisk());
-			fos.write(content);
-			fos.close();
+			BufferedOutputStream bos = new BufferedOutputStream(
+					new FileOutputStream(getDisk()));
+			bos.write(content);
+			bos.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -105,7 +103,7 @@ public abstract class DiskFile extends File {
 
 		try {
 
-			byte[] buff = new byte[256];
+			byte[] buff = new byte[1024];
 			int bytesRead = 0;
 
 			while ((bytesRead = is.read(buff)) != -1) {
