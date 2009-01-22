@@ -43,7 +43,11 @@ public class DocsFolderDir extends Dir implements EntryContainer {
 	}
 
 	public void addNewEntryById(String entryId) throws Exception {
-		add(new DocsFolderDir(this, getDocuments().getFolderById(entryId)));
+		if (entryId.indexOf("/folder") != -1) {
+			add(new DocsFolderDir(this, getDocuments().getFolderById(entryId)));
+		} else {
+			add(new DocsFile(this, getDocuments().getDocumentById(entryId)));
+		}
 	}
 
 	public Set<String> getCurrentEntryIds() throws Exception {
