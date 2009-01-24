@@ -3,7 +3,6 @@ package goofs.fs.blogger;
 import fuse.Errno;
 import goofs.Fetchable;
 import goofs.Identifiable;
-import goofs.NotFoundException;
 import goofs.blogger.Blog;
 import goofs.blogger.IBlogger;
 import goofs.blogger.Post;
@@ -43,25 +42,15 @@ public class PostDir extends Dir implements Identifiable, Fetchable {
 		this.postId = postId;
 	}
 
-	public Post getPost() {
+	public Post getPost() throws Exception {
 
-		try {
-			return getBlogger().getPostById(getPostId());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		return getBlogger().getPostById(getPostId());
 
-			return null;
-		}
 	}
 
-	public Object fetch() throws NotFoundException {
+	public Object fetch() throws Exception {
 
-		Object o = getPost();
-		if (o == null) {
-			throw new NotFoundException(toString());
-		}
-		return o;
+		return getPost();
 
 	}
 
@@ -72,7 +61,7 @@ public class PostDir extends Dir implements Identifiable, Fetchable {
 		return parentDir.getBlogger();
 	}
 
-	protected Blog getBlog() {
+	protected Blog getBlog() throws Exception {
 		return ((BlogDir) getParent()).getBlog();
 
 	}
@@ -107,6 +96,19 @@ public class PostDir extends Dir implements Identifiable, Fetchable {
 
 	@Override
 	public int createChild(String name, boolean isDir) {
+
+		if (!isDir) {
+			try {
+				PostContentFile f = new PostContentFile(this, name);
+
+				add(f);
+
+				return 0;
+
+			} catch (Exception e) {
+				return Errno.EROFS;
+			}
+		}
 
 		return Errno.EROFS;
 

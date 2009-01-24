@@ -227,7 +227,7 @@ public class GoofsFS implements Filesystem3, XattrSupport, ResourceAware {
 
 		java.io.File f = new java.io.File(to);
 
-		return n.rename(p, f.getName());
+		return n.move(p, f.getName());
 	}
 
 	public int rmdir(String path) throws FuseException {

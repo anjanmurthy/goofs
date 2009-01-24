@@ -3,7 +3,6 @@ package goofs.fs.photos;
 import fuse.Errno;
 import goofs.Fetchable;
 import goofs.Identifiable;
-import goofs.NotFoundException;
 import goofs.fs.Dir;
 import goofs.fs.DiskFile;
 import goofs.photos.IPicasa;
@@ -47,25 +46,16 @@ public class PhotoFile extends DiskFile implements Identifiable, Fetchable {
 		this.photoId = photoId;
 	}
 
-	public PhotoEntry getPhoto() {
+	public PhotoEntry getPhoto() throws Exception {
 
-		try {
-			return (PhotoEntry) getPicasa().getPhotoById(getPhotoId());
-		} catch (Exception e) {
+		return (PhotoEntry) getPicasa().getPhotoById(getPhotoId());
 
-			e.printStackTrace();
-
-			return null;
-		}
 	}
 
-	public Object fetch() throws NotFoundException {
+	public Object fetch() throws Exception {
 
-		Object o = getPhoto();
-		if (o == null) {
-			throw new NotFoundException(toString());
-		}
-		return o;
+		return getPhoto();
+
 	}
 
 	protected IPicasa getPicasa() {
@@ -73,7 +63,7 @@ public class PhotoFile extends DiskFile implements Identifiable, Fetchable {
 		return ((PhotosDir) getParent().getParent().getParent()).getPicasa();
 	}
 
-	protected AlbumEntry getAlbum() {
+	protected AlbumEntry getAlbum() throws Exception {
 
 		return ((AlbumDir) getParent()).getAlbum();
 	}
@@ -95,10 +85,6 @@ public class PhotoFile extends DiskFile implements Identifiable, Fetchable {
 
 		} catch (Exception e) {
 			e.printStackTrace();
-
-			if (getPhoto() == null) {
-				remove();
-			}
 
 			return Errno.ENOENT;
 

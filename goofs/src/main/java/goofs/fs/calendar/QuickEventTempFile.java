@@ -18,7 +18,7 @@ public class QuickEventTempFile extends SimpleFile {
 		return ((CalendarsDir) getParent().getParent()).getCalendarService();
 	}
 
-	protected CalendarEntry getCalendar() {
+	protected CalendarEntry getCalendar() throws Exception {
 
 		return ((CalendarDir) getParent()).getCalendar();
 

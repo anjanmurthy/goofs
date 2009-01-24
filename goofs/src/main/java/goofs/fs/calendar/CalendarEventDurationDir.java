@@ -81,7 +81,7 @@ public class CalendarEventDurationDir extends Dir implements EntryContainer {
 		return ((CalendarsDir) getParent().getParent()).getCalendarService();
 	}
 
-	protected CalendarEntry getCalendar() {
+	protected CalendarEntry getCalendar() throws Exception {
 
 		return ((CalendarDir) getParent()).getCalendar();
 

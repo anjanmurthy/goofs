@@ -42,20 +42,19 @@ public class ContactEmailTempFile extends SimpleFile {
 		if (rt == 0) {
 
 			if (RELS.contains(getName())) {
+				try {
+					IContacts contacts = ((ContactEmailDir) getParent())
+							.getContacts();
+					ContactEntry contact = ((ContactEmailDir) getParent())
+							.getContact();
 
-				IContacts contacts = ((ContactEmailDir) getParent())
-						.getContacts();
-				ContactEntry contact = ((ContactEmailDir) getParent())
-						.getContact();
+					List<Email> emails = contact.getEmailAddresses();
 
-				List<Email> emails = contact.getEmailAddresses();
+					Email e = findMatch(emails);
 
-				Email e = findMatch(emails);
+					if (e != null) {
+						e.setAddress(new String(getContent()));
 
-				if (e != null) {
-					e.setAddress(new String(getContent()));
-
-					try {
 						contacts.updateContact(contact);
 
 						remove();
@@ -64,12 +63,13 @@ public class ContactEmailTempFile extends SimpleFile {
 
 						return 0;
 
-					} catch (Exception e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-
-						return Errno.EROFS;
 					}
+
+				} catch (Exception e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+
+					return Errno.EROFS;
 				}
 			}
 

@@ -1,5 +1,6 @@
 package goofs.fs.docs;
 
+import fuse.Errno;
 import goofs.docs.IDocuments;
 import goofs.fs.Dir;
 import goofs.fs.DiskFile;
@@ -97,6 +98,8 @@ public class DocsTempFile extends DiskFile {
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				
+				return Errno.EROFS;
 			}
 
 		}

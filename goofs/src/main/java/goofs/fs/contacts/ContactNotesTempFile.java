@@ -25,15 +25,17 @@ public class ContactNotesTempFile extends SimpleFile {
 			if (resourceBundle.getString("goofs.contacts.notes").equals(
 					getName())) {
 
-				IContacts contacts = ((ContactsDir) getParent().getParent())
-						.getContacts();
-
-				ContactEntry contact = ((ContactDir) getParent()).getContact();
-
-				contact.setContent(new PlainTextConstruct(new String(
-						getContent())));
-
 				try {
+
+					IContacts contacts = ((ContactsDir) getParent().getParent())
+							.getContacts();
+
+					ContactEntry contact = ((ContactDir) getParent())
+							.getContact();
+
+					contact.setContent(new PlainTextConstruct(new String(
+							getContent())));
+
 					contacts.updateContact(contact);
 
 					remove();
