@@ -8,4 +8,4 @@ JAVA_HOME=/usr/lib/jvm/java-1.5.0-sun-1.5.0_update17/jre
 GOOFS_HOME=/home/rwynn/Desktop/goofs
 #####################################################################
 
-$JAVA_HOME/bin/java -Dusername=$1 -Dpassword=$2 -Djava.library.path=$GOOFS_HOME/jni/fuse-2.7.2 -jar $GOOFS_HOME/goofs.jar -f $3
+$JAVA_HOME/bin/java -Djava.library.path=$GOOFS_HOME/jni/fuse-2.7.2 -jar $GOOFS_HOME/goofs.jar -f $1

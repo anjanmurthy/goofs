@@ -1,6 +1,7 @@
 package goofs.fs.calendar;
 
 import fuse.Errno;
+import goofs.GoofsProperties;
 import goofs.calendar.ICalendar;
 import goofs.fs.Dir;
 import goofs.fs.File;
@@ -15,8 +16,8 @@ public class CalendarEventRecurrenceFile extends File {
 	public CalendarEventRecurrenceFile(Dir parent, CalendarEventEntry event)
 			throws Exception {
 
-		super(parent, resourceBundle.getString("goofs.calendar.recurrence"),
-				0755, "");
+		super(parent, GoofsProperties.INSTANCE
+				.getProperty("goofs.calendar.recurrence"), 0755, "");
 
 		setContent(getRecurrence(event).getBytes());
 

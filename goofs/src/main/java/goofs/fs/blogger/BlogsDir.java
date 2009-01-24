@@ -2,6 +2,7 @@ package goofs.fs.blogger;
 
 import fuse.Errno;
 import goofs.EntryContainer;
+import goofs.GoofsProperties;
 import goofs.ServiceFactory;
 import goofs.blogger.Blog;
 import goofs.blogger.IBlogger;
@@ -20,7 +21,8 @@ public class BlogsDir extends Dir implements EntryContainer {
 
 	public BlogsDir(Dir parent) throws Exception {
 
-		super(parent, resourceBundle.getString("goofs.blogger.blogs"), 0755);
+		super(parent, GoofsProperties.INSTANCE
+				.getProperty("goofs.blogger.blogs"), 0755);
 
 		blogger = (IBlogger) ServiceFactory.getService(IBlogger.class);
 

@@ -20,8 +20,9 @@ import fuse.FuseSizeSetter;
 import fuse.FuseStatfsSetter;
 import fuse.XattrLister;
 import fuse.XattrSupport;
+import goofs.GoofsProperties;
 
-public class GoofsFS implements Filesystem3, XattrSupport, ResourceAware {
+public class GoofsFS implements Filesystem3, XattrSupport {
 
 	protected static final Log log = LogFactory.getLog(GoofsFS.class);
 
@@ -40,15 +41,17 @@ public class GoofsFS implements Filesystem3, XattrSupport, ResourceAware {
 
 		cleanupTimer = new Timer(true);
 		cleanupTimer.schedule(new CleanupTask(root), Integer
-				.parseInt(resourceBundle.getString("goofs.cleanup.delay")),
-				Integer.parseInt(resourceBundle
-						.getString("goofs.cleanup.period")));
+				.parseInt(GoofsProperties.INSTANCE
+						.getProperty("goofs.cleanup.delay")), Integer
+				.parseInt(GoofsProperties.INSTANCE
+						.getProperty("goofs.cleanup.period")));
 
 		discoverTimer = new Timer(true);
 		discoverTimer.schedule(new DiscoverTask(root), Integer
-				.parseInt(resourceBundle.getString("goofs.discover.delay")),
-				Integer.parseInt(resourceBundle
-						.getString("goofs.discover.period")));
+				.parseInt(GoofsProperties.INSTANCE
+						.getProperty("goofs.discover.delay")), Integer
+				.parseInt(GoofsProperties.INSTANCE
+						.getProperty("goofs.discover.period")));
 
 	}
 

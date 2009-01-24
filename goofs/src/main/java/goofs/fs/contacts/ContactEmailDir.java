@@ -1,6 +1,7 @@
 package goofs.fs.contacts;
 
 import fuse.Errno;
+import goofs.GoofsProperties;
 import goofs.contacts.IContacts;
 import goofs.fs.Dir;
 import goofs.fs.Node;
@@ -14,7 +15,8 @@ public class ContactEmailDir extends Dir {
 
 	public ContactEmailDir(Dir parent) throws Exception {
 
-		super(parent, resourceBundle.getString("goofs.contacts.email"), 0755);
+		super(parent, GoofsProperties.INSTANCE
+				.getProperty("goofs.contacts.email"), 0755);
 
 		List<Email> emails = getContact().getEmailAddresses();
 

@@ -1,6 +1,7 @@
 package goofs.fs.contacts;
 
 import fuse.Errno;
+import goofs.GoofsProperties;
 import goofs.contacts.IContacts;
 import goofs.fs.Dir;
 import goofs.fs.SimpleFile;
@@ -22,8 +23,8 @@ public class ContactNotesTempFile extends SimpleFile {
 
 		if (rt == 0) {
 
-			if (resourceBundle.getString("goofs.contacts.notes").equals(
-					getName())) {
+			if (GoofsProperties.INSTANCE.getProperty("goofs.contacts.notes")
+					.equals(getName())) {
 
 				try {
 

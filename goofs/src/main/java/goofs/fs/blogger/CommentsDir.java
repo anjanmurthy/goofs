@@ -2,6 +2,7 @@ package goofs.fs.blogger;
 
 import fuse.Errno;
 import goofs.EntryContainer;
+import goofs.GoofsProperties;
 import goofs.blogger.Blog;
 import goofs.blogger.Comment;
 import goofs.blogger.IBlogger;
@@ -19,7 +20,8 @@ public class CommentsDir extends SimpleDir implements EntryContainer {
 	protected Set<String> entryIds = new HashSet<String>();
 
 	public CommentsDir(Dir parent) {
-		super(parent, resourceBundle.getString("goofs.blogger.comments"));
+		super(parent, GoofsProperties.INSTANCE
+				.getProperty("goofs.blogger.comments"));
 
 		try {
 			List<Comment> comments = getBlogger().getComments(getBlog(),

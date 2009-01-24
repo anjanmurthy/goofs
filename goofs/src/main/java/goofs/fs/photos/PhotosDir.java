@@ -1,6 +1,7 @@
 package goofs.fs.photos;
 
 import fuse.Errno;
+import goofs.GoofsProperties;
 import goofs.ServiceFactory;
 import goofs.fs.Dir;
 import goofs.fs.Node;
@@ -12,7 +13,8 @@ public class PhotosDir extends Dir {
 
 	public PhotosDir(Dir parent) throws Exception {
 
-		super(parent, resourceBundle.getString("goofs.photos.photos"), 0755);
+		super(parent, GoofsProperties.INSTANCE
+				.getProperty("goofs.photos.photos"), 0755);
 
 		picasa = (IPicasa) ServiceFactory.getService(IPicasa.class);
 

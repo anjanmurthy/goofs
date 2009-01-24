@@ -1,6 +1,7 @@
 package goofs.fs.contacts;
 
 import fuse.Errno;
+import goofs.GoofsProperties;
 import goofs.contacts.IContacts;
 import goofs.fs.Dir;
 import goofs.fs.File;
@@ -12,9 +13,10 @@ public class ContactNotesFile extends File {
 
 	public ContactNotesFile(Dir parent, ContactEntry contact) throws Exception {
 
-		super(parent, resourceBundle.getString("goofs.contacts.notes"), 0755,
-				(contact.getContent() == null) ? "" : contact.getTextContent()
-						.getContent().getPlainText());
+		super(parent, GoofsProperties.INSTANCE
+				.getProperty("goofs.contacts.notes"), 0755, (contact
+				.getContent() == null) ? "" : contact.getTextContent()
+				.getContent().getPlainText());
 
 	}
 

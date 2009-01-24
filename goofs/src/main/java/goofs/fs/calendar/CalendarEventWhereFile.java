@@ -1,6 +1,7 @@
 package goofs.fs.calendar;
 
 import fuse.Errno;
+import goofs.GoofsProperties;
 import goofs.calendar.ICalendar;
 import goofs.fs.Dir;
 import goofs.fs.File;
@@ -16,8 +17,8 @@ public class CalendarEventWhereFile extends File {
 	public CalendarEventWhereFile(Dir parent, CalendarEventEntry event)
 			throws Exception {
 
-		super(parent, resourceBundle.getString("goofs.calendar.where"), 0755,
-				"");
+		super(parent, GoofsProperties.INSTANCE
+				.getProperty("goofs.calendar.where"), 0755, "");
 
 		setContent(getWhere(event).getBytes());
 
