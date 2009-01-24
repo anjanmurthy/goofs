@@ -38,8 +38,8 @@ public class ServiceInvocationHandler implements InvocationHandler {
 				// let's try to re-establish a connection
 
 				getTarget().getRealService().setUserCredentials(
-						System.getProperty("username"),
-						System.getProperty("password"));
+						GoofsProperties.INSTANCE.getProperty("username"),
+						GoofsProperties.INSTANCE.getProperty("password"));
 
 				// try one more time
 

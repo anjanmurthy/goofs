@@ -2,6 +2,7 @@ package goofs.fs.calendar;
 
 import fuse.Errno;
 import goofs.EntryContainer;
+import goofs.GoofsProperties;
 import goofs.ServiceFactory;
 import goofs.calendar.ICalendar;
 import goofs.fs.Dir;
@@ -21,8 +22,8 @@ public class CalendarsDir extends Dir implements EntryContainer {
 
 	public CalendarsDir(Dir parent) throws Exception {
 
-		super(parent, resourceBundle.getString("goofs.calendar.calendars"),
-				0755);
+		super(parent, GoofsProperties.INSTANCE
+				.getProperty("goofs.calendar.calendars"), 0755);
 
 		calendarService = (ICalendar) ServiceFactory
 				.getService(ICalendar.class);

@@ -2,6 +2,7 @@ package goofs.fs.docs;
 
 import fuse.Errno;
 import goofs.EntryContainer;
+import goofs.GoofsProperties;
 import goofs.ServiceFactory;
 import goofs.docs.IDocuments;
 import goofs.fs.Dir;
@@ -22,7 +23,8 @@ public class DocsDir extends Dir implements EntryContainer {
 
 	public DocsDir(Dir parent) throws Exception {
 
-		super(parent, resourceBundle.getString("goofs.docs.documents"), 0755);
+		super(parent, GoofsProperties.INSTANCE
+				.getProperty("goofs.docs.documents"), 0755);
 
 		documents = (IDocuments) ServiceFactory.getService(IDocuments.class);
 

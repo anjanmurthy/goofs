@@ -2,6 +2,7 @@ package goofs.fs.photos;
 
 import fuse.Errno;
 import goofs.EntryContainer;
+import goofs.GoofsProperties;
 import goofs.fs.Dir;
 import goofs.fs.SimpleDir;
 import goofs.photos.IPicasa;
@@ -18,7 +19,8 @@ public class PrivateAlbumDir extends SimpleDir implements EntryContainer {
 
 	public PrivateAlbumDir(Dir parent) throws Exception {
 
-		super(parent, resourceBundle.getString("goofs.photos.private"));
+		super(parent, GoofsProperties.INSTANCE
+				.getProperty("goofs.photos.private"));
 
 		List<AlbumEntry> albums = getPicasa().getAlbums();
 

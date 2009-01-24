@@ -5,7 +5,7 @@ import java.util.Map;
 
 import fuse.Errno;
 
-public abstract class Node implements ResourceAware {
+public abstract class Node {
 
 	protected static int nfiles = 0;
 	protected String name;

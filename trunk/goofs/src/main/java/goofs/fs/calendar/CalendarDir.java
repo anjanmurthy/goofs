@@ -2,6 +2,7 @@ package goofs.fs.calendar;
 
 import fuse.Errno;
 import goofs.Fetchable;
+import goofs.GoofsProperties;
 import goofs.Identifiable;
 import goofs.calendar.ICalendar;
 import goofs.fs.Dir;
@@ -34,16 +35,16 @@ public class CalendarDir extends Dir implements Identifiable, Fetchable {
 		end.set(java.util.Calendar.MILLISECOND, 999);
 
 		CalendarEventDurationDir next = new CalendarEventDurationDir(this,
-				resourceBundle.getString("goofs.calendar.today"), cal, start
-						.getTime(), end.getTime());
+				GoofsProperties.INSTANCE.getProperty("goofs.calendar.today"),
+				cal, start.getTime(), end.getTime());
 
 		add(next);
 
 		start.setTime(end.getTime());
 		end.add(java.util.Calendar.DATE, 6);
 
-		next = new CalendarEventDurationDir(this, resourceBundle
-				.getString("goofs.calendar.next7"), cal, start.getTime(), end
+		next = new CalendarEventDurationDir(this, GoofsProperties.INSTANCE
+				.getProperty("goofs.calendar.next7"), cal, start.getTime(), end
 				.getTime());
 
 		add(next);
@@ -51,9 +52,9 @@ public class CalendarDir extends Dir implements Identifiable, Fetchable {
 		start.setTime(end.getTime());
 		end.add(java.util.Calendar.DATE, 23);
 
-		next = new CalendarEventDurationDir(this, resourceBundle
-				.getString("goofs.calendar.next30"), cal, start.getTime(), end
-				.getTime());
+		next = new CalendarEventDurationDir(this, GoofsProperties.INSTANCE
+				.getProperty("goofs.calendar.next30"), cal, start.getTime(),
+				end.getTime());
 
 		add(next);
 

@@ -20,8 +20,8 @@ public class ServiceFactory {
 
 		GoofsService gs = null;
 
-		String u = System.getProperty("username");
-		String p = System.getProperty("password");
+		String u = GoofsProperties.INSTANCE.getProperty("username");
+		String p = GoofsProperties.INSTANCE.getProperty("password");
 
 		if (clazz == IBlogger.class) {
 			gs = new Blogger(u, p);

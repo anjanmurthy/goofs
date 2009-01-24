@@ -2,6 +2,7 @@ package goofs.fs.contacts;
 
 import fuse.Errno;
 import goofs.Fetchable;
+import goofs.GoofsProperties;
 import goofs.Identifiable;
 import goofs.contacts.IContacts;
 import goofs.fs.Dir;
@@ -81,7 +82,8 @@ public class ContactDir extends Dir implements Identifiable, Fetchable {
 	public int createChild(String name, boolean isDir) {
 
 		try {
-			if (name.equals(resourceBundle.getString("goofs.contacts.notes"))) {
+			if (name.equals(GoofsProperties.INSTANCE
+					.getProperty("goofs.contacts.notes"))) {
 
 				add(new ContactNotesFile(this, getContact()));
 

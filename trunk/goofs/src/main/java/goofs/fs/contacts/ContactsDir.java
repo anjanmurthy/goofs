@@ -1,6 +1,7 @@
 package goofs.fs.contacts;
 
 import fuse.Errno;
+import goofs.GoofsProperties;
 import goofs.ServiceFactory;
 import goofs.contacts.IContacts;
 import goofs.fs.Dir;
@@ -16,7 +17,8 @@ public class ContactsDir extends Dir {
 
 	public ContactsDir(Dir parent) throws Exception {
 
-		super(parent, resourceBundle.getString("goofs.contacts.contacts"), 0755);
+		super(parent, GoofsProperties.INSTANCE
+				.getProperty("goofs.contacts.contacts"), 0755);
 
 		contacts = (IContacts) ServiceFactory.getService(IContacts.class);
 
