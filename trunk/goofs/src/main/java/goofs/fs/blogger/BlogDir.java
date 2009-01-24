@@ -1,9 +1,9 @@
 package goofs.fs.blogger;
 
 import fuse.Errno;
+import goofs.EntryContainer;
 import goofs.Fetchable;
 import goofs.Identifiable;
-import goofs.NotFoundException;
 import goofs.blogger.Blog;
 import goofs.blogger.IBlogger;
 import goofs.blogger.Post;
@@ -11,11 +11,16 @@ import goofs.fs.Dir;
 import goofs.fs.Node;
 import goofs.fs.SimpleFile;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-public class BlogDir extends Dir implements Identifiable, Fetchable {
+public class BlogDir extends Dir implements EntryContainer, Identifiable,
+		Fetchable {
 
 	private String blogId;
+
+	protected Set<String> entryIds = new HashSet<String>();
 
 	public BlogDir(Dir parent, Blog blog) throws Exception {
 
@@ -30,7 +35,41 @@ public class BlogDir extends Dir implements Identifiable, Fetchable {
 			PostDir postDir = new PostDir(this, post);
 
 			add(postDir);
+
+			entryIds.add(post.getEntry().getSelfLink().getHref());
 		}
+
+	}
+
+	public void addNewEntryById(String entryId) throws Exception {
+
+		Post post = getBlogger().getPostById(entryId);
+
+		PostDir postDir = new PostDir(this, post);
+
+		add(postDir);
+
+		entryIds.add(post.getEntry().getSelfLink().getHref());
+
+	}
+
+	public Set<String> getCurrentEntryIds() throws Exception {
+
+		Set<String> current = new HashSet<String>();
+		List<Post> posts = getBlogger().getPosts(getBlog());
+
+		for (Post post : posts) {
+
+			current.add(post.getEntry().getSelfLink().getHref());
+		}
+
+		return current;
+
+	}
+
+	public Set<String> getEntryIds() {
+
+		return entryIds;
 
 	}
 
@@ -53,25 +92,15 @@ public class BlogDir extends Dir implements Identifiable, Fetchable {
 		return parentDir.getBlogger();
 	}
 
-	public Blog getBlog() {
+	public Blog getBlog() throws Exception {
 
-		try {
-			return getBlogger().getBlogById(getBlogId());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		return getBlogger().getBlogById(getBlogId());
 
-			return null;
-		}
 	}
 
-	public Object fetch() throws NotFoundException {
+	public Object fetch() throws Exception {
 
-		Object o = getBlog();
-		if (o == null) {
-			throw new NotFoundException(toString());
-		}
-		return o;
+		return getBlog();
 	}
 
 	@Override

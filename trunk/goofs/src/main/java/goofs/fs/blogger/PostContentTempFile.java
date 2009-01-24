@@ -20,11 +20,11 @@ public class PostContentTempFile extends SimpleFile {
 
 		if (rt == 0) {
 
-			Post post = ((PostDir) getParent()).getPost();
-
-			IBlogger blogger = ((PostDir) getParent()).getBlogger();
-
 			try {
+
+				Post post = ((PostDir) getParent()).getPost();
+
+				IBlogger blogger = ((PostDir) getParent()).getBlogger();
 
 				blogger.updatePost(post, null, new String(getContent()));
 

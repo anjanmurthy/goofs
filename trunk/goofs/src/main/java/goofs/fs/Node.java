@@ -3,6 +3,8 @@ package goofs.fs;
 import java.util.HashMap;
 import java.util.Map;
 
+import fuse.Errno;
+
 public abstract class Node implements ResourceAware {
 
 	protected static int nfiles = 0;
@@ -103,6 +105,37 @@ public abstract class Node implements ResourceAware {
 
 	public void updateModifyTime() {
 		setModifyTime((int) (System.currentTimeMillis() / 1000L));
+	}
+
+	public final int move(Dir newParent, String name) {
+
+		// handle common backup operations
+		if (getParent() == newParent) {
+			if (this instanceof File) {
+
+				if (File.isTempFile(name)) {
+
+					try {
+						((Dir) getParent()).add(new SimpleFile(
+								(Dir) getParent(), name));
+
+						remove();
+
+					}
+
+					catch (Exception e) {
+
+						return Errno.EROFS;
+					}
+
+					return 0;
+
+				}
+			}
+		}
+
+		return rename(newParent, name);
+
 	}
 
 	public abstract void remove();

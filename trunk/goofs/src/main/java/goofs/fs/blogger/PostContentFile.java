@@ -9,11 +9,28 @@ import goofs.fs.File;
 
 public class PostContentFile extends File {
 
+	protected String postId;
+
 	public PostContentFile(Dir parent, Post post) throws Exception {
 
 		super(parent, post.getEntry().getTitle().getPlainText(), 0755, post
 				.getContent());
 
+		setPostId(post.getEntry().getSelfLink().getHref());
+
+	}
+
+	public PostContentFile(Dir parent, String name) throws Exception {
+
+		super(parent, name, 0755, "");
+	}
+
+	protected String getPostId() {
+		return postId;
+	}
+
+	protected void setPostId(String postId) {
+		this.postId = postId;
 	}
 
 	protected IBlogger getBlogger() {
@@ -23,12 +40,12 @@ public class PostContentFile extends File {
 		return parentDir.getBlogger();
 	}
 
-	protected Blog getBlog() {
+	protected Blog getBlog() throws Exception {
 		return ((BlogDir) getParent().getParent()).getBlog();
 
 	}
 
-	protected Post getPost() {
+	protected Post getPost() throws Exception {
 
 		return ((PostDir) getParent()).getPost();
 	}
@@ -48,7 +65,17 @@ public class PostContentFile extends File {
 
 	@Override
 	public int delete() {
-		return Errno.ENOENT;
+
+		try {
+			getBlogger().deletePost(getPost());
+
+			getParent().remove();
+
+			return 0;
+		} catch (Exception e) {
+			return Errno.ENOENT;
+		}
+
 	}
 
 	@Override
@@ -57,6 +84,7 @@ public class PostContentFile extends File {
 		if (getParent() == newParent) {
 
 			setName(name);
+
 		}
 
 		return 0;

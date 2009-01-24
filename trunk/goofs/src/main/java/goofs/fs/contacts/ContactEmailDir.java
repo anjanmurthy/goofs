@@ -26,7 +26,7 @@ public class ContactEmailDir extends Dir {
 
 	}
 
-	public ContactEntry getContact() {
+	public ContactEntry getContact() throws Exception {
 		return ((ContactDir) getParent()).getContact();
 	}
 

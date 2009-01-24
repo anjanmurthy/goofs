@@ -3,7 +3,6 @@ package goofs.fs.calendar;
 import fuse.Errno;
 import goofs.Fetchable;
 import goofs.Identifiable;
-import goofs.NotFoundException;
 import goofs.calendar.ICalendar;
 import goofs.fs.Dir;
 import goofs.fs.Node;
@@ -60,12 +59,8 @@ public class CalendarDir extends Dir implements Identifiable, Fetchable {
 
 	}
 
-	public Object fetch() throws NotFoundException {
-		Object o = getCalendar();
-		if (o == null) {
-			throw new NotFoundException(toString());
-		}
-		return o;
+	public Object fetch() throws Exception {
+		return getCalendar();
 	}
 
 	public String getId() {
@@ -77,15 +72,9 @@ public class CalendarDir extends Dir implements Identifiable, Fetchable {
 		return ((CalendarsDir) getParent()).getCalendarService();
 	}
 
-	protected CalendarEntry getCalendar() {
+	protected CalendarEntry getCalendar() throws Exception {
 
-		try {
-			return getCalendarService().getCalendarById(getCalendarId());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
-		}
+		return getCalendarService().getCalendarById(getCalendarId());
 
 	}
 

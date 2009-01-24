@@ -3,10 +3,10 @@ package goofs.fs.blogger;
 import fuse.Errno;
 import goofs.Fetchable;
 import goofs.Identifiable;
-import goofs.NotFoundException;
 import goofs.blogger.Blog;
 import goofs.blogger.Comment;
 import goofs.blogger.IBlogger;
+import goofs.blogger.Post;
 import goofs.fs.Dir;
 import goofs.fs.File;
 
@@ -20,6 +20,12 @@ public class CommentFile extends File implements Identifiable, Fetchable {
 				comment.getContent());
 
 		setCommentId(comment.getEntry().getSelfLink().getHref());
+	}
+
+	public CommentFile(Dir parent, String name) throws Exception {
+
+		super(parent, name, 0755, "");
+
 	}
 
 	public String getId() {
@@ -42,28 +48,28 @@ public class CommentFile extends File implements Identifiable, Fetchable {
 		return parentDir.getBlogger();
 	}
 
-	protected Blog getBlog() {
+	protected Blog getBlog() throws Exception {
+
 		return ((BlogDir) getParent().getParent().getParent()).getBlog();
 
 	}
 
-	public Comment getComment() {
+	protected Post getPost() throws Exception {
 
-		try {
-			return getBlogger().getCommentById(getCommentId());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
-		}
+		return ((CommentsDir) getParent()).getPost();
+
 	}
 
-	public Object fetch() throws NotFoundException {
-		Object o = getComment();
-		if (o == null) {
-			throw new NotFoundException(toString());
-		}
-		return o;
+	public Comment getComment() throws Exception {
+
+		return getBlogger().getCommentById(getCommentId());
+
+	}
+
+	public Object fetch() throws Exception {
+
+		return getComment();
+
 	}
 
 	@Override
@@ -92,7 +98,18 @@ public class CommentFile extends File implements Identifiable, Fetchable {
 
 		try {
 
-			getBlogger().updateComment(getComment(), new String(getContent()));
+			if (getCommentId() == null) {
+
+				Comment comment = getBlogger().createComment(getBlog(),
+						getPost(), new String(getContent()));
+
+				setCommentId(comment.getEntry().getSelfLink().getHref());
+			}
+
+			else {
+				getBlogger().updateComment(getComment(),
+						new String(getContent()));
+			}
 
 			return 0;
 		} catch (Exception e) {

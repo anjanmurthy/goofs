@@ -1,17 +1,22 @@
 package goofs.fs.blogger;
 
 import fuse.Errno;
+import goofs.EntryContainer;
 import goofs.ServiceFactory;
 import goofs.blogger.Blog;
 import goofs.blogger.IBlogger;
 import goofs.fs.Dir;
 import goofs.fs.Node;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-public class BlogsDir extends Dir {
+public class BlogsDir extends Dir implements EntryContainer {
 
 	private IBlogger blogger;
+
+	protected Set<String> entryIds = new HashSet<String>();
 
 	public BlogsDir(Dir parent) throws Exception {
 
@@ -26,8 +31,40 @@ public class BlogsDir extends Dir {
 			BlogDir dir = new BlogDir(this, blog);
 
 			add(dir);
+
+			entryIds.add(blog.getEntry().getSelfLink().getHref());
 		}
 
+	}
+
+	public void addNewEntryById(String entryId) throws Exception {
+
+		Blog blog = getBlogger().getBlogById(entryId);
+
+		BlogDir dir = new BlogDir(this, blog);
+
+		add(dir);
+
+		entryIds.add(blog.getEntry().getSelfLink().getHref());
+
+	}
+
+	public Set<String> getCurrentEntryIds() throws Exception {
+
+		Set<String> current = new HashSet<String>();
+
+		List<Blog> blogs = blogger.getBlogs();
+
+		for (Blog blog : blogs) {
+
+			current.add(blog.getEntry().getSelfLink().getHref());
+		}
+
+		return current;
+	}
+
+	public Set<String> getEntryIds() {
+		return entryIds;
 	}
 
 	protected IBlogger getBlogger() {

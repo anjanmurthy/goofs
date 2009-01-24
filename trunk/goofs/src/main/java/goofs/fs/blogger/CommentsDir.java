@@ -1,8 +1,7 @@
 package goofs.fs.blogger;
 
-import java.util.List;
-
 import fuse.Errno;
+import goofs.EntryContainer;
 import goofs.blogger.Blog;
 import goofs.blogger.Comment;
 import goofs.blogger.IBlogger;
@@ -11,7 +10,13 @@ import goofs.fs.Dir;
 import goofs.fs.SimpleDir;
 import goofs.fs.SimpleFile;
 
-public class CommentsDir extends SimpleDir {
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+public class CommentsDir extends SimpleDir implements EntryContainer {
+
+	protected Set<String> entryIds = new HashSet<String>();
 
 	public CommentsDir(Dir parent) {
 		super(parent, resourceBundle.getString("goofs.blogger.comments"));
@@ -26,11 +31,42 @@ public class CommentsDir extends SimpleDir {
 
 				add(commentFile);
 
+				entryIds.add(comment.getEntry().getSelfLink().getHref());
+
 			}
 		} catch (Exception e) {
 
 		}
 
+	}
+
+	public void addNewEntryById(String entryId) throws Exception {
+
+		Comment comment = getBlogger().getCommentById(entryId);
+
+		CommentFile commentFile = new CommentFile(this, comment);
+
+		add(commentFile);
+
+		entryIds.add(comment.getEntry().getSelfLink().getHref());
+	}
+
+	public Set<String> getCurrentEntryIds() throws Exception {
+
+		Set<String> current = new HashSet<String>();
+
+		List<Comment> comments = getBlogger().getComments(getBlog(), getPost());
+		for (Comment comment : comments) {
+
+			current.add(comment.getEntry().getSelfLink().getHref());
+		}
+
+		return current;
+
+	}
+
+	public Set<String> getEntryIds() {
+		return entryIds;
 	}
 
 	protected IBlogger getBlogger() {
@@ -40,12 +76,12 @@ public class CommentsDir extends SimpleDir {
 		return parentDir.getBlogger();
 	}
 
-	protected Blog getBlog() {
+	protected Blog getBlog() throws Exception {
 		return ((BlogDir) getParent().getParent()).getBlog();
 
 	}
 
-	protected Post getPost() {
+	protected Post getPost() throws Exception {
 
 		return ((PostDir) getParent()).getPost();
 	}
@@ -56,10 +92,8 @@ public class CommentsDir extends SimpleDir {
 			return Errno.EROFS;
 
 		try {
-			Comment comment = getBlogger().createComment(getBlog(), getPost(),
-					name);
 
-			CommentFile commentFile = new CommentFile(this, comment);
+			CommentFile commentFile = new CommentFile(this, name);
 
 			add(commentFile);
 

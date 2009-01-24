@@ -1,10 +1,10 @@
 package goofs.fs;
 
 import goofs.Fetchable;
-import goofs.NotFoundException;
 
-import java.util.Iterator;
 import java.util.TimerTask;
+
+import com.google.gdata.util.ResourceNotFoundException;
 
 public class CleanupTask extends TimerTask {
 
@@ -33,11 +33,7 @@ public class CleanupTask extends TimerTask {
 
 		try {
 
-			Iterator<Node> it = root.getFiles().values().iterator();
-
-			while (it.hasNext()) {
-
-				Node next = it.next();
+			for (Node next : root.getFiles().values()) {
 
 				if (next instanceof Fetchable) {
 
@@ -46,10 +42,14 @@ public class CleanupTask extends TimerTask {
 						((Fetchable) next).fetch();
 					}
 
-					catch (NotFoundException nf) {
+					catch (Exception ex) {
 
-						next.remove();
-						continue;
+						if (ex instanceof ResourceNotFoundException
+								|| ex.getCause() instanceof ResourceNotFoundException) {
+
+							next.remove();
+							continue;
+						}
 
 					}
 
@@ -59,8 +59,8 @@ public class CleanupTask extends TimerTask {
 
 					prune((Dir) next);
 				}
-
 			}
+
 		} catch (Throwable e) {
 
 			e.printStackTrace();

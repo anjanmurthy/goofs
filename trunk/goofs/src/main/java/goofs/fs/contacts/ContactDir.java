@@ -3,7 +3,6 @@ package goofs.fs.contacts;
 import fuse.Errno;
 import goofs.Fetchable;
 import goofs.Identifiable;
-import goofs.NotFoundException;
 import goofs.contacts.IContacts;
 import goofs.fs.Dir;
 import goofs.fs.Node;
@@ -61,26 +60,16 @@ public class ContactDir extends Dir implements Identifiable, Fetchable {
 		this.contactId = contactId;
 	}
 
-	public ContactEntry getContact() {
+	public ContactEntry getContact() throws Exception {
 
-		try {
-			return getContacts().getContactById(getContactId());
-		} catch (Exception e) {
-
-			e.printStackTrace();
-
-			return null;
-		}
+		return getContacts().getContactById(getContactId());
 
 	}
 
-	public Object fetch() throws NotFoundException {
+	public Object fetch() throws Exception {
 
-		Object o = getContact();
-		if (o == null) {
-			throw new NotFoundException(toString());
-		}
-		return o;
+		return getContact();
+
 	}
 
 	protected IContacts getContacts() {
@@ -90,6 +79,18 @@ public class ContactDir extends Dir implements Identifiable, Fetchable {
 
 	@Override
 	public int createChild(String name, boolean isDir) {
+
+		try {
+			if (name.equals(resourceBundle.getString("goofs.contacts.notes"))) {
+
+				add(new ContactNotesFile(this, getContact()));
+
+				return 0;
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 		return Errno.EROFS;
 

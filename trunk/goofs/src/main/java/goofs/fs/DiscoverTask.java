@@ -3,7 +3,6 @@ package goofs.fs;
 import goofs.EntryContainer;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.TimerTask;
 
@@ -34,11 +33,7 @@ public class DiscoverTask extends TimerTask {
 
 		try {
 
-			Iterator<Node> it = root.getFiles().values().iterator();
-
-			while (it.hasNext()) {
-
-				Node next = it.next();
+			for (Node next : root.getFiles().values()) {
 
 				if (next instanceof EntryContainer) {
 

@@ -1,5 +1,6 @@
 package goofs.fs.docs;
 
+import fuse.Errno;
 import goofs.docs.IDocuments;
 import goofs.fs.Dir;
 import goofs.fs.DiskFile;
@@ -15,7 +16,11 @@ public class DocsFile extends DiskFile {
 
 	public DocsFile(Dir parent, DocumentListEntry doc) throws Exception {
 
-		super(parent, doc.getTitle().getPlainText(), 0755);
+		super(parent, doc.getTitle().getPlainText(), 0555);
+
+		if (doc.getCanEdit()) {
+			setMode(0755);
+		}
 
 		try {
 			setContent(getDocuments().getDocumentContents(doc));
@@ -112,6 +117,12 @@ public class DocsFile extends DiskFile {
 
 				}
 
+				else {
+
+					return Errno.EROFS;
+
+				}
+
 			}
 
 			else {
@@ -123,6 +134,8 @@ public class DocsFile extends DiskFile {
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			
+			return Errno.EROFS;
 		}
 
 		return 0;
@@ -153,6 +166,8 @@ public class DocsFile extends DiskFile {
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			
+			return Errno.EROFS;
 		}
 
 		return 0;
@@ -187,6 +202,8 @@ public class DocsFile extends DiskFile {
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			
+			return Errno.EROFS;
 		}
 		return 0;
 	}

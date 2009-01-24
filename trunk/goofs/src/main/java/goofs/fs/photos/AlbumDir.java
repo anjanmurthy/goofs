@@ -4,7 +4,6 @@ import fuse.Errno;
 import goofs.EntryContainer;
 import goofs.Fetchable;
 import goofs.Identifiable;
-import goofs.NotFoundException;
 import goofs.fs.Dir;
 import goofs.fs.Node;
 import goofs.fs.SimpleFile;
@@ -89,26 +88,16 @@ public class AlbumDir extends Dir implements Identifiable, Fetchable,
 		return ((PhotosDir) getParent().getParent()).getPicasa();
 	}
 
-	public AlbumEntry getAlbum() {
-		try {
-			return getPicasa().getAlbumById(getAlbumId());
-		}
+	public AlbumEntry getAlbum() throws Exception {
 
-		catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		return getPicasa().getAlbumById(getAlbumId());
 
-			return null;
-		}
 	}
 
-	public Object fetch() throws NotFoundException {
+	public Object fetch() throws Exception {
 
-		Object o = getAlbum();
-		if (o == null) {
-			throw new NotFoundException(toString());
-		}
-		return o;
+		return getAlbum();
+
 	}
 
 	@Override

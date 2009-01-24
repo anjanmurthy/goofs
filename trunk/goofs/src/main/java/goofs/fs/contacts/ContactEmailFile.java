@@ -23,7 +23,7 @@ public class ContactEmailFile extends File {
 		this.email = email;
 	}
 
-	public ContactEntry getContact() {
+	public ContactEntry getContact() throws Exception {
 		return ((ContactEmailDir) getParent()).getContact();
 	}
 

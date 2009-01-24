@@ -18,23 +18,30 @@ public class ContactNotesFile extends File {
 
 	}
 
+	public ContactNotesFile(Dir parent, String name) throws Exception {
+
+		super(parent, name, 0755, "");
+
+	}
+
 	protected IContacts getContacts() {
 
 		return ((ContactsDir) getParent().getParent()).getContacts();
 	}
 
-	public ContactEntry getContact() {
+	public ContactEntry getContact() throws Exception {
 		return ((ContactDir) getParent()).getContact();
 	}
 
 	@Override
 	public int save() {
 
-		ContactEntry contact = getContact();
-
-		contact.setContent(new PlainTextConstruct(new String(getContent())));
-
 		try {
+
+			ContactEntry contact = getContact();
+
+			contact
+					.setContent(new PlainTextConstruct(new String(getContent())));
 
 			getContacts().updateContact(contact);
 
