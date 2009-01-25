@@ -42,6 +42,8 @@ public class ContactDir extends Dir implements Identifiable, Fetchable {
 
 			add(new ContactNotesFile(this, contact));
 
+			add(new ContactAddressDir(this));
+
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -81,17 +83,19 @@ public class ContactDir extends Dir implements Identifiable, Fetchable {
 	@Override
 	public int createChild(String name, boolean isDir) {
 
-		try {
-			if (name.equals(GoofsProperties.INSTANCE
-					.getProperty("goofs.contacts.notes"))) {
+		if (!isDir) {
+			try {
+				if (name.equals(GoofsProperties.INSTANCE
+						.getProperty("goofs.contacts.notes"))) {
 
-				add(new ContactNotesFile(this, getContact()));
+					add(new ContactNotesFile(this, getContact()));
 
-				return 0;
+					return 0;
+				}
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 
 		return Errno.EROFS;
