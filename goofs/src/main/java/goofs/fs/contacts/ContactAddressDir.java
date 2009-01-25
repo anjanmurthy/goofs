@@ -9,20 +9,20 @@ import goofs.fs.Node;
 import java.util.List;
 
 import com.google.gdata.data.contacts.ContactEntry;
-import com.google.gdata.data.extensions.Email;
+import com.google.gdata.data.extensions.PostalAddress;
 
-public class ContactEmailDir extends Dir {
+public class ContactAddressDir extends Dir {
 
-	public ContactEmailDir(Dir parent) throws Exception {
+	public ContactAddressDir(Dir parent) throws Exception {
 
 		super(parent, GoofsProperties.INSTANCE
-				.getProperty("goofs.contacts.email"), 0755);
+				.getProperty("goofs.contacts.address"), 0755);
 
-		List<Email> emails = getContact().getEmailAddresses();
+		List<PostalAddress> postals = getContact().getPostalAddresses();
 
-		for (Email email : emails) {
+		for (PostalAddress postal : postals) {
 
-			add(new ContactEmailFile(this, email));
+			add(new ContactAddressFile(this, postal));
 
 		}
 
@@ -42,19 +42,19 @@ public class ContactEmailDir extends Dir {
 
 		if (!isDir) {
 			try {
-				Email email = new Email();
-				if (Email.Rel.WORK.split("#")[1].equals(name)) {
-					email.setRel(Email.Rel.WORK);
+				PostalAddress postal = new PostalAddress();
+				if (PostalAddress.Rel.WORK.split("#")[1].equals(name)) {
+					postal.setRel(PostalAddress.Rel.WORK);
 
-				} else if (Email.Rel.HOME.split("#")[1].equals(name)) {
-					email.setRel(Email.Rel.HOME);
+				} else if (PostalAddress.Rel.HOME.split("#")[1].equals(name)) {
+					postal.setRel(PostalAddress.Rel.HOME);
 				} else {
 
-					email.setRel(Email.Rel.OTHER);
-					email.setLabel(name);
+					postal.setRel(PostalAddress.Rel.OTHER);
+					postal.setLabel(name);
 				}
 
-				add(new ContactEmailFile(this, email));
+				add(new ContactAddressFile(this, postal));
 
 				return 0;
 
