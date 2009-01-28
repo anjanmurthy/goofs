@@ -57,9 +57,32 @@ public class ContactEmailTempFile extends SimpleFile {
 
 						contacts.updateContact(contact);
 
+						Dir parent = getParent();
+
 						remove();
 
-						getParent().add(new ContactEmailFile(getParent(), e));
+						parent.add(new ContactEmailFile(parent, e));
+
+						return 0;
+
+					} else {
+						e = new Email();
+						e.setAddress(new String(getContent()));
+						if (Email.Rel.HOME.endsWith(getName())) {
+							e.setRel(Email.Rel.HOME);
+						} else if (Email.Rel.WORK.endsWith(getName())) {
+							e.setRel(Email.Rel.WORK);
+						} else {
+							e.setRel(Email.Rel.OTHER);
+						}
+						contact.getEmailAddresses().add(e);
+						contacts.updateContact(contact);
+
+						Dir parent = getParent();
+
+						remove();
+
+						parent.add(new ContactEmailFile(parent, e));
 
 						return 0;
 

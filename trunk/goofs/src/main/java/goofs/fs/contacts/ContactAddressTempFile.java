@@ -57,12 +57,36 @@ public class ContactAddressTempFile extends SimpleFile {
 
 						contacts.updateContact(contact);
 
+						Dir parent = getParent();
+
 						remove();
 
-						getParent().add(new ContactAddressFile(getParent(), p));
+						parent.add(new ContactAddressFile(parent, p));
 
 						return 0;
 
+					} else {
+						p = new PostalAddress();
+						p.setValue(new String(getContent()));
+						if (PostalAddress.Rel.WORK.endsWith(getName())) {
+							p.setRel(PostalAddress.Rel.WORK);
+						} else if (PostalAddress.Rel.HOME.endsWith(getName())) {
+							p.setRel(PostalAddress.Rel.HOME);
+						} else {
+							p.setRel(PostalAddress.Rel.OTHER);
+						}
+
+						contact.getPostalAddresses().add(p);
+
+						contacts.updateContact(contact);
+
+						Dir parent = getParent();
+
+						remove();
+
+						parent.add(new ContactAddressFile(parent, p));
+
+						return 0;
 					}
 
 				} catch (Exception e1) {

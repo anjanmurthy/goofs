@@ -76,7 +76,7 @@ public class ContactAddressDir extends Dir {
 	@Override
 	public int createTempChild(String name) {
 		try {
-			ContactEmailTempFile f = new ContactEmailTempFile(this, name);
+			ContactAddressTempFile f = new ContactAddressTempFile(this, name);
 
 			add(f);
 

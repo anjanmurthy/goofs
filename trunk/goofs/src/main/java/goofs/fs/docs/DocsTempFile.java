@@ -37,6 +37,8 @@ public class DocsTempFile extends DiskFile {
 			setName(name);
 
 			try {
+				Dir parent = getParent();
+
 				if (getDocuments().isWPDocument(getName())) {
 
 					DocumentEntry doc = getDocuments().createWPDocument(
@@ -44,9 +46,8 @@ public class DocsTempFile extends DiskFile {
 
 					remove();
 
-					getParent().add(new DocsFile(getParent(), doc));
+					parent.add(new DocsFile(parent, doc));
 
-					Dir parent = getParent();
 					if (parent instanceof DocsFolderDir) {
 
 						getDocuments().addDocumentToFolder(
@@ -54,6 +55,7 @@ public class DocsTempFile extends DiskFile {
 								doc.getId());
 
 					}
+
 				}
 
 				else if (getDocuments().isSpreadSheet(getName())) {
@@ -63,9 +65,8 @@ public class DocsTempFile extends DiskFile {
 
 					remove();
 
-					getParent().add(new DocsFile(getParent(), sp));
+					parent.add(new DocsFile(parent, sp));
 
-					Dir parent = getParent();
 					if (parent instanceof DocsFolderDir) {
 
 						getDocuments().addDocumentToFolder(
@@ -83,9 +84,8 @@ public class DocsTempFile extends DiskFile {
 
 					remove();
 
-					getParent().add(new DocsFile(getParent(), pr));
+					parent.add(new DocsFile(parent, pr));
 
-					Dir parent = getParent();
 					if (parent instanceof DocsFolderDir) {
 
 						getDocuments().addDocumentToFolder(
@@ -98,7 +98,7 @@ public class DocsTempFile extends DiskFile {
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				
+
 				return Errno.EROFS;
 			}
 

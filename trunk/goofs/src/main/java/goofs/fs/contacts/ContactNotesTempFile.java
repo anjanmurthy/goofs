@@ -39,9 +39,11 @@ public class ContactNotesTempFile extends SimpleFile {
 
 					contacts.updateContact(contact);
 
+					Dir parent = getParent();
+
 					remove();
 
-					getParent().add(new ContactNotesFile(getParent(), contact));
+					parent.add(new ContactNotesFile(parent, contact));
 
 					return 0;
 
