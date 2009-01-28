@@ -28,9 +28,11 @@ public class PostContentTempFile extends SimpleFile {
 
 				blogger.updatePost(post, null, new String(getContent()));
 
+				Dir parent = getParent();
+
 				remove();
 
-				getParent().add(new PostContentFile(getParent(), post));
+				parent.add(new PostContentFile(parent, post));
 
 				return 0;
 

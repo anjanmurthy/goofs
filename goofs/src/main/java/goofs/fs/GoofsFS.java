@@ -3,10 +3,14 @@ package goofs.fs;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.util.Timer;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import com.google.gdata.util.ResourceNotFoundException;
+import com.sun.corba.se.spi.ior.Identifiable;
 
 import fuse.Errno;
 import fuse.Filesystem3;
@@ -20,7 +24,8 @@ import fuse.FuseSizeSetter;
 import fuse.FuseStatfsSetter;
 import fuse.XattrLister;
 import fuse.XattrSupport;
-import goofs.GoofsProperties;
+import goofs.EntryContainer;
+import goofs.Fetchable;
 
 public class GoofsFS implements Filesystem3, XattrSupport {
 
@@ -31,28 +36,8 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 
 	protected Dir root;
 
-	protected Timer cleanupTimer;
-
-	protected Timer discoverTimer;
-
 	public GoofsFS() throws Exception {
-
 		root = new RootDir();
-
-		cleanupTimer = new Timer(true);
-		cleanupTimer.schedule(new CleanupTask(root), Integer
-				.parseInt(GoofsProperties.INSTANCE
-						.getProperty("goofs.cleanup.delay")), Integer
-				.parseInt(GoofsProperties.INSTANCE
-						.getProperty("goofs.cleanup.period")));
-
-		discoverTimer = new Timer(true);
-		discoverTimer.schedule(new DiscoverTask(root), Integer
-				.parseInt(GoofsProperties.INSTANCE
-						.getProperty("goofs.discover.delay")), Integer
-				.parseInt(GoofsProperties.INSTANCE
-						.getProperty("goofs.discover.period")));
-
 	}
 
 	protected Node lookup(String path) {
@@ -98,9 +83,7 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 	public int getattr(String path, FuseGetattrSetter getattrSetter)
 			throws FuseException {
 		Node n = lookup(path);
-
 		// int time = (int) (System.currentTimeMillis() / 1000L);
-
 		if (n instanceof Dir) {
 			Dir d = (Dir) n;
 			getattrSetter.set(d.hashCode(), FuseFtypeConstants.TYPE_DIR
@@ -120,16 +103,14 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 
 			return 0;
 		}
-
 		return Errno.ENOENT;
 	}
 
 	public int getdir(String path, FuseDirFiller filler) throws FuseException {
 		// log.info("in getdir");
-
 		Node n = lookup(path);
-
 		if (n instanceof Dir) {
+			synchDir((Dir) n);
 			for (Node child : ((Dir) n).files.values()) {
 				int ftype = (child instanceof Dir) ? FuseFtypeConstants.TYPE_DIR
 						: ((child instanceof File) ? FuseFtypeConstants.TYPE_FILE
@@ -139,11 +120,44 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 							.add(child.name, child.hashCode(), ftype
 									| child.mode);
 			}
-
 			return 0;
 		}
-
 		return Errno.ENOTDIR;
+	}
+
+	protected void synchDir(Dir dir) {
+		for (Node next : dir.getFiles().values()) {
+			if (next instanceof Fetchable) {
+				try {
+					((Fetchable) next).fetch();
+				} catch (Exception ex) {
+					if (ex instanceof ResourceNotFoundException
+							|| ex.getCause() instanceof ResourceNotFoundException) {
+						if (dir instanceof EntryContainer
+								&& next instanceof Identifiable) {
+							((EntryContainer) dir).getEntryIds().remove(
+									((Identifiable) next).getId());
+						}
+						next.remove();
+					}
+				}
+			}
+		}
+		try {
+			if (dir instanceof EntryContainer) {
+
+				EntryContainer ec = (EntryContainer) dir;
+				Set<String> currIds = ec.getEntryIds();
+				Set<String> latestIds = ec.getCurrentEntryIds();
+				Set<String> difference = new HashSet<String>(latestIds);
+				difference.removeAll(currIds);
+				for (String id : difference) {
+					ec.addNewEntryById(id);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	public int link(String arg0, String arg1) throws FuseException {
@@ -151,62 +165,43 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 	}
 
 	public int mkdir(String path, int mode) throws FuseException {
-
 		Dir parent = lookupParent(path);
-
 		if (parent != null) {
-
 			java.io.File f = new java.io.File(path);
-
 			return parent.createChild(f.getName(), true);
 		}
-
 		return Errno.EROFS;
 	}
 
 	public int mknod(String path, int mode, int rdev) throws FuseException {
 		Dir parent = lookupParent(path);
-
 		if (parent != null) {
-
 			java.io.File f = new java.io.File(path);
-
 			if (File.isTempFile(f.getName())) {
-
 				return parent.createTempChild(f.getName());
-			}
-
-			else {
+			} else {
 				return parent.createChild(f.getName(), false);
 			}
-
 		}
-
 		return Errno.ENOENT;
 	}
 
 	public int open(String path, int flags, FuseOpenSetter openSetter)
 			throws FuseException {
 		Node n = lookup(path);
-
 		if (n != null) {
-
 			openSetter.setFh(new FileHandle(n));
 			return 0;
 		}
-
 		return Errno.ENOENT;
 	}
 
 	public int read(String path, Object fh, ByteBuffer buf, long offset)
 			throws FuseException {
-
 		if (fh instanceof FileHandle) {
-
 			File f = (File) ((FileHandle) fh).getNode();
 			return f.read(buf, offset);
 		}
-
 		return Errno.EBADF;
 	}
 
@@ -215,37 +210,26 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 	}
 
 	public int release(String path, Object fh, int flags) throws FuseException {
-
 		if (fh instanceof FileHandle)
 			return ((FileHandle) fh).release();
-
 		return 0;
 	}
 
 	public int rename(String from, String to) throws FuseException {
-
 		Node n = lookup(from);
-
 		Dir p = lookupParent(to);
-
 		java.io.File f = new java.io.File(to);
-
 		return n.move(p, f.getName());
 	}
 
 	public int rmdir(String path) throws FuseException {
-
 		Node n = lookup(path);
-
 		return n.delete();
-
 	}
 
 	public int statfs(FuseStatfsSetter statfsSetter) throws FuseException {
-
 		statfsSetter.set(BLOCK_SIZE, 100000, 20000, 18000, Node.nfiles, 0,
 				NAME_LENGTH);
-
 		return 0;
 	}
 
@@ -254,24 +238,17 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 	}
 
 	public int truncate(String path, long size) throws FuseException {
-
 		Node n = lookup(path);
-
 		if (n instanceof File) {
 			((File) n).truncate(size);
 			return 0;
 		}
-
 		return Errno.ENOENT;
-
 	}
 
 	public int unlink(String path) throws FuseException {
-
 		Node n = lookup(path);
-
 		java.io.File f = new java.io.File(path);
-
 		if (File.isTempFile(f.getName())) {
 			n.remove();
 			return 0;
@@ -303,87 +280,61 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 	public int getxattr(String path, String name, ByteBuffer dst)
 			throws FuseException, BufferOverflowException {
 		Node n = lookup(path);
-
 		if (n == null)
 			return Errno.ENOENT;
-
 		byte[] value = n.xattrs.get(name);
-
 		if (value == null)
 			return Errno.ENOATTR;
-
 		dst.put(value);
-
 		return 0;
 	}
 
 	public int getxattrsize(String path, String name, FuseSizeSetter sizeSetter)
 			throws FuseException {
 		Node n = lookup(path);
-
 		if (n == null)
 			return Errno.ENOENT;
-
 		byte[] value = n.xattrs.get(name);
-
 		if (value == null)
 			return Errno.ENOATTR;
-
 		sizeSetter.setSize(value.length);
-
 		return 0;
 	}
 
 	public int listxattr(String path, XattrLister lister) throws FuseException {
 		Node n = lookup(path);
-
 		if (n == null)
 			return Errno.ENOENT;
-
 		for (String xattrName : n.xattrs.keySet())
 			lister.add(xattrName);
-
 		return 0;
 	}
 
 	public int removexattr(String path, String name) throws FuseException {
 		Node n = lookup(path);
-
 		if (n == null)
 			return Errno.ENOENT;
-
 		n.xattrs.remove(name);
-
 		return 0;
 	}
 
 	public int setxattr(String path, String name, ByteBuffer value, int flags)
 			throws FuseException {
 		Node n = lookup(path);
-
 		if (n == null)
 			return Errno.ENOENT;
-
 		byte[] dest = new byte[256];
-
 		value.get(dest, 0, value.remaining());
-
 		n.xattrs.put(name, dest);
-
 		return 0;
 	}
 
 	public static void main(String[] args) {
 		// log.info("entering");
-
 		try {
-
 			FuseMount.mount(args, new GoofsFS(), log);
-
 		} catch (Exception e) {
-
 			log.error("Unable to mount filesystem", e);
-
 		} finally {
 			log.info("exiting");
 		}

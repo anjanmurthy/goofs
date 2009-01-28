@@ -53,6 +53,10 @@ public abstract class File extends Node {
 		return parent;
 	}
 
+	public void setParent(Dir parent) {
+		this.parent = parent;
+	}
+
 	@Override
 	public void remove() {
 
@@ -63,6 +67,8 @@ public abstract class File extends Node {
 		synchronized (getRootLock()) {
 			nfiles--;
 		}
+
+		setParent(null);
 
 	}
 

@@ -37,6 +37,10 @@ public abstract class Dir extends Node {
 		return parent;
 	}
 
+	public void setParent(Dir parent) {
+		this.parent = parent;
+	}
+
 	public Map<String, Node> getFiles() {
 		return files;
 	}
@@ -64,6 +68,7 @@ public abstract class Dir extends Node {
 
 			}
 
+			setParent(null);
 		}
 
 	}
