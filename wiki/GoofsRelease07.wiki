@@ -1,7 +1,7 @@
 #labels Featured,Phase-Deploy
 = goofs-0.7 is available =
 
-goofs-0.7 is a complete rewrite of the python version in java with some new features.
+goofs-0.7 is a complete rewrite of the python version in java with some new features.  To see what we plan on implementing for goofs-1.0 check out RoadMap
 
 = details =
 
