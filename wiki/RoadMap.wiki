@@ -1,5 +1,5 @@
 #summary This page outlines features planned for future releases of goofs.
-#labels Phase-Design
+#labels Phase-Design,Featured
 
 
 = Feature Plan for goofs-1.0 =
