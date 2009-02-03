@@ -79,6 +79,48 @@ edit the file goofs-0.7/goofs-mount.sh to define *JAVA_HOME* and *GOOFS_HOME*
 
 add goofs-0.7 to your PATH
 
+= advanced configuration (optional) =
+
+You can customize some of the properties used throughout the application by overriding values in your *~/.goofs.properties* file.  You can turn services off completely by setting the enabled property to false.  You can also provide your own strings for the names of some of the stock directories for a service.  Finally you can set the interval at which folders are synchronized with the server (measured in milliseconds).  The defaults values are shown below. 
+
+{{{
+# blogger
+goofs.blogger.enabled=true
+goofs.blogger.blogs=blogs
+goofs.blogger.comments=comments
+
+# calendar
+goofs.calendar.enabled=true
+goofs.calendar.calendars=calendars
+goofs.calendar.today=Today
+goofs.calendar.next7=7_Days
+goofs.calendar.next30=30_Days
+goofs.calendar.when=when
+goofs.calendar.recurrence=recurrence
+goofs.calendar.where=where
+goofs.calendar.summary=summary
+
+# contacts
+goofs.contacts.enabled=true
+goofs.contacts.contacts=contacts
+goofs.contacts.email=email
+goofs.contacts.notes=notes
+goofs.contacts.address=addresses
+
+# photos
+goofs.photos.enabled=true
+goofs.photos.photos=photos
+goofs.photos.public=public
+goofs.photos.private=private
+
+# documents
+goofs.docs.enabled=true
+goofs.docs.documents=documents
+
+# synchronization
+goofs.folder.synch.threshold=60000
+}}}
+
 = running goofs =
 
 {{{
