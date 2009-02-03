@@ -1,5 +1,6 @@
 package goofs.fs.calendar;
 
+import fuse.Errno;
 import goofs.EntryContainer;
 import goofs.calendar.ICalendar;
 import goofs.fs.Dir;
@@ -78,25 +79,24 @@ public class CalendarEventByTextDir extends Dir implements EntryContainer {
 
 	@Override
 	public int createChild(String name, boolean isDir) {
-		// TODO Auto-generated method stub
-		return 0;
+		return Errno.EROFS;
 	}
 
 	@Override
 	public int createChildFromExisting(String name, Node child) {
-		// TODO Auto-generated method stub
-		return 0;
+		return Errno.EROFS;
 	}
 
 	@Override
 	public int createTempChild(String name) {
-		// TODO Auto-generated method stub
-		return 0;
+		return Errno.EROFS;
 	}
 
 	@Override
 	public int delete() {
-		// TODO Auto-generated method stub
+
+		remove();
+
 		return 0;
 	}
 

@@ -120,7 +120,10 @@ public class CalendarEventDurationDir extends Dir implements EntryContainer {
 
 	@Override
 	public int delete() {
-		return Errno.EROFS;
+
+		remove();
+
+		return 0;
 	}
 
 	@Override
