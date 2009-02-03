@@ -110,7 +110,9 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 		// log.info("in getdir");
 		Node n = lookup(path);
 		if (n instanceof Dir) {
-			synchDir((Dir) n);
+			if (((Dir) n).needsSynch()) {
+				synchDir((Dir) n);
+			}
 			for (Node child : ((Dir) n).files.values()) {
 				int ftype = (child instanceof Dir) ? FuseFtypeConstants.TYPE_DIR
 						: ((child instanceof File) ? FuseFtypeConstants.TYPE_FILE
@@ -126,6 +128,7 @@ public class GoofsFS implements Filesystem3, XattrSupport {
 	}
 
 	protected void synchDir(Dir dir) {
+		dir.setLastSynch(System.currentTimeMillis());
 		for (Node next : dir.getFiles().values()) {
 			if (next instanceof Fetchable) {
 				try {

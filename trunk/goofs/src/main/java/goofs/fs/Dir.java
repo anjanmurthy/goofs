@@ -1,5 +1,7 @@
 package goofs.fs;
 
+import goofs.GoofsProperties;
+
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -9,6 +11,12 @@ public abstract class Dir extends Node {
 	protected Map<String, Node> files = new LinkedHashMap<String, Node>();
 
 	protected Dir parent;
+
+	protected long lastSynch = -1;
+
+	public static final long SYNCH_THRESHOLD = Long
+			.parseLong(GoofsProperties.INSTANCE
+					.getProperty("goofs.folder.synch.threshold"));
 
 	public Dir(Dir parent, String name, int mode, String... xattrs) {
 		super(name, mode, xattrs);
@@ -47,6 +55,19 @@ public abstract class Dir extends Node {
 
 	public void setFiles(Map<String, Node> files) {
 		this.files = files;
+	}
+
+	public long getLastSynch() {
+		return lastSynch;
+	}
+
+	public void setLastSynch(long lastSynch) {
+		this.lastSynch = lastSynch;
+	}
+
+	public boolean needsSynch() {
+		return (getLastSynch() == -1 || (System.currentTimeMillis()
+				- getLastSynch() >= SYNCH_THRESHOLD));
 	}
 
 	@Override
