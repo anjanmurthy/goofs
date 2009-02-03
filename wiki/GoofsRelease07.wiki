@@ -43,7 +43,7 @@ documents backend supports:
 
 
 = requirements =
-  * fuse version 2.7.2
+  * fuse version 2.7.2 or 2.7.3
   * java 5 jre
 
 you can install the requirements as follows on opensuse
@@ -75,7 +75,10 @@ username=yourusername@gmail.com
 password=password@gmail.com
 }}}
 
-edit the file goofs-0.7/goofs-mount.sh to define *JAVA_HOME* and *GOOFS_HOME*
+edit the file goofs-0.7/goofs-mount.sh to define:
+  * JAVA_HOME
+  * GOOFS_HOME
+  * Optionally change jni/fuse-2.7.2 to jni/fuse-2.7.3 if you have 2.7.3 installed
 
 add goofs-0.7 to your PATH
 
