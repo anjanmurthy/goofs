@@ -1,5 +1,5 @@
 #summary goofs-0.6 is available. google calendar support has been added.  a few bugs have been squashed related to renaming files.
-#labels Featured,Phase-Deploy
+#labels Phase-Deploy
 
 = goofs-0.6 is available =
 goofs-0.6 is available now.  There are now 5 backends complete: calendar, documents, picasa, contacts, and blogger.
