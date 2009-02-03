@@ -52,6 +52,10 @@ you can install the requirements as follows on opensuse
 zypper in fuse java-1_5_0-sun
 }}}
 
+= know issues =
+
+I have had problems uploading images and documents when using sun's java 6 jre.  The problem does not appear when using sun's java 5 jre.  The crux of it seems to be how google libraries are registering mime mappings.  I created a ticket to address the issue at http://code.google.com/p/gdata-java-client/issues/detail?id=75&can=5.
+
 = installation =
 
 Download the goofs binary and unpack it:
