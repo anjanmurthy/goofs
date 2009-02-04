@@ -54,9 +54,9 @@ zypper in fuse java-1_5_0-sun
 
 = know issues =
 
-I have had problems uploading images and documents when using sun's java 6 jre.  The problem does not appear when using sun's java 5 jre.  The crux of it seems to be how google libraries are registering mime mappings.  I created a ticket to address the issue at http://code.google.com/p/gdata-java-client/issues/detail?id=75&can=5.
+I have had problems uploading images and documents when using sun's java 6 jre.  The problem does not appear when using sun's java 5 jre.  The problem seems to be that the java activation framework is bundled with java 6 and has not been updated with the fixes in the latest activation.jar (version 1.1.1).  I created a ticket to address the issue at http://code.google.com/p/gdata-java-client/issues/detail?id=75&can=5.
 
-~~From some googling it seems this problem was fixed in B25 of JDK 6u10.~~ Scratch that I just tried update 12 and it still seems to be unfixed.
+I would suggest installing java 5 either through your package manager or from http://java.sun.com/products/archive/j2se/5.0_16/index.html
 
 = installation =
 
