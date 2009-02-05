@@ -18,12 +18,41 @@ public class ContactEmailDir extends Dir {
 		super(parent, GoofsProperties.INSTANCE
 				.getProperty("goofs.contacts.email"), 0755);
 
+		boolean homeCreated = false;
+		boolean workCreated = false;
+		boolean otherCreated = false;
+
 		List<Email> emails = getContact().getEmailAddresses();
 
 		for (Email email : emails) {
 
 			add(new ContactEmailFile(this, email));
 
+			homeCreated = homeCreated || Email.Rel.HOME.equals(email.getRel());
+			workCreated = workCreated || Email.Rel.WORK.equals(email.getRel());
+			otherCreated = otherCreated
+					|| Email.Rel.OTHER.equals(email.getRel());
+		}
+
+		Email email = null;
+		if (!homeCreated) {
+			email = new Email();
+			email.setAddress("");
+			email.setRel(Email.Rel.HOME);
+			add(new ContactEmailFile(this, email));
+		}
+		if (!workCreated) {
+			email = new Email();
+			email.setAddress("");
+			email.setRel(Email.Rel.WORK);
+			add(new ContactEmailFile(this, email));
+		}
+		if (!otherCreated) {
+			email = new Email();
+			email.setAddress("");
+			email.setRel(Email.Rel.OTHER);
+			email.setLabel("other");
+			add(new ContactEmailFile(this, email));
 		}
 
 	}
