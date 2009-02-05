@@ -18,12 +18,44 @@ public class ContactAddressDir extends Dir {
 		super(parent, GoofsProperties.INSTANCE
 				.getProperty("goofs.contacts.address"), 0755);
 
+		boolean homeCreated = false;
+		boolean workCreated = false;
+		boolean otherCreated = false;
+
 		List<PostalAddress> postals = getContact().getPostalAddresses();
 
 		for (PostalAddress postal : postals) {
 
 			add(new ContactAddressFile(this, postal));
 
+			homeCreated = homeCreated
+					|| PostalAddress.Rel.HOME.equals(postal.getRel());
+			workCreated = workCreated
+					|| PostalAddress.Rel.WORK.equals(postal.getRel());
+			otherCreated = otherCreated
+					|| PostalAddress.Rel.OTHER.equals(postal.getRel());
+
+		}
+
+		PostalAddress postal = null;
+		if (!homeCreated) {
+			postal = new PostalAddress();
+			postal.setValue("");
+			postal.setRel(PostalAddress.Rel.HOME);
+			add(new ContactAddressFile(this, postal));
+		}
+		if (!workCreated) {
+			postal = new PostalAddress();
+			postal.setValue("");
+			postal.setRel(PostalAddress.Rel.WORK);
+			add(new ContactAddressFile(this, postal));
+		}
+		if (!otherCreated) {
+			postal = new PostalAddress();
+			postal.setValue("");
+			postal.setRel(PostalAddress.Rel.OTHER);
+			postal.setLabel("other");
+			add(new ContactAddressFile(this, postal));
 		}
 
 	}

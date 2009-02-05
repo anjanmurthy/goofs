@@ -12,7 +12,7 @@ public abstract class Dir extends Node {
 
 	protected Dir parent;
 
-	protected long lastSynch = -1;
+	protected long lastSynch = System.currentTimeMillis();
 
 	public static final long SYNCH_THRESHOLD = Long
 			.parseLong(GoofsProperties.INSTANCE
@@ -66,8 +66,7 @@ public abstract class Dir extends Node {
 	}
 
 	public boolean needsSynch() {
-		return (getLastSynch() == -1 || (System.currentTimeMillis()
-				- getLastSynch() >= SYNCH_THRESHOLD));
+		return (System.currentTimeMillis() - getLastSynch() >= SYNCH_THRESHOLD);
 	}
 
 	@Override
