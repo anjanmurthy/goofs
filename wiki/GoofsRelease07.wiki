@@ -74,7 +74,7 @@ add the following 2 properties and save
 
 {{{
 username=yourusername@gmail.com
-password=password@gmail.com
+password=yourpassword
 }}}
 
 edit the file goofs-0.7/goofs-mount.sh to define:
