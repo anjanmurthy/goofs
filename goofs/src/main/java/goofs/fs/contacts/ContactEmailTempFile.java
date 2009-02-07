@@ -74,7 +74,7 @@ public class ContactEmailTempFile extends SimpleFile {
 							e.setRel(Email.Rel.WORK);
 						} else {
 							e.setRel(Email.Rel.OTHER);
-							e.setLabel(getName());
+							//e.setLabel(getName());
 						}
 						contact.getEmailAddresses().add(e);
 						contacts.updateContact(contact);

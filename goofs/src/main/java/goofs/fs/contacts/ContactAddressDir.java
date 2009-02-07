@@ -83,7 +83,7 @@ public class ContactAddressDir extends Dir {
 				} else {
 
 					postal.setRel(PostalAddress.Rel.OTHER);
-					postal.setLabel(name);
+					//postal.setLabel(name);
 				}
 
 				add(new ContactAddressFile(this, postal));
