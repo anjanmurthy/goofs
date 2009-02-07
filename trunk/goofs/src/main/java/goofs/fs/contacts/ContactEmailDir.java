@@ -80,7 +80,7 @@ public class ContactEmailDir extends Dir {
 				} else {
 
 					email.setRel(Email.Rel.OTHER);
-					email.setLabel(name);
+					//email.setLabel(name);
 				}
 
 				add(new ContactEmailFile(this, email));
