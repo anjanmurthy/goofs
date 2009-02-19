@@ -39,8 +39,26 @@ public class ContactsDir extends Dir {
 
 	@Override
 	public int createChild(String name, boolean isDir) {
-		// TODO Auto-generated method stub
-		return 0;
+
+		if (isDir) {
+
+			try {
+
+				ContactEntry entry = getContacts().createContact(name);
+
+				ContactDir contactDir = new ContactDir(this, entry);
+
+				add(contactDir);
+
+				return 0;
+			} catch (Exception e) {
+
+				e.printStackTrace();
+			}
+
+		}
+		return Errno.EROFS;
+
 	}
 
 	@Override
