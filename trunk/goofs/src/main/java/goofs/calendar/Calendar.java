@@ -32,7 +32,16 @@ public class Calendar implements ICalendar {
 		return realService;
 	}
 
-	/* (non-Javadoc)
+	public void acquireSessionTokens(String username, String password)
+			throws AuthenticationException {
+
+		getRealService().setUserCredentials(username, password);
+
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.calendar.ICalendar#getCalendars()
 	 */
 	public List<CalendarEntry> getCalendars() throws Exception {
@@ -50,7 +59,9 @@ public class Calendar implements ICalendar {
 		return parts[parts.length - 1];
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.calendar.ICalendar#createCalendar(java.lang.String)
 	 */
 	public CalendarEntry createCalendar(String title) throws Exception {
@@ -63,7 +74,9 @@ public class Calendar implements ICalendar {
 
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.calendar.ICalendar#getCalendarById(java.lang.String)
 	 */
 	public CalendarEntry getCalendarById(String id) throws Exception {
@@ -72,7 +85,9 @@ public class Calendar implements ICalendar {
 
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.calendar.ICalendar#getCalendarEventById(java.lang.String)
 	 */
 	public CalendarEventEntry getCalendarEventById(String id) throws Exception {
@@ -80,8 +95,11 @@ public class Calendar implements ICalendar {
 		return getRealService().getEntry(new URL(id), CalendarEventEntry.class);
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.calendar.ICalendar#updateCalendar(java.lang.String, com.google.gdata.data.calendar.CalendarEntry)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see goofs.calendar.ICalendar#updateCalendar(java.lang.String,
+	 * com.google.gdata.data.calendar.CalendarEntry)
 	 */
 	public CalendarEntry updateCalendar(String id, CalendarEntry in)
 			throws Exception {
@@ -108,8 +126,11 @@ public class Calendar implements ICalendar {
 
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.calendar.ICalendar#updateCalendarEvent(java.lang.String, com.google.gdata.data.calendar.CalendarEventEntry)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see goofs.calendar.ICalendar#updateCalendarEvent(java.lang.String,
+	 * com.google.gdata.data.calendar.CalendarEventEntry)
 	 */
 	public CalendarEventEntry updateCalendarEvent(String id,
 			CalendarEventEntry in) throws Exception {
@@ -128,7 +149,9 @@ public class Calendar implements ICalendar {
 
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.calendar.ICalendar#deleteCalendar(java.lang.String)
 	 */
 	public void deleteCalendar(String id) throws Exception {
@@ -138,7 +161,9 @@ public class Calendar implements ICalendar {
 		current.delete();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.calendar.ICalendar#deleteCalendarEvent(java.lang.String)
 	 */
 	public void deleteCalendarEvent(String id) throws Exception {
@@ -148,7 +173,9 @@ public class Calendar implements ICalendar {
 		current.delete();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.calendar.ICalendar#subscribeToCalendar(java.lang.String)
 	 */
 	public CalendarEntry subscribeToCalendar(String id) throws Exception {
@@ -167,8 +194,11 @@ public class Calendar implements ICalendar {
 		return feedUrl;
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.calendar.ICalendar#getEvents(com.google.gdata.data.calendar.CalendarEntry)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @seegoofs.calendar.ICalendar#getEvents(com.google.gdata.data.calendar.
+	 * CalendarEntry)
 	 */
 	public List<CalendarEventEntry> getEvents(CalendarEntry cal)
 			throws Exception {
@@ -180,8 +210,11 @@ public class Calendar implements ICalendar {
 
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.calendar.ICalendar#getEvents(com.google.gdata.data.calendar.CalendarEntry, java.util.Date, java.util.Date)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @seegoofs.calendar.ICalendar#getEvents(com.google.gdata.data.calendar.
+	 * CalendarEntry, java.util.Date, java.util.Date)
 	 */
 	public List<CalendarEventEntry> getEvents(CalendarEntry cal, Date start,
 			Date end) throws Exception {
@@ -198,8 +231,11 @@ public class Calendar implements ICalendar {
 		return feed.getEntries();
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.calendar.ICalendar#getEvents(com.google.gdata.data.calendar.CalendarEntry, java.lang.String)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @seegoofs.calendar.ICalendar#getEvents(com.google.gdata.data.calendar.
+	 * CalendarEntry, java.lang.String)
 	 */
 	public List<CalendarEventEntry> getEvents(CalendarEntry cal, String query)
 			throws Exception {
@@ -212,8 +248,12 @@ public class Calendar implements ICalendar {
 
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.calendar.ICalendar#createQuickEvent(com.google.gdata.data.calendar.CalendarEntry, java.lang.String)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * goofs.calendar.ICalendar#createQuickEvent(com.google.gdata.data.calendar
+	 * .CalendarEntry, java.lang.String)
 	 */
 	public CalendarEventEntry createQuickEvent(CalendarEntry cal, String event)
 			throws Exception {
@@ -227,7 +267,9 @@ public class Calendar implements ICalendar {
 		return getRealService().insert(getCalendarEventUrl(cal), e);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.calendar.ICalendar#getExtensionProfile()
 	 */
 	public ExtensionProfile getExtensionProfile() {

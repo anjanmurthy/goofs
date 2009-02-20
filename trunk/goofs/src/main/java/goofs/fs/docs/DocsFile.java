@@ -5,6 +5,7 @@ import goofs.docs.IDocuments;
 import goofs.fs.Dir;
 import goofs.fs.DiskFile;
 
+import com.google.gdata.data.Category;
 import com.google.gdata.data.docs.DocumentEntry;
 import com.google.gdata.data.docs.DocumentListEntry;
 import com.google.gdata.data.docs.PresentationEntry;
@@ -16,14 +17,27 @@ public class DocsFile extends DiskFile {
 
 	public DocsFile(Dir parent, DocumentListEntry doc) throws Exception {
 
-		super(parent, doc.getTitle().getPlainText(), 0555);
+		super(parent, doc.getTitle().getPlainText(), 0755);
 
-		if (doc.getCanEdit()) {
-			setMode(0755);
+		String ext = null;
+
+		for (Category cat : doc.getCategories()) {
+			if ("http://schemas.google.com/g/2005#kind".equals(cat.getScheme())) {
+				if (cat.getTerm().endsWith("document")) {
+					ext = "odt";
+				} else if (cat.getTerm().endsWith("spreadsheet")) {
+					ext = "ods";
+				} else if (cat.getTerm().endsWith("presentation")) {
+					ext = "ppt";
+				}
+				break;
+			}
 		}
 
+		setName(getName() + "." + ext);
+
 		try {
-			setContent(getDocuments().getDocumentContents(doc));
+			setContent(getDocuments().getDocumentContents(doc, ext));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -134,7 +148,7 @@ public class DocsFile extends DiskFile {
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			
+
 			return Errno.EROFS;
 		}
 
@@ -166,7 +180,7 @@ public class DocsFile extends DiskFile {
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			
+
 			return Errno.EROFS;
 		}
 
@@ -202,7 +216,7 @@ public class DocsFile extends DiskFile {
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			
+
 			return Errno.EROFS;
 		}
 		return 0;

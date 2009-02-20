@@ -27,7 +27,16 @@ public class Blogger implements IBlogger {
 		return realService;
 	}
 
-	/* (non-Javadoc)
+	public void acquireSessionTokens(String username, String password)
+			throws AuthenticationException {
+
+		getRealService().setUserCredentials(username, password);
+
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.blogger.IBlogger#getBlogs()
 	 */
 	public List<Blog> getBlogs() throws Exception {
@@ -45,7 +54,9 @@ public class Blogger implements IBlogger {
 		return blogs;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.blogger.IBlogger#getBlogById(java.lang.String)
 	 */
 	public Blog getBlogById(String blogId) throws Exception {
@@ -54,7 +65,9 @@ public class Blogger implements IBlogger {
 
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.blogger.IBlogger#getPostById(java.lang.String)
 	 */
 	public Post getPostById(String postId) throws Exception {
@@ -63,7 +76,9 @@ public class Blogger implements IBlogger {
 
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.blogger.IBlogger#getCommentById(java.lang.String)
 	 */
 	public Comment getCommentById(String commentId) throws Exception {
@@ -72,7 +87,9 @@ public class Blogger implements IBlogger {
 				Entry.class));
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.blogger.IBlogger#getPosts(goofs.blogger.Blog)
 	 */
 	public List<Post> getPosts(Blog blog) throws Exception {
@@ -81,8 +98,11 @@ public class Blogger implements IBlogger {
 
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.blogger.IBlogger#getPosts(goofs.blogger.Blog, com.google.gdata.client.Query)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see goofs.blogger.IBlogger#getPosts(goofs.blogger.Blog,
+	 * com.google.gdata.client.Query)
 	 */
 	public List<Post> getPosts(Blog blog, Query query) throws Exception {
 		List<Post> posts = new ArrayList<Post>();
@@ -102,8 +122,11 @@ public class Blogger implements IBlogger {
 
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.blogger.IBlogger#getPosts(goofs.blogger.Blog, com.google.gdata.data.DateTime, com.google.gdata.data.DateTime)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see goofs.blogger.IBlogger#getPosts(goofs.blogger.Blog,
+	 * com.google.gdata.data.DateTime, com.google.gdata.data.DateTime)
 	 */
 	public List<Post> getPosts(Blog blog, DateTime start, DateTime end)
 			throws Exception {
@@ -117,16 +140,22 @@ public class Blogger implements IBlogger {
 		return getPosts(blog, myQuery);
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.blogger.IBlogger#createPost(goofs.blogger.Blog, java.lang.String, java.lang.String)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see goofs.blogger.IBlogger#createPost(goofs.blogger.Blog,
+	 * java.lang.String, java.lang.String)
 	 */
 	public Post createPost(Blog blog, String title, String content)
 			throws Exception {
 		return createPost(blog, title, content, false);
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.blogger.IBlogger#createPost(goofs.blogger.Blog, java.lang.String, java.lang.String, boolean)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see goofs.blogger.IBlogger#createPost(goofs.blogger.Blog,
+	 * java.lang.String, java.lang.String, boolean)
 	 */
 	public Post createPost(Blog blog, String title, String content,
 			boolean isDraft) throws Exception {
@@ -142,8 +171,11 @@ public class Blogger implements IBlogger {
 		return new Post(getRealService().insert(postUrl, myEntry));
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.blogger.IBlogger#updatePost(goofs.blogger.Post, java.lang.String, java.lang.String)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see goofs.blogger.IBlogger#updatePost(goofs.blogger.Post,
+	 * java.lang.String, java.lang.String)
 	 */
 	public Post updatePost(Post post, String title, String content)
 			throws Exception {
@@ -160,7 +192,9 @@ public class Blogger implements IBlogger {
 
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.blogger.IBlogger#deletePost(goofs.blogger.Post)
 	 */
 	public void deletePost(Post post) throws Exception {
@@ -170,8 +204,11 @@ public class Blogger implements IBlogger {
 
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.blogger.IBlogger#createComment(goofs.blogger.Blog, goofs.blogger.Post, java.lang.String)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see goofs.blogger.IBlogger#createComment(goofs.blogger.Blog,
+	 * goofs.blogger.Post, java.lang.String)
 	 */
 	public Comment createComment(Blog blog, Post post, String comment)
 			throws Exception {
@@ -187,8 +224,11 @@ public class Blogger implements IBlogger {
 		return new Comment(getRealService().insert(feedUrl, myEntry));
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.blogger.IBlogger#getComments(goofs.blogger.Blog, goofs.blogger.Post)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see goofs.blogger.IBlogger#getComments(goofs.blogger.Blog,
+	 * goofs.blogger.Post)
 	 */
 	public List<Comment> getComments(Blog blog, Post post) throws Exception {
 		List<Comment> comments = new ArrayList<Comment>();
@@ -204,7 +244,9 @@ public class Blogger implements IBlogger {
 		return comments;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.blogger.IBlogger#deleteComment(goofs.blogger.Comment)
 	 */
 	public void deleteComment(Comment comment) throws Exception {
@@ -213,8 +255,11 @@ public class Blogger implements IBlogger {
 				new URL(comment.getEntry().getEditLink().getHref()));
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.blogger.IBlogger#updateComment(goofs.blogger.Comment, java.lang.String)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see goofs.blogger.IBlogger#updateComment(goofs.blogger.Comment,
+	 * java.lang.String)
 	 */
 	public Comment updateComment(Comment comment, String content)
 			throws Exception {

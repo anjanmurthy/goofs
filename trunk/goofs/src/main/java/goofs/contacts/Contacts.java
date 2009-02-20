@@ -35,7 +35,16 @@ public class Contacts implements IContacts {
 		return realService;
 	}
 
-	/* (non-Javadoc)
+	public void acquireSessionTokens(String username, String password)
+			throws AuthenticationException {
+
+		getRealService().setUserCredentials(username, password);
+
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.contacts.IContacts#getContacts()
 	 */
 	public List<ContactEntry> getContacts() throws Exception {
@@ -53,7 +62,9 @@ public class Contacts implements IContacts {
 
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.contacts.IContacts#getContactById(java.lang.String)
 	 */
 	public ContactEntry getContactById(String id) throws Exception {
@@ -63,7 +74,9 @@ public class Contacts implements IContacts {
 
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see goofs.contacts.IContacts#createContact(java.lang.String)
 	 */
 	public ContactEntry createContact(String name) throws ServiceException,
@@ -77,8 +90,12 @@ public class Contacts implements IContacts {
 		return getRealService().insert(postUrl, contact);
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.contacts.IContacts#deleteContact(com.google.gdata.data.contacts.ContactEntry)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * goofs.contacts.IContacts#deleteContact(com.google.gdata.data.contacts
+	 * .ContactEntry)
 	 */
 	public void deleteContact(ContactEntry entry) throws Exception {
 
@@ -87,8 +104,12 @@ public class Contacts implements IContacts {
 
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.contacts.IContacts#updateContact(com.google.gdata.data.contacts.ContactEntry)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * goofs.contacts.IContacts#updateContact(com.google.gdata.data.contacts
+	 * .ContactEntry)
 	 */
 	public ContactEntry updateContact(ContactEntry entry) throws Exception {
 
@@ -96,8 +117,12 @@ public class Contacts implements IContacts {
 		return getRealService().update(editUrl, entry);
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.contacts.IContacts#addContactPhoto(com.google.gdata.data.contacts.ContactEntry, byte[])
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * goofs.contacts.IContacts#addContactPhoto(com.google.gdata.data.contacts
+	 * .ContactEntry, byte[])
 	 */
 	public void addContactPhoto(ContactEntry entry, byte[] photoData)
 			throws ServiceException, IOException {
@@ -116,16 +141,24 @@ public class Contacts implements IContacts {
 
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.contacts.IContacts#hasPhotoContent(com.google.gdata.data.contacts.ContactEntry)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * goofs.contacts.IContacts#hasPhotoContent(com.google.gdata.data.contacts
+	 * .ContactEntry)
 	 */
 	public boolean hasPhotoContent(ContactEntry entry) {
 
 		return entry.getContactPhotoLink() != null;
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.contacts.IContacts#getContactPhotoContent(com.google.gdata.data.contacts.ContactEntry)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * goofs.contacts.IContacts#getContactPhotoContent(com.google.gdata.data
+	 * .contacts.ContactEntry)
 	 */
 	public byte[] getContactPhotoContent(ContactEntry entry) throws Exception {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -151,8 +184,12 @@ public class Contacts implements IContacts {
 		return baos.toByteArray();
 	}
 
-	/* (non-Javadoc)
-	 * @see goofs.contacts.IContacts#getContactPhotoInputStream(com.google.gdata.data.contacts.ContactEntry)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * goofs.contacts.IContacts#getContactPhotoInputStream(com.google.gdata.
+	 * data.contacts.ContactEntry)
 	 */
 	public InputStream getContactPhotoInputStream(ContactEntry entry)
 			throws Exception {
