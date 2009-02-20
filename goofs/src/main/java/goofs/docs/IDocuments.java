@@ -31,8 +31,8 @@ public interface IDocuments extends GoofsService {
 	public abstract DocumentListEntry getDocumentById(String id)
 			throws Exception;
 
-	public abstract InputStream getDocumentContents(DocumentListEntry e)
-			throws Exception;
+	public abstract InputStream getDocumentContents(DocumentListEntry e,
+			String fileExtension) throws Exception;
 
 	public abstract FolderEntry getFolderById(String id) throws Exception;
 

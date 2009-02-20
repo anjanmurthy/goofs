@@ -5,8 +5,11 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.google.gdata.client.GoogleService;
 import com.google.gdata.client.docs.DocsService;
 import com.google.gdata.data.Link;
 import com.google.gdata.data.PlainTextConstruct;
@@ -23,15 +26,66 @@ public class Documents implements IDocuments {
 
 	protected DocsService realService;
 
+	protected GoogleService spreadsheetsService;
+
+	protected static final String SPREADSHEETS_SERVICE_NAME = "wise";
+
+	private static final Map<String, String> DOWNLOAD_DOCUMENT_FORMATS;
+	static {
+		DOWNLOAD_DOCUMENT_FORMATS = new HashMap<String, String>();
+		DOWNLOAD_DOCUMENT_FORMATS.put("doc", "doc");
+		DOWNLOAD_DOCUMENT_FORMATS.put("txt", "txt");
+		DOWNLOAD_DOCUMENT_FORMATS.put("odt", "odt");
+		DOWNLOAD_DOCUMENT_FORMATS.put("pdf", "pdf");
+		DOWNLOAD_DOCUMENT_FORMATS.put("png", "png");
+		DOWNLOAD_DOCUMENT_FORMATS.put("rtf", "rtf");
+		DOWNLOAD_DOCUMENT_FORMATS.put("html", "html");
+	}
+
+	private static final Map<String, String> DOWNLOAD_PRESENTATION_FORMATS;
+	static {
+		DOWNLOAD_PRESENTATION_FORMATS = new HashMap<String, String>();
+		DOWNLOAD_PRESENTATION_FORMATS.put("pdf", "pdf");
+		DOWNLOAD_PRESENTATION_FORMATS.put("ppt", "ppt");
+		DOWNLOAD_PRESENTATION_FORMATS.put("swf", "swf");
+	}
+
+	private static final Map<String, String> DOWNLOAD_SPREADSHEET_FORMATS;
+	static {
+		DOWNLOAD_SPREADSHEET_FORMATS = new HashMap<String, String>();
+		DOWNLOAD_SPREADSHEET_FORMATS.put("xls", "4");
+		DOWNLOAD_SPREADSHEET_FORMATS.put("ods", "13");
+		DOWNLOAD_SPREADSHEET_FORMATS.put("pdf", "12");
+		DOWNLOAD_SPREADSHEET_FORMATS.put("csv", "5");
+		DOWNLOAD_SPREADSHEET_FORMATS.put("tsv", "23");
+		DOWNLOAD_SPREADSHEET_FORMATS.put("html", "102");
+	}
+
 	public Documents(String username, String password)
 			throws AuthenticationException {
 
 		realService = new DocsService(APP_NAME);
 		realService.setUserCredentials(username, password);
+		spreadsheetsService = new GoogleService(SPREADSHEETS_SERVICE_NAME,
+				APP_NAME);
+		spreadsheetsService.setUserCredentials(username, password);
 	}
 
 	public DocsService getRealService() {
 		return realService;
+	}
+
+	public GoogleService getSpreadsheetsService() {
+		return spreadsheetsService;
+	}
+
+	public void acquireSessionTokens(String username, String password)
+			throws AuthenticationException {
+
+		getRealService().setUserCredentials(username, password);
+
+		getSpreadsheetsService().setUserCredentials(username, password);
+
 	}
 
 	/*
@@ -41,11 +95,9 @@ public class Documents implements IDocuments {
 	 */
 	public List<DocumentListEntry> getDocuments() throws Exception {
 
-		DocumentListFeed feed = getRealService()
-				.getFeed(
-						new URL(
-								"http://docs.google.com/feeds/documents/private/full?showfolders=true"),
-						DocumentListFeed.class);
+		DocumentListFeed feed = getRealService().getFeed(
+				new URL("http://docs.google.com/feeds/documents/private/full"),
+				DocumentListFeed.class);
 
 		return feed.getEntries();
 
@@ -143,14 +195,44 @@ public class Documents implements IDocuments {
 
 	}
 
-	public InputStream getDocumentContents(DocumentListEntry e)
+	protected String getDocumentIdSuffix(String objectId) {
+
+		return objectId.substring(objectId.lastIndexOf("%3A") + 3);
+	}
+
+	public InputStream getDocumentContents(DocumentListEntry e, String mt)
 			throws Exception {
 
-		// need to do this one when
-		// http://code.google.com/p/gdata-issues/issues/detail?id=70
-		// is solved
+		Link link = new Link();
+		if ("odt".equals(mt)) {
+			link
+					.setHref("http://docs.google.com/feeds/download/documents/Export?docID="
+							+ getDocumentIdSuffix(e.getId())
+							+ "&exportFormat="
+							+ DOWNLOAD_DOCUMENT_FORMATS.get(mt));
 
-		return new ByteArrayInputStream(new byte[] {});
+			return getRealService().getStreamFromLink(link);
+
+		} else if ("ods".equals(mt)) {
+			link
+					.setHref("http://spreadsheets.google.com/feeds/download/spreadsheets/Export?key="
+							+ getDocumentIdSuffix(e.getId())
+							+ "&fmcmd="
+							+ DOWNLOAD_SPREADSHEET_FORMATS.get(mt) + "&gid=1");
+
+			return getSpreadsheetsService().getStreamFromLink(link);
+
+		} else if ("ppt".equals(mt)) {
+			link
+					.setHref("http://docs.google.com/feeds/download/presentations/Export?docID="
+							+ getDocumentIdSuffix(e.getId())
+							+ "&exportFormat="
+							+ DOWNLOAD_PRESENTATION_FORMATS.get(mt));
+
+			return getRealService().getStreamFromLink(link);
+		}
+
+		return new ByteArrayInputStream("".getBytes());
 
 	}
 
@@ -240,8 +322,14 @@ public class Documents implements IDocuments {
 	public void renameDocument(String id, String name) throws Exception {
 
 		DocumentListEntry doc = getDocumentById(id);
+		int dindex = name.lastIndexOf(".");
+		if (dindex != -1) {
 
-		doc.setTitle(new PlainTextConstruct(name));
+			doc.setTitle(new PlainTextConstruct(name.substring(dindex + 1)));
+
+		} else {
+			doc.setTitle(new PlainTextConstruct(name));
+		}
 
 		doc.update();
 
@@ -341,7 +429,17 @@ public class Documents implements IDocuments {
 
 		newDocument.setFile(contents, MediaType.fromFileName(name)
 				.getMimeType());
-		newDocument.setTitle(new PlainTextConstruct(name.split("\\.")[0]));
+
+		int dindex = name.lastIndexOf(".");
+		if (dindex != -1) {
+
+			newDocument.setTitle(new PlainTextConstruct(name
+					.substring(dindex + 1)));
+
+		} else {
+
+			newDocument.setTitle(new PlainTextConstruct(name));
+		}
 
 		T created = getRealService().insert(
 				new URL("http://docs.google.com/feeds/documents/private/full"),

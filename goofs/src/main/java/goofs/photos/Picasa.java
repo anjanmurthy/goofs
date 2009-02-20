@@ -44,6 +44,13 @@ public class Picasa implements IPicasa {
 		realService.setUserCredentials(userName, password);
 	}
 
+	public void acquireSessionTokens(String username, String password)
+			throws AuthenticationException {
+
+		getRealService().setUserCredentials(username, password);
+
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
