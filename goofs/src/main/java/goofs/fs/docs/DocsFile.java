@@ -1,17 +1,17 @@
 package goofs.fs.docs;
 
 import fuse.Errno;
+import goofs.Identifiable;
 import goofs.docs.IDocuments;
 import goofs.fs.Dir;
 import goofs.fs.DiskFile;
 
-import com.google.gdata.data.Category;
 import com.google.gdata.data.docs.DocumentEntry;
 import com.google.gdata.data.docs.DocumentListEntry;
 import com.google.gdata.data.docs.PresentationEntry;
 import com.google.gdata.data.docs.SpreadsheetEntry;
 
-public class DocsFile extends DiskFile {
+public class DocsFile extends DiskFile implements Identifiable {
 
 	protected String docId;
 
@@ -19,26 +19,16 @@ public class DocsFile extends DiskFile {
 
 		super(parent, doc.getTitle().getPlainText(), 0755);
 
-		String ext = null;
-
-		for (Category cat : doc.getCategories()) {
-			if ("http://schemas.google.com/g/2005#kind".equals(cat.getScheme())) {
-				if (cat.getTerm().endsWith("document")) {
-					ext = "odt";
-				} else if (cat.getTerm().endsWith("spreadsheet")) {
-					ext = "ods";
-				} else if (cat.getTerm().endsWith("presentation")) {
-					ext = "ppt";
-				}
-				break;
-			}
-		}
+		String ext = getDocuments().getDefaultExtension(doc);
 
 		setName(getName() + "." + ext);
 
 		try {
+
 			setContent(getDocuments().getDocumentContents(doc, ext));
+
 		} catch (Exception e) {
+
 			e.printStackTrace();
 		}
 
@@ -62,6 +52,10 @@ public class DocsFile extends DiskFile {
 			return ((DocsDir) parent).getDocuments();
 		}
 
+	}
+
+	public String getId() {
+		return getDocId();
 	}
 
 	protected String getDocId() {
@@ -141,7 +135,8 @@ public class DocsFile extends DiskFile {
 
 			else {
 
-				getDocuments().updateDocumentContent(getDocId(), getDisk());
+				getDocuments().updateDocumentContent(getDocId(), getName(),
+						getDisk());
 
 			}
 
@@ -196,6 +191,19 @@ public class DocsFile extends DiskFile {
 				getDocuments().renameDocument(getDocId(), name);
 
 				setName(name);
+
+				if (getName().lastIndexOf('.') != -1) {
+
+					String ext = getName().substring(
+							getName().lastIndexOf('.') + 1);
+
+					try {
+						setContent(getDocuments().getDocumentContents(
+								getDocId(), ext));
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
 
 			}
 
