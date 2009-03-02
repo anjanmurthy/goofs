@@ -1,4 +1,4 @@
-#labels Featured,Phase-Deploy
+#labels Phase-Deploy
 = goofs-0.7.1 is available =
 
 goofs-0.7.1 fixes some performance issues found in 0.7 as well as some bug related to creating and updating contacts.  To see what we plan on implementing for goofs-1.0 check out RoadMap
