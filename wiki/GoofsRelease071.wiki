@@ -41,6 +41,8 @@ documents backend supports:
   * removing wp docs, spreadsheets, and presentations
   * support for reading back the original uploaded document has to wait until [http://code.google.com/p/gdata-issues/issues/detail?id=70 issue70] is fixed
 
+= words of warning = 
+First, goofs is *NOT* an official google project.  It is also a relatively new project and probably contains quite a few bugs.  There is no guarantee that you will not lose data inadvertently so I would highly recommend that you backup any important data before using goofs.  At this stage it's probably best just to create a new google account that you wouldn't mind finding a bug under.  
 
 = requirements =
   * fuse version 2.7.2 or 2.7.3
