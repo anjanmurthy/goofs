@@ -8,8 +8,10 @@ import goofs.docs.IDocuments;
 import goofs.fs.Dir;
 import goofs.fs.Node;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.gdata.data.docs.DocumentListEntry;
@@ -111,7 +113,19 @@ public class DocsDir extends Dir implements EntryContainer {
 	public int createTempChild(String name) {
 
 		try {
-			add(new DocsTempFile(this, name));
+
+			Map<String, String> docMap = new HashMap<String, String>();
+
+			for (Node node : files.values()) {
+
+				if (node instanceof DocsFile) {
+					docMap.put(node.getName(), ((DocsFile) node).getId());
+				}
+
+			}
+
+			add(new DocsTempFile(this, name, docMap));
+
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

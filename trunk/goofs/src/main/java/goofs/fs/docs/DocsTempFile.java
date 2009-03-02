@@ -5,16 +5,29 @@ import goofs.docs.IDocuments;
 import goofs.fs.Dir;
 import goofs.fs.DiskFile;
 
-import com.google.gdata.data.docs.DocumentEntry;
-import com.google.gdata.data.docs.PresentationEntry;
-import com.google.gdata.data.docs.SpreadsheetEntry;
+import java.util.Map;
+
+import com.google.gdata.data.docs.DocumentListEntry;
 
 public class DocsTempFile extends DiskFile {
 
-	public DocsTempFile(Dir parent, String name) throws Exception {
+	protected Map<String, String> documentMap;
+
+	public DocsTempFile(Dir parent, String name, Map<String, String> documentMap)
+			throws Exception {
 
 		super(parent, name, 0755);
 		// TODO Auto-generated constructor stub
+
+		setDocumentMap(documentMap);
+	}
+
+	protected Map<String, String> getDocumentMap() {
+		return documentMap;
+	}
+
+	protected void setDocumentMap(Map<String, String> documentMap) {
+		this.documentMap = documentMap;
 	}
 
 	public int delete() {
@@ -41,8 +54,23 @@ public class DocsTempFile extends DiskFile {
 
 				if (getDocuments().isWPDocument(getName())) {
 
-					DocumentEntry doc = getDocuments().createWPDocument(
-							getName(), getDisk(), null);
+					DocumentListEntry doc = null;
+
+					if (getDocumentMap().containsKey(getName())) {
+
+						String docId = getDocumentMap().get(getName());
+
+						getDocuments().updateDocumentContent(docId, getName(),
+								getDisk());
+
+						doc = getDocuments().getDocumentById(docId);
+
+					} else {
+
+						doc = getDocuments().createWPDocument(getName(),
+								getDisk(), null);
+
+					}
 
 					remove();
 
@@ -60,8 +88,23 @@ public class DocsTempFile extends DiskFile {
 
 				else if (getDocuments().isSpreadSheet(getName())) {
 
-					SpreadsheetEntry sp = getDocuments().createSpreadsheet(
-							getName(), getDisk(), null);
+					DocumentListEntry sp = null;
+
+					if (getDocumentMap().containsKey(getName())) {
+
+						String docId = getDocumentMap().get(getName());
+
+						getDocuments().updateDocumentContent(docId, getName(),
+								getDisk());
+
+						sp = getDocuments().getDocumentById(docId);
+
+					} else {
+
+						sp = getDocuments().createSpreadsheet(getName(),
+								getDisk(), null);
+
+					}
 
 					remove();
 
@@ -79,8 +122,22 @@ public class DocsTempFile extends DiskFile {
 
 				else if (getDocuments().isPresentation(getName())) {
 
-					PresentationEntry pr = getDocuments().createPresentation(
-							getName(), getDisk(), null);
+					DocumentListEntry pr = null;
+
+					if (getDocumentMap().containsKey(getName())) {
+
+						String docId = getDocumentMap().get(getName());
+
+						getDocuments().updateDocumentContent(docId, getName(),
+								getDisk());
+
+						pr = getDocuments().getDocumentById(docId);
+
+					} else {
+						pr = getDocuments().createPresentation(getName(),
+								getDisk(), null);
+
+					}
 
 					remove();
 

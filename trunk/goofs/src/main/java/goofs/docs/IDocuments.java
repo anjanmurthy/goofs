@@ -34,6 +34,9 @@ public interface IDocuments extends GoofsService {
 	public abstract InputStream getDocumentContents(DocumentListEntry e,
 			String fileExtension) throws Exception;
 
+	public abstract InputStream getDocumentContents(String docId,
+			String fileExtension) throws Exception;
+
 	public abstract FolderEntry getFolderById(String id) throws Exception;
 
 	public abstract List<Link> getFolderParentLinks(String folderId)
@@ -78,13 +81,15 @@ public interface IDocuments extends GoofsService {
 	public abstract PresentationEntry createPresentation(String name,
 			File contents, String folderName) throws Exception;
 
-	public abstract void updateDocumentContent(String id, File contents)
-			throws Exception;
+	public abstract void updateDocumentContent(String id, String fileName,
+			File contents) throws Exception;
 
 	public abstract boolean isWPDocument(String fileName);
 
 	public abstract boolean isSpreadSheet(String fileName);
 
 	public abstract boolean isPresentation(String fileName);
+
+	public abstract String getDefaultExtension(DocumentListEntry e);
 
 }

@@ -1,18 +1,21 @@
 package goofs.fs.docs;
 
 import goofs.EntryContainer;
+import goofs.Identifiable;
 import goofs.docs.IDocuments;
 import goofs.fs.Dir;
 import goofs.fs.Node;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.gdata.data.docs.DocumentListEntry;
 import com.google.gdata.data.docs.FolderEntry;
 
-public class DocsFolderDir extends Dir implements EntryContainer {
+public class DocsFolderDir extends Dir implements EntryContainer, Identifiable {
 
 	protected String folderId;
 
@@ -74,6 +77,10 @@ public class DocsFolderDir extends Dir implements EntryContainer {
 		return ((DocsDir) parent).getDocuments();
 	}
 
+	public String getId() {
+		return getFolderId();
+	}
+
 	protected String getFolderId() {
 		return folderId;
 	}
@@ -120,7 +127,19 @@ public class DocsFolderDir extends Dir implements EntryContainer {
 	public int createTempChild(String name) {
 
 		try {
-			add(new DocsTempFile(this, name));
+
+			Map<String, String> docMap = new HashMap<String, String>();
+
+			for (Node node : files.values()) {
+
+				if (node instanceof DocsFile) {
+					docMap.put(node.getName(), ((DocsFile) node).getId());
+				}
+
+			}
+
+			add(new DocsTempFile(this, name, docMap));
+			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

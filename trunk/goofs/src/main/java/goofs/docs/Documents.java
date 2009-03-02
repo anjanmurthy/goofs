@@ -1,5 +1,7 @@
 package goofs.docs;
 
+import goofs.GoofsProperties;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -11,6 +13,7 @@ import java.util.Map;
 
 import com.google.gdata.client.GoogleService;
 import com.google.gdata.client.docs.DocsService;
+import com.google.gdata.data.Category;
 import com.google.gdata.data.Link;
 import com.google.gdata.data.PlainTextConstruct;
 import com.google.gdata.data.docs.DocumentEntry;
@@ -29,6 +32,15 @@ public class Documents implements IDocuments {
 	protected GoogleService spreadsheetsService;
 
 	protected static final String SPREADSHEETS_SERVICE_NAME = "wise";
+
+	public static final String DOC_DEFAULT_EXT = GoofsProperties.INSTANCE
+			.getProperty("goofs.docs.wp.ext");
+
+	public static final String SPREAD_DEFAULT_EXT = GoofsProperties.INSTANCE
+			.getProperty("goofs.docs.spreadsheet.ext");
+
+	public static final String PRESENT_DEFAULT_EXT = GoofsProperties.INSTANCE
+			.getProperty("goofs.docs.presentation.ext");
 
 	private static final Map<String, String> DOWNLOAD_DOCUMENT_FORMATS;
 	static {
@@ -143,7 +155,7 @@ public class Documents implements IDocuments {
 		DocumentListFeed feed = getRealService()
 				.getFeed(
 						new URL(
-								"http://docs.google.com/feeds/documents/private/full/-/document?showfolders=true"),
+								"http://docs.google.com/feeds/documents/private/full/-/document"),
 						DocumentListFeed.class);
 
 		return feed.getEntries();
@@ -160,7 +172,7 @@ public class Documents implements IDocuments {
 		DocumentListFeed feed = getRealService()
 				.getFeed(
 						new URL(
-								"http://docs.google.com/feeds/documents/private/full/-/spreadsheet?showfolders=true"),
+								"http://docs.google.com/feeds/documents/private/full/-/spreadsheet"),
 						DocumentListFeed.class);
 
 		return feed.getEntries();
@@ -177,7 +189,7 @@ public class Documents implements IDocuments {
 		DocumentListFeed feed = getRealService()
 				.getFeed(
 						new URL(
-								"http://docs.google.com/feeds/documents/private/full/-/presentation?showfolders=true"),
+								"http://docs.google.com/feeds/documents/private/full/-/presentation"),
 						DocumentListFeed.class);
 
 		return feed.getEntries();
@@ -198,42 +210,6 @@ public class Documents implements IDocuments {
 	protected String getDocumentIdSuffix(String objectId) {
 
 		return objectId.substring(objectId.lastIndexOf("%3A") + 3);
-	}
-
-	public InputStream getDocumentContents(DocumentListEntry e, String mt)
-			throws Exception {
-
-		Link link = new Link();
-		if ("odt".equals(mt)) {
-			link
-					.setHref("http://docs.google.com/feeds/download/documents/Export?docID="
-							+ getDocumentIdSuffix(e.getId())
-							+ "&exportFormat="
-							+ DOWNLOAD_DOCUMENT_FORMATS.get(mt));
-
-			return getRealService().getStreamFromLink(link);
-
-		} else if ("ods".equals(mt)) {
-			link
-					.setHref("http://spreadsheets.google.com/feeds/download/spreadsheets/Export?key="
-							+ getDocumentIdSuffix(e.getId())
-							+ "&fmcmd="
-							+ DOWNLOAD_SPREADSHEET_FORMATS.get(mt) + "&gid=1");
-
-			return getSpreadsheetsService().getStreamFromLink(link);
-
-		} else if ("ppt".equals(mt)) {
-			link
-					.setHref("http://docs.google.com/feeds/download/presentations/Export?docID="
-							+ getDocumentIdSuffix(e.getId())
-							+ "&exportFormat="
-							+ DOWNLOAD_PRESENTATION_FORMATS.get(mt));
-
-			return getRealService().getStreamFromLink(link);
-		}
-
-		return new ByteArrayInputStream("".getBytes());
-
 	}
 
 	/*
@@ -424,11 +400,22 @@ public class Documents implements IDocuments {
 
 	}
 
+	protected MediaType getMediaType(String fileName) {
+		MediaType m = null;
+		fileName = fileName.toUpperCase();
+		int dindex = fileName.lastIndexOf(".");
+		if (dindex != -1) {
+			m = MediaType.fromFileName(fileName.substring(dindex + 1));
+		} else {
+			m = MediaType.fromFileName(fileName);
+		}
+		return m;
+	}
+
 	protected <T extends DocumentListEntry> T createDocument(String name,
 			File contents, String folderId, T newDocument) throws Exception {
 
-		newDocument.setFile(contents, MediaType.fromFileName(name)
-				.getMimeType());
+		newDocument.setFile(contents, getMediaType(name).getMimeType());
 
 		int dindex = name.lastIndexOf(".");
 		if (dindex != -1) {
@@ -455,7 +442,7 @@ public class Documents implements IDocuments {
 
 	public boolean isWPDocument(String fileName) {
 
-		MediaType m = MediaType.fromFileName(fileName);
+		MediaType m = getMediaType(fileName);
 
 		return (m != null && (m.equals(MediaType.DOC)
 				|| m.equals(MediaType.RTF) || m.equals(MediaType.ODT)
@@ -465,7 +452,7 @@ public class Documents implements IDocuments {
 
 	public boolean isSpreadSheet(String fileName) {
 
-		MediaType m = MediaType.fromFileName(fileName);
+		MediaType m = getMediaType(fileName);
 
 		return (m != null && (m.equals(MediaType.XLS)
 				|| m.equals(MediaType.CSV) || m.equals(MediaType.ODS)
@@ -475,22 +462,21 @@ public class Documents implements IDocuments {
 
 	public boolean isPresentation(String fileName) {
 
-		MediaType m = MediaType.fromFileName(fileName);
+		MediaType m = getMediaType(fileName);
 
 		return (m != null && (m.equals(MediaType.PPT) || m
 				.equals(MediaType.PPS)));
 
 	}
 
-	public void updateDocumentContent(String id, File contents)
+	public void updateDocumentContent(String id, String fileName, File contents)
 			throws Exception {
 
 		DocumentListEntry doc = getDocumentById(id);
 
-		doc.setFile(contents, MediaType.fromFileName(
-				doc.getTitle().getPlainText()).getMimeType());
+		doc.setFile(contents, getMediaType(fileName).getMimeType());
 
-		doc.updateMedia(false);
+		doc.updateMedia(true);
 
 	}
 
@@ -538,4 +524,64 @@ public class Documents implements IDocuments {
 		return createDocument(name, contents, folderName, newDocument);
 
 	}
+
+	public InputStream getDocumentContents(String docId, String fileExtension)
+			throws Exception {
+
+		return getDocumentContents(getDocumentById(docId), fileExtension);
+	}
+
+	public InputStream getDocumentContents(DocumentListEntry e, String ext)
+			throws Exception {
+
+		Link link = new Link();
+		if (DOWNLOAD_DOCUMENT_FORMATS.containsKey(ext.toLowerCase())) {
+			link
+					.setHref("http://docs.google.com/feeds/download/documents/Export?docID="
+							+ getDocumentIdSuffix(e.getId())
+							+ "&exportFormat="
+							+ DOWNLOAD_DOCUMENT_FORMATS.get(ext));
+
+			return getRealService().getStreamFromLink(link);
+
+		} else if (DOWNLOAD_SPREADSHEET_FORMATS.containsKey(ext.toLowerCase())) {
+			link
+					.setHref("http://spreadsheets.google.com/feeds/download/spreadsheets/Export?key="
+							+ getDocumentIdSuffix(e.getId())
+							+ "&fmcmd="
+							+ DOWNLOAD_SPREADSHEET_FORMATS.get(ext) + "&gid=1");
+
+			return getSpreadsheetsService().getStreamFromLink(link);
+
+		} else if (DOWNLOAD_PRESENTATION_FORMATS.containsKey(ext.toLowerCase())) {
+			link
+					.setHref("http://docs.google.com/feeds/download/presentations/Export?docID="
+							+ getDocumentIdSuffix(e.getId())
+							+ "&exportFormat="
+							+ DOWNLOAD_PRESENTATION_FORMATS.get(ext));
+
+			return getRealService().getStreamFromLink(link);
+		}
+
+		return new ByteArrayInputStream("".getBytes());
+
+	}
+
+	public String getDefaultExtension(DocumentListEntry e) {
+		String ext = null;
+		for (Category cat : e.getCategories()) {
+			if ("http://schemas.google.com/g/2005#kind".equals(cat.getScheme())) {
+				if (cat.getTerm().endsWith("document")) {
+					ext = Documents.DOC_DEFAULT_EXT;
+				} else if (cat.getTerm().endsWith("spreadsheet")) {
+					ext = Documents.SPREAD_DEFAULT_EXT;
+				} else if (cat.getTerm().endsWith("presentation")) {
+					ext = Documents.PRESENT_DEFAULT_EXT;
+				}
+				break;
+			}
+		}
+		return ext;
+	}
+
 }
