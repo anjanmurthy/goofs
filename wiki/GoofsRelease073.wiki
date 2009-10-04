@@ -73,6 +73,7 @@ Download the goofs binary and unpack it:
 {{{
 wget http://goofs.googlecode.com/files/goofs-0.7.3.zip
 unzip goofs-0.7.3.zip
+chmod +x goofs-mount.sh
 }}}
 
 = configuration =
