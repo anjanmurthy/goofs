@@ -1,5 +1,7 @@
 package goofs;
 
+import goofs.fs.GoofsFS;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -27,6 +29,12 @@ public class ServiceInvocationHandler implements InvocationHandler {
 	public Object invoke(Object proxy, Method method, Object[] args)
 			throws Throwable {
 
+		// make sure that activation.jar included in the boot classpath in java
+		// 6 is able to load the google data handlers
+
+		Thread.currentThread().setContextClassLoader(
+				GoofsFS.class.getClassLoader());
+
 		try {
 
 			return method.invoke(getTarget(), args);
@@ -51,5 +59,4 @@ public class ServiceInvocationHandler implements InvocationHandler {
 		}
 
 	}
-
 }

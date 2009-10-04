@@ -11,7 +11,7 @@ public class FileTestCase extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 
-		file = new File(null, "hello", 0755, "hello world") {
+		file = new File(null, "hello", 0777, "hello world") {
 
 			@Override
 			public int save() {

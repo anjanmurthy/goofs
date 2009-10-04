@@ -16,7 +16,7 @@ public class DocsTempFile extends DiskFile {
 	public DocsTempFile(Dir parent, String name, Map<String, String> documentMap)
 			throws Exception {
 
-		super(parent, name, 0755);
+		super(parent, name, 0777);
 		// TODO Auto-generated constructor stub
 
 		setDocumentMap(documentMap);

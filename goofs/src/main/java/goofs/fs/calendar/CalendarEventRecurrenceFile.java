@@ -17,7 +17,7 @@ public class CalendarEventRecurrenceFile extends File {
 			throws Exception {
 
 		super(parent, GoofsProperties.INSTANCE
-				.getProperty("goofs.calendar.recurrence"), 0755, "");
+				.getProperty("goofs.calendar.recurrence"), 0777, "");
 
 		setContent(getRecurrence(event).getBytes());
 

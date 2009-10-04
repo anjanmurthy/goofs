@@ -20,7 +20,7 @@ public class CalendarEventByTextDir extends Dir implements EntryContainer {
 	public CalendarEventByTextDir(Dir parent, String name, CalendarEntry cal)
 			throws Exception {
 
-		super(parent, name, 0755);
+		super(parent, name, 0777);
 
 		List<CalendarEventEntry> events = getCalendarService().getEvents(cal,
 				getName());

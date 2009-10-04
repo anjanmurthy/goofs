@@ -18,7 +18,7 @@ public class ContactAddressFile extends File {
 	public ContactAddressFile(Dir parent, PostalAddress postal)
 			throws Exception {
 
-		super(parent, postal.getRel().split("#")[1], 0755,
+		super(parent, postal.getRel().split("#")[1], 0777,
 				postal.getValue() != null ? postal.getValue() : "");
 
 		this.postal = postal;

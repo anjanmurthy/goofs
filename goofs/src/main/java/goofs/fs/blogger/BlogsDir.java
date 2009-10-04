@@ -22,7 +22,7 @@ public class BlogsDir extends Dir implements EntryContainer {
 	public BlogsDir(Dir parent) throws Exception {
 
 		super(parent, GoofsProperties.INSTANCE
-				.getProperty("goofs.blogger.blogs"), 0755);
+				.getProperty("goofs.blogger.blogs"), 0777);
 
 		blogger = (IBlogger) ServiceFactory.getService(IBlogger.class);
 

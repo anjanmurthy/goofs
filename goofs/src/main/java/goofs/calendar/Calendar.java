@@ -23,7 +23,6 @@ public class Calendar implements ICalendar {
 
 	public Calendar(String userName, String password)
 			throws AuthenticationException {
-
 		realService = new CalendarService(APP_NAME);
 		realService.setUserCredentials(userName, password);
 	}

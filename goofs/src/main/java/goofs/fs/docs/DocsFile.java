@@ -17,7 +17,7 @@ public class DocsFile extends DiskFile implements Identifiable {
 
 	public DocsFile(Dir parent, DocumentListEntry doc) throws Exception {
 
-		super(parent, doc.getTitle().getPlainText(), 0755);
+		super(parent, doc.getTitle().getPlainText(), 0777);
 
 		String ext = getDocuments().getDefaultExtension(doc);
 
@@ -32,13 +32,13 @@ public class DocsFile extends DiskFile implements Identifiable {
 			e.printStackTrace();
 		}
 
-		setDocId(doc.getId());
+		setDocId(doc.getSelfLink().getHref());
 
 	}
 
 	public DocsFile(Dir parent, String name) throws Exception {
 
-		super(parent, name, 0755);
+		super(parent, name, 0777);
 
 		setDocId(null);
 
@@ -77,7 +77,7 @@ public class DocsFile extends DiskFile implements Identifiable {
 					DocumentEntry doc = getDocuments().createWPDocument(
 							getName(), getDisk(), null);
 
-					setDocId(doc.getId());
+					setDocId(doc.getSelfLink().getHref());
 
 					Dir parent = getParent();
 					if (parent instanceof DocsFolderDir) {
@@ -94,7 +94,7 @@ public class DocsFile extends DiskFile implements Identifiable {
 					SpreadsheetEntry sp = getDocuments().createSpreadsheet(
 							getName(), getDisk(), null);
 
-					setDocId(sp.getId());
+					setDocId(sp.getSelfLink().getHref());
 
 					Dir parent = getParent();
 					if (parent instanceof DocsFolderDir) {
@@ -112,7 +112,7 @@ public class DocsFile extends DiskFile implements Identifiable {
 					PresentationEntry pr = getDocuments().createPresentation(
 							getName(), getDisk(), null);
 
-					setDocId(pr.getId());
+					setDocId(pr.getSelfLink().getHref());
 
 					Dir parent = getParent();
 					if (parent instanceof DocsFolderDir) {

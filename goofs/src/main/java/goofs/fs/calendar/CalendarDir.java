@@ -22,7 +22,7 @@ public class CalendarDir extends Dir implements Identifiable, Fetchable {
 
 	public CalendarDir(Dir parent, CalendarEntry cal) throws Exception {
 
-		super(parent, cal.getTitle().getPlainText(), 0755);
+		super(parent, cal.getTitle().getPlainText(), 0777);
 
 		setCalendarId(cal.getSelfLink().getHref());
 

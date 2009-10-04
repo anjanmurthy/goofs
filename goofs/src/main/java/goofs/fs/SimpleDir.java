@@ -6,7 +6,7 @@ public class SimpleDir extends Dir {
 
 	public SimpleDir(Dir parent, String name) {
 
-		super(parent, name, 0755);
+		super(parent, name, 0777);
 	}
 
 	@Override

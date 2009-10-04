@@ -15,7 +15,7 @@ public class PostDir extends Dir implements Identifiable, Fetchable {
 
 	public PostDir(Dir parent, Post post) throws Exception {
 
-		super(parent, post.getEntry().getTitle().getPlainText(), 0755);
+		super(parent, post.getEntry().getTitle().getPlainText(), 0777);
 
 		setPostId(post.getEntry().getSelfLink().getHref());
 

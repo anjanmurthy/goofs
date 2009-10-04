@@ -13,7 +13,7 @@ public class CalendarEventSummaryFile extends File {
 			throws Exception {
 
 		super(parent, GoofsProperties.INSTANCE
-				.getProperty("goofs.calendar.summary"), 0755, event
+				.getProperty("goofs.calendar.summary"), 0777, event
 				.getSummary().getPlainText());
 
 	}

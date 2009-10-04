@@ -23,7 +23,7 @@ public class CalendarsDir extends Dir implements EntryContainer {
 	public CalendarsDir(Dir parent) throws Exception {
 
 		super(parent, GoofsProperties.INSTANCE
-				.getProperty("goofs.calendar.calendars"), 0755);
+				.getProperty("goofs.calendar.calendars"), 0777);
 
 		calendarService = (ICalendar) ServiceFactory
 				.getService(ICalendar.class);

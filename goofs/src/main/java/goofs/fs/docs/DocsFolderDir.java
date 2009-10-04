@@ -23,16 +23,16 @@ public class DocsFolderDir extends Dir implements EntryContainer, Identifiable {
 
 	public DocsFolderDir(Dir parent, FolderEntry folder) throws Exception {
 
-		super(parent, folder.getTitle().getPlainText(), 0755);
+		super(parent, folder.getTitle().getPlainText(), 0777);
 
-		setFolderId(folder.getId());
+		setFolderId(folder.getSelfLink().getHref());
 
 		List<DocumentListEntry> docs = getDocuments().getDocumentsInFolder(
 				folder.getId());
 
 		for (DocumentListEntry doc : docs) {
 			add(new DocsFile(this, doc));
-			entryIds.add(doc.getId());
+			entryIds.add(doc.getSelfLink().getHref());
 
 		}
 
@@ -40,7 +40,7 @@ public class DocsFolderDir extends Dir implements EntryContainer, Identifiable {
 
 		for (FolderEntry next : folders) {
 			add(new DocsFolderDir(this, next));
-			entryIds.add(folder.getId());
+			entryIds.add(folder.getSelfLink().getHref());
 		}
 
 	}
@@ -58,7 +58,7 @@ public class DocsFolderDir extends Dir implements EntryContainer, Identifiable {
 		List<FolderEntry> folders = getDocuments().getChildFolders(
 				getFolderId());
 		for (FolderEntry next : folders) {
-			current.add(next.getId());
+			current.add(next.getSelfLink().getHref());
 		}
 		return current;
 	}

@@ -25,7 +25,7 @@ public class CalendarEventDurationDir extends Dir implements EntryContainer {
 	public CalendarEventDurationDir(Dir parent, String name, CalendarEntry cal,
 			Date start, Date end) throws Exception {
 
-		super(parent, name, 0755);
+		super(parent, name, 0777);
 
 		setStart(start);
 

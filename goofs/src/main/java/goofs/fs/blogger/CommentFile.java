@@ -16,7 +16,7 @@ public class CommentFile extends File implements Identifiable, Fetchable {
 
 	public CommentFile(Dir parent, Comment comment) throws Exception {
 
-		super(parent, comment.getEntry().getTitle().getPlainText(), 0755,
+		super(parent, comment.getEntry().getTitle().getPlainText(), 0777,
 				comment.getContent());
 
 		setCommentId(comment.getEntry().getSelfLink().getHref());
@@ -24,7 +24,7 @@ public class CommentFile extends File implements Identifiable, Fetchable {
 
 	public CommentFile(Dir parent, String name) throws Exception {
 
-		super(parent, name, 0755, "");
+		super(parent, name, 0777, "");
 
 	}
 

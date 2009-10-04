@@ -18,7 +18,7 @@ public class ContactsDir extends Dir {
 	public ContactsDir(Dir parent) throws Exception {
 
 		super(parent, GoofsProperties.INSTANCE
-				.getProperty("goofs.contacts.contacts"), 0755);
+				.getProperty("goofs.contacts.contacts"), 0777);
 
 		contacts = (IContacts) ServiceFactory.getService(IContacts.class);
 

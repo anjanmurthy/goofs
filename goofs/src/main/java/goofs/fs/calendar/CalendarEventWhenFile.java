@@ -18,7 +18,7 @@ public class CalendarEventWhenFile extends File {
 			throws Exception {
 
 		super(parent, GoofsProperties.INSTANCE
-				.getProperty("goofs.calendar.when"), 0755, "");
+				.getProperty("goofs.calendar.when"), 0777, "");
 
 		setContent(getWhen(event).getBytes());
 

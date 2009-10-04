@@ -12,7 +12,7 @@ public class RootDir extends Dir {
 
 	public RootDir() throws Exception {
 
-		super(null, "", 0755, "description", "ROOT directory");
+		super(null, "", 0777, "description", "ROOT directory");
 
 		AddDirThread t;
 

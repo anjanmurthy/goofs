@@ -13,7 +13,7 @@ public class PostContentFile extends File {
 
 	public PostContentFile(Dir parent, Post post) throws Exception {
 
-		super(parent, post.getEntry().getTitle().getPlainText(), 0755, post
+		super(parent, post.getEntry().getTitle().getPlainText(), 0777, post
 				.getContent());
 
 		setPostId(post.getEntry().getSelfLink().getHref());
@@ -22,7 +22,7 @@ public class PostContentFile extends File {
 
 	public PostContentFile(Dir parent, String name) throws Exception {
 
-		super(parent, name, 0755, "");
+		super(parent, name, 0777, "");
 	}
 
 	protected String getPostId() {
