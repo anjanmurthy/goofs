@@ -25,9 +25,9 @@ public class AlbumDir extends Dir implements Identifiable, Fetchable,
 
 	public AlbumDir(Dir parent, AlbumEntry album) throws Exception {
 
-		super(parent, album.getTitle().getPlainText(), 0755);
+		super(parent, album.getTitle().getPlainText(), 0777);
 
-		setAlbumId(album.getId());
+		setAlbumId(album.getSelfLink().getHref());
 
 		List<PhotoEntry> photos = getPicasa().getPhotos(album);
 

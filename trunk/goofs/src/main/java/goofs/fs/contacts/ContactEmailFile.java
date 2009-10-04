@@ -17,7 +17,7 @@ public class ContactEmailFile extends File {
 
 	public ContactEmailFile(Dir parent, Email email) throws Exception {
 
-		super(parent, email.getRel().split("#")[1], 0755,
+		super(parent, email.getRel().split("#")[1], 0777,
 				email.getAddress() != null ? email.getAddress() : "");
 
 		this.email = email;

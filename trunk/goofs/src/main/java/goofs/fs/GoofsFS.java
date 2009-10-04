@@ -10,7 +10,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.google.gdata.util.ResourceNotFoundException;
-import com.sun.corba.se.spi.ior.Identifiable;
 
 import fuse.Errno;
 import fuse.Filesystem3;
@@ -26,6 +25,7 @@ import fuse.XattrLister;
 import fuse.XattrSupport;
 import goofs.EntryContainer;
 import goofs.Fetchable;
+import goofs.Identifiable;
 
 public class GoofsFS implements Filesystem3, XattrSupport {
 

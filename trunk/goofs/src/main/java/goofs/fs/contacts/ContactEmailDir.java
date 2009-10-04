@@ -16,7 +16,7 @@ public class ContactEmailDir extends Dir {
 	public ContactEmailDir(Dir parent) throws Exception {
 
 		super(parent, GoofsProperties.INSTANCE
-				.getProperty("goofs.contacts.email"), 0755);
+				.getProperty("goofs.contacts.email"), 0777);
 
 		boolean homeCreated = false;
 		boolean workCreated = false;

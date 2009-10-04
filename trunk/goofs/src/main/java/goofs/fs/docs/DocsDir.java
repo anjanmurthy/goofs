@@ -26,7 +26,7 @@ public class DocsDir extends Dir implements EntryContainer {
 	public DocsDir(Dir parent) throws Exception {
 
 		super(parent, GoofsProperties.INSTANCE
-				.getProperty("goofs.docs.documents"), 0755);
+				.getProperty("goofs.docs.documents"), 0777);
 
 		documents = (IDocuments) ServiceFactory.getService(IDocuments.class);
 
@@ -36,7 +36,7 @@ public class DocsDir extends Dir implements EntryContainer {
 
 			add(new DocsFile(this, doc));
 
-			entryIds.add(doc.getId());
+			entryIds.add(doc.getSelfLink().getHref());
 
 		}
 
@@ -46,7 +46,7 @@ public class DocsDir extends Dir implements EntryContainer {
 
 			add(new DocsFolderDir(this, folder));
 
-			entryIds.add(folder.getId());
+			entryIds.add(folder.getSelfLink().getHref());
 
 		}
 
@@ -64,7 +64,7 @@ public class DocsDir extends Dir implements EntryContainer {
 		Set<String> current = new HashSet<String>();
 		List<FolderEntry> folders = documents.getRootFolders();
 		for (FolderEntry folder : folders) {
-			current.add(folder.getId());
+			current.add(folder.getSelfLink().getHref());
 		}
 		return current;
 	}

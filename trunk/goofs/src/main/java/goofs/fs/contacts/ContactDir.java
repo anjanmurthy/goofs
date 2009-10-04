@@ -19,7 +19,7 @@ public class ContactDir extends Dir implements Identifiable, Fetchable {
 
 		super(parent, contact.getTitle().getPlainText().length() == 0 ? contact
 				.getEmailAddresses().get(0).getAddress() : contact.getTitle()
-				.getPlainText(), 0755);
+				.getPlainText(), 0777);
 
 		setContactId(contact.getId());
 

@@ -17,7 +17,7 @@ public class CalendarEventDir extends Dir implements Identifiable, Fetchable {
 	public CalendarEventDir(Dir parent, CalendarEventEntry event)
 			throws Exception {
 
-		super(parent, event.getTitle().getPlainText(), 0755);
+		super(parent, event.getTitle().getPlainText(), 0777);
 
 		setCalendarEventId(event.getSelfLink().getHref());
 

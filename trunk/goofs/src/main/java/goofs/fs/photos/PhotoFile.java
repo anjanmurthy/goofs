@@ -16,7 +16,7 @@ public class PhotoFile extends DiskFile implements Identifiable, Fetchable {
 
 	public PhotoFile(Dir parent, PhotoEntry photo) throws Exception {
 
-		super(parent, photo.getTitle().getPlainText(), 0755);
+		super(parent, photo.getTitle().getPlainText(), 0777);
 
 		try {
 			setContent(getPicasa().getPhotoInputStream(photo));
@@ -24,13 +24,13 @@ public class PhotoFile extends DiskFile implements Identifiable, Fetchable {
 			e.printStackTrace();
 		}
 
-		setPhotoId(photo.getId());
+		setPhotoId(photo.getSelfLink().getHref());
 
 	}
 
 	public PhotoFile(Dir parent, String name) throws Exception {
 
-		super(parent, name, 0755);
+		super(parent, name, 0777);
 
 	}
 

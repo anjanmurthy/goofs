@@ -11,7 +11,7 @@ public class DiskFileTestCase extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 
-		file = new DiskFile(null, "hello", 0755) {
+		file = new DiskFile(null, "hello", 0777) {
 
 			@Override
 			public int save() {

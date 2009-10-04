@@ -24,7 +24,7 @@ public class BlogDir extends Dir implements EntryContainer, Identifiable,
 
 	public BlogDir(Dir parent, Blog blog) throws Exception {
 
-		super(parent, blog.getBlogTitle(), 0755);
+		super(parent, blog.getBlogTitle(), 0777);
 
 		setBlogId(blog.getEntry().getSelfLink().getHref());
 

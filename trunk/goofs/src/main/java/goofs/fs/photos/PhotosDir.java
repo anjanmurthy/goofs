@@ -14,7 +14,7 @@ public class PhotosDir extends Dir {
 	public PhotosDir(Dir parent) throws Exception {
 
 		super(parent, GoofsProperties.INSTANCE
-				.getProperty("goofs.photos.photos"), 0755);
+				.getProperty("goofs.photos.photos"), 0777);
 
 		picasa = (IPicasa) ServiceFactory.getService(IPicasa.class);
 

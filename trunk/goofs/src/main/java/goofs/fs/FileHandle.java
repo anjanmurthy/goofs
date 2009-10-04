@@ -38,6 +38,7 @@ public class FileHandle {
 	}
 
 	public int release() {
+		
 		int result = isTempFile() ? 0 : isDirty() ? ((File) getNode()).save()
 				: 0;
 

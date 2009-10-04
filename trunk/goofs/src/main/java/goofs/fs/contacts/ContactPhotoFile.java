@@ -11,7 +11,7 @@ public class ContactPhotoFile extends DiskFile {
 	public ContactPhotoFile(Dir parent, String name, InputStream photo)
 			throws Exception {
 
-		super(parent, name, 0755);
+		super(parent, name, 0777);
 
 		setContent(photo);
 

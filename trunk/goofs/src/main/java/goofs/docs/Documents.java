@@ -4,6 +4,7 @@ import goofs.GoofsProperties;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
@@ -12,9 +13,12 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.gdata.client.GoogleService;
+import com.google.gdata.client.Service.GDataRequest;
 import com.google.gdata.client.docs.DocsService;
+import com.google.gdata.client.spreadsheet.SpreadsheetService;
 import com.google.gdata.data.Category;
 import com.google.gdata.data.Link;
+import com.google.gdata.data.MediaContent;
 import com.google.gdata.data.PlainTextConstruct;
 import com.google.gdata.data.docs.DocumentEntry;
 import com.google.gdata.data.docs.DocumentListEntry;
@@ -24,12 +28,16 @@ import com.google.gdata.data.docs.PresentationEntry;
 import com.google.gdata.data.docs.SpreadsheetEntry;
 import com.google.gdata.data.docs.DocumentListEntry.MediaType;
 import com.google.gdata.util.AuthenticationException;
+import com.google.gdata.util.ServiceException;
 
 public class Documents implements IDocuments {
 
+	private static final String DOCS_GOOGLE_COM_FEEDS_DOCS = "http://docs.google.com/feeds/download/documents/Export?docID=";
+	private static final String DOCS_GOOGLE_COM_FEEDS_PRES = "http://docs.google.com/feeds/download/presentations/Export?docID=";
+
 	protected DocsService realService;
 
-	protected GoogleService spreadsheetsService;
+	protected SpreadsheetService spreadsheetsService;
 
 	protected static final String SPREADSHEETS_SERVICE_NAME = "wise";
 
@@ -41,6 +49,8 @@ public class Documents implements IDocuments {
 
 	public static final String PRESENT_DEFAULT_EXT = GoofsProperties.INSTANCE
 			.getProperty("goofs.docs.presentation.ext");
+
+	public static final String PDF_DEFAULT_EXT = "pdf";
 
 	private static final Map<String, String> DOWNLOAD_DOCUMENT_FORMATS;
 	static {
@@ -65,12 +75,12 @@ public class Documents implements IDocuments {
 	private static final Map<String, String> DOWNLOAD_SPREADSHEET_FORMATS;
 	static {
 		DOWNLOAD_SPREADSHEET_FORMATS = new HashMap<String, String>();
-		DOWNLOAD_SPREADSHEET_FORMATS.put("xls", "4");
-		DOWNLOAD_SPREADSHEET_FORMATS.put("ods", "13");
-		DOWNLOAD_SPREADSHEET_FORMATS.put("pdf", "12");
-		DOWNLOAD_SPREADSHEET_FORMATS.put("csv", "5");
-		DOWNLOAD_SPREADSHEET_FORMATS.put("tsv", "23");
-		DOWNLOAD_SPREADSHEET_FORMATS.put("html", "102");
+		DOWNLOAD_SPREADSHEET_FORMATS.put("xls", "xls");
+		DOWNLOAD_SPREADSHEET_FORMATS.put("ods", "ods");
+		DOWNLOAD_SPREADSHEET_FORMATS.put("pdf", "pdf");
+		DOWNLOAD_SPREADSHEET_FORMATS.put("csv", "csv");
+		DOWNLOAD_SPREADSHEET_FORMATS.put("tsv", "tsv");
+		DOWNLOAD_SPREADSHEET_FORMATS.put("html", "html");
 	}
 
 	public Documents(String username, String password)
@@ -78,8 +88,7 @@ public class Documents implements IDocuments {
 
 		realService = new DocsService(APP_NAME);
 		realService.setUserCredentials(username, password);
-		spreadsheetsService = new GoogleService(SPREADSHEETS_SERVICE_NAME,
-				APP_NAME);
+		spreadsheetsService = new SpreadsheetService(APP_NAME);
 		spreadsheetsService.setUserCredentials(username, password);
 	}
 
@@ -95,7 +104,6 @@ public class Documents implements IDocuments {
 			throws AuthenticationException {
 
 		getRealService().setUserCredentials(username, password);
-
 		getSpreadsheetsService().setUserCredentials(username, password);
 
 	}
@@ -108,7 +116,7 @@ public class Documents implements IDocuments {
 	public List<DocumentListEntry> getDocuments() throws Exception {
 
 		DocumentListFeed feed = getRealService().getFeed(
-				new URL("http://docs.google.com/feeds/documents/private/full"),
+				new URL("http://docs.google.com/feeds/default/private/full"),
 				DocumentListFeed.class);
 
 		return feed.getEntries();
@@ -122,8 +130,9 @@ public class Documents implements IDocuments {
 
 		DocumentListFeed feed = getRealService().getFeed(
 				new URL(
-						"http://docs.google.com/feeds/folders/private/full/folder%3A"
-								+ folderIdShort), DocumentListFeed.class);
+						"http://docs.google.com/feeds/default/private/full/folder%3A"
+								+ folderIdShort + "/contents"),
+				DocumentListFeed.class);
 
 		return feed.getEntries();
 
@@ -139,7 +148,7 @@ public class Documents implements IDocuments {
 		DocumentListFeed feed = getRealService()
 				.getFeed(
 						new URL(
-								"http://docs.google.com/feeds/documents/private/full/-/folder?showfolders=true"),
+								"http://docs.google.com/feeds/default/private/full/-/folder"),
 						DocumentListFeed.class);
 
 		return feed.getEntries(FolderEntry.class);
@@ -155,7 +164,7 @@ public class Documents implements IDocuments {
 		DocumentListFeed feed = getRealService()
 				.getFeed(
 						new URL(
-								"http://docs.google.com/feeds/documents/private/full/-/document"),
+								"http://docs.google.com/feeds/default/private/full/-/document"),
 						DocumentListFeed.class);
 
 		return feed.getEntries();
@@ -172,7 +181,7 @@ public class Documents implements IDocuments {
 		DocumentListFeed feed = getRealService()
 				.getFeed(
 						new URL(
-								"http://docs.google.com/feeds/documents/private/full/-/spreadsheet"),
+								"http://docs.google.com/feeds/default/private/full/-/spreadsheet"),
 						DocumentListFeed.class);
 
 		return feed.getEntries();
@@ -189,7 +198,7 @@ public class Documents implements IDocuments {
 		DocumentListFeed feed = getRealService()
 				.getFeed(
 						new URL(
-								"http://docs.google.com/feeds/documents/private/full/-/presentation"),
+								"http://docs.google.com/feeds/default/private/full/-/presentation"),
 						DocumentListFeed.class);
 
 		return feed.getEntries();
@@ -233,7 +242,7 @@ public class Documents implements IDocuments {
 		List<DocumentListEntry> roots = new ArrayList<DocumentListEntry>();
 		for (DocumentListEntry next : getDocuments()) {
 
-			if (next.getFolders().isEmpty()) {
+			if (next.getParentLinks().isEmpty()) {
 				roots.add(next);
 			}
 		}
@@ -301,7 +310,7 @@ public class Documents implements IDocuments {
 		int dindex = name.lastIndexOf(".");
 		if (dindex != -1) {
 
-			doc.setTitle(new PlainTextConstruct(name.substring(dindex + 1)));
+			doc.setTitle(new PlainTextConstruct(name.substring(0, dindex)));
 
 		} else {
 			doc.setTitle(new PlainTextConstruct(name));
@@ -329,15 +338,15 @@ public class Documents implements IDocuments {
 	public void removeDocumentFromFolder(String folderId, String docId)
 			throws Exception {
 
-		String folderIdShort = folderId.split("%3A")[1];
+		FolderEntry folder = getFolderById(folderId);
 
-		String docIdShort = docId.split("%3A")[1];
+		DocumentListEntry doc = getDocumentById(docId);
 
-		URL deleteUrl = new URL(
-				"http://docs.google.com/feeds/folders/private/full/folder%3A"
-						+ folderIdShort + "/document%3A" + docIdShort);
+		String folderContentUri = ((MediaContent) folder.getContent()).getUri();
 
-		getRealService().delete(deleteUrl);
+		getRealService().delete(
+				new URL(folderContentUri + "/" + doc.getResourceId()),
+				doc.getEtag());
 
 	}
 
@@ -353,18 +362,17 @@ public class Documents implements IDocuments {
 		DocumentListEntry doc = getDocumentById(docId);
 
 		addDocumentToFolder(folderId, doc);
+
 	}
 
 	protected void addDocumentToFolder(String folderId, DocumentListEntry doc)
 			throws Exception {
 
-		String urlBase = "http://docs.google.com/feeds/folders/private/full/folder%3A";
+		FolderEntry folder = getFolderById(folderId);
 
-		String shortId = folderId.split("%3A")[1];
+		String destFolderUri = ((MediaContent) folder.getContent()).getUri();
 
-		URL postUrl = new URL(urlBase + shortId);
-
-		getRealService().insert(postUrl, doc);
+		getRealService().insert(new URL(destFolderUri), doc);
 
 	}
 
@@ -377,15 +385,14 @@ public class Documents implements IDocuments {
 	public void moveFolderToFolder(String toFolderId, String fromFolderId)
 			throws Exception {
 
-		String urlBase = "http://docs.google.com/feeds/folders/private/full/folder%3A";
+		FolderEntry destFolder = getFolderById(toFolderId);
 
-		String shortId = toFolderId.split("%3A")[1];
+		FolderEntry sourceFolder = getFolderById(fromFolderId);
 
-		URL postUrl = new URL(urlBase + shortId);
+		String destFolderUri = ((MediaContent) destFolder.getContent())
+				.getUri();
 
-		FolderEntry folder = getFolderById(fromFolderId);
-
-		getRealService().insert(postUrl, folder);
+		getRealService().insert(new URL(destFolderUri), sourceFolder);
 
 	}
 
@@ -395,7 +402,7 @@ public class Documents implements IDocuments {
 		folder.setTitle(new PlainTextConstruct(name));
 
 		return getRealService().insert(
-				new URL("http://docs.google.com/feeds/documents/private/full"),
+				new URL("http://docs.google.com/feeds/default/private/full"),
 				folder);
 
 	}
@@ -420,8 +427,8 @@ public class Documents implements IDocuments {
 		int dindex = name.lastIndexOf(".");
 		if (dindex != -1) {
 
-			newDocument.setTitle(new PlainTextConstruct(name
-					.substring(dindex + 1)));
+			newDocument.setTitle(new PlainTextConstruct(name.substring(0,
+					dindex)));
 
 		} else {
 
@@ -429,7 +436,7 @@ public class Documents implements IDocuments {
 		}
 
 		T created = getRealService().insert(
-				new URL("http://docs.google.com/feeds/documents/private/full"),
+				new URL("http://docs.google.com/feeds/default/private/full"),
 				newDocument);
 
 		if (folderId != null) {
@@ -444,10 +451,11 @@ public class Documents implements IDocuments {
 
 		MediaType m = getMediaType(fileName);
 
-		return (m != null && (m.equals(MediaType.DOC)
-				|| m.equals(MediaType.RTF) || m.equals(MediaType.ODT)
-				|| m.equals(MediaType.TXT) || m.equals(MediaType.HTM) || m
-				.equals(MediaType.HTML)));
+		return (m != null
+				&& (m.equals(MediaType.DOC) || m.equals(MediaType.DOCX)
+						|| m.equals(MediaType.RTF) || m.equals(MediaType.ODT)
+						|| m.equals(MediaType.TXT) || m.equals(MediaType.HTM) || m
+						.equals(MediaType.HTML)) || m.equals(MediaType.PDF));
 	}
 
 	public boolean isSpreadSheet(String fileName) {
@@ -455,8 +463,9 @@ public class Documents implements IDocuments {
 		MediaType m = getMediaType(fileName);
 
 		return (m != null && (m.equals(MediaType.XLS)
-				|| m.equals(MediaType.CSV) || m.equals(MediaType.ODS)
-				|| m.equals(MediaType.TAB) || m.equals(MediaType.TSV)));
+				|| m.equals(MediaType.XLSX) || m.equals(MediaType.CSV)
+				|| m.equals(MediaType.ODS) || m.equals(MediaType.TAB) || m
+				.equals(MediaType.TSV)));
 
 	}
 
@@ -533,55 +542,99 @@ public class Documents implements IDocuments {
 
 	public InputStream getDocumentContents(DocumentListEntry e, String ext)
 			throws Exception {
-
-		Link link = new Link();
-		if (DOWNLOAD_DOCUMENT_FORMATS.containsKey(ext.toLowerCase())) {
-			link
-					.setHref("http://docs.google.com/feeds/download/documents/Export?docID="
-							+ getDocumentIdSuffix(e.getId())
-							+ "&exportFormat="
-							+ DOWNLOAD_DOCUMENT_FORMATS.get(ext));
-
-			return getRealService().getStreamFromLink(link);
-
-		} else if (DOWNLOAD_SPREADSHEET_FORMATS.containsKey(ext.toLowerCase())) {
-			link
-					.setHref("http://spreadsheets.google.com/feeds/download/spreadsheets/Export?key="
-							+ getDocumentIdSuffix(e.getId())
-							+ "&fmcmd="
-							+ DOWNLOAD_SPREADSHEET_FORMATS.get(ext) + "&gid=1");
-
-			return getSpreadsheetsService().getStreamFromLink(link);
-
-		} else if (DOWNLOAD_PRESENTATION_FORMATS.containsKey(ext.toLowerCase())) {
-			link
-					.setHref("http://docs.google.com/feeds/download/presentations/Export?docID="
-							+ getDocumentIdSuffix(e.getId())
-							+ "&exportFormat="
-							+ DOWNLOAD_PRESENTATION_FORMATS.get(ext));
-
-			return getRealService().getStreamFromLink(link);
+		Link link = getLinkFromEntry(e, ext);
+		if (link.getHref() != null) {
+			if (isSpreadSheet(e)) {
+				return getSpreadsheetInputStream(link);
+			} else {
+				return getDocumentInputStream(link);
+			}
+		} else {
+			return new ByteArrayInputStream("".getBytes());
 		}
+	}
 
-		return new ByteArrayInputStream("".getBytes());
+	private Link getLinkFromEntry(DocumentListEntry e, String ext) {
+		Link link = new Link();
+		if (isWPDocument(e)
+				&& DOWNLOAD_DOCUMENT_FORMATS.containsKey(ext.toLowerCase())) {
+			link.setHref(DOCS_GOOGLE_COM_FEEDS_DOCS
+					+ getDocumentIdSuffix(e.getId()) + "&exportFormat="
+					+ DOWNLOAD_DOCUMENT_FORMATS.get(ext));
+		} else if (isSpreadSheet(e)
+				&& DOWNLOAD_SPREADSHEET_FORMATS.containsKey(ext.toLowerCase())) {
+			link.setHref(((MediaContent) e.getContent()).getUri()
+					+ "&exportFormat=" + DOWNLOAD_SPREADSHEET_FORMATS.get(ext));
+		} else if (isPresentation(e)
+				&& DOWNLOAD_PRESENTATION_FORMATS.containsKey(ext.toLowerCase())) {
+			link.setHref(DOCS_GOOGLE_COM_FEEDS_PRES
+					+ getDocumentIdSuffix(e.getId()) + "&exportFormat="
+					+ DOWNLOAD_PRESENTATION_FORMATS.get(ext));
 
+		} else if (isPdf(e) && PDF_DEFAULT_EXT.equals(ext)) {
+			link.setHref(((MediaContent) e.getContent()).getUri());
+		}
+		return link;
+	}
+
+	private InputStream getDocumentInputStream(Link link) throws IOException,
+			ServiceException {
+		GDataRequest gdataRequest = getRealService().createLinkQueryRequest(
+				link);
+		gdataRequest.execute();
+		return gdataRequest.getResponseStream();
+	}
+
+	private InputStream getSpreadsheetInputStream(Link link)
+			throws IOException, ServiceException {
+		GDataRequest gdataRequest = getSpreadsheetsService()
+				.createLinkQueryRequest(link);
+		gdataRequest.execute();
+		return gdataRequest.getResponseStream();
 	}
 
 	public String getDefaultExtension(DocumentListEntry e) {
 		String ext = null;
-		for (Category cat : e.getCategories()) {
-			if ("http://schemas.google.com/g/2005#kind".equals(cat.getScheme())) {
-				if (cat.getTerm().endsWith("document")) {
-					ext = Documents.DOC_DEFAULT_EXT;
-				} else if (cat.getTerm().endsWith("spreadsheet")) {
-					ext = Documents.SPREAD_DEFAULT_EXT;
-				} else if (cat.getTerm().endsWith("presentation")) {
-					ext = Documents.PRESENT_DEFAULT_EXT;
-				}
-				break;
-			}
+		Category cat = getKind(e);
+		if (cat.getTerm().endsWith("document")) {
+			ext = Documents.DOC_DEFAULT_EXT;
+		} else if (cat.getTerm().endsWith("spreadsheet")) {
+			ext = Documents.SPREAD_DEFAULT_EXT;
+		} else if (cat.getTerm().endsWith("presentation")) {
+			ext = Documents.PRESENT_DEFAULT_EXT;
+		} else if (cat.getTerm().endsWith("pdf")) {
+			ext = Documents.PDF_DEFAULT_EXT;
 		}
 		return ext;
+	}
+
+	protected Category getKind(DocumentListEntry e) {
+		for (Category cat : e.getCategories()) {
+			if ("http://schemas.google.com/g/2005#kind".equals(cat.getScheme())) {
+				return cat;
+			}
+		}
+		return null;
+	}
+
+	protected boolean isWPDocument(DocumentListEntry e) {
+		Category cat = getKind(e);
+		return (cat != null && cat.getTerm().endsWith("document"));
+	}
+
+	protected boolean isSpreadSheet(DocumentListEntry e) {
+		Category cat = getKind(e);
+		return (cat != null && cat.getTerm().endsWith("spreadsheet"));
+	}
+
+	protected boolean isPresentation(DocumentListEntry e) {
+		Category cat = getKind(e);
+		return (cat != null && cat.getTerm().endsWith("presentation"));
+	}
+
+	protected boolean isPdf(DocumentListEntry e) {
+		Category cat = getKind(e);
+		return (cat != null && cat.getTerm().endsWith("pdf"));
 	}
 
 }

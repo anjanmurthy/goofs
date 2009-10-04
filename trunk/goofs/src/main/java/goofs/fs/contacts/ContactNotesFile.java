@@ -14,7 +14,7 @@ public class ContactNotesFile extends File {
 	public ContactNotesFile(Dir parent, ContactEntry contact) throws Exception {
 
 		super(parent, GoofsProperties.INSTANCE
-				.getProperty("goofs.contacts.notes"), 0755, (contact
+				.getProperty("goofs.contacts.notes"), 0777, (contact
 				.getContent() == null) ? "" : contact.getTextContent()
 				.getContent().getPlainText());
 
@@ -22,7 +22,7 @@ public class ContactNotesFile extends File {
 
 	public ContactNotesFile(Dir parent, String name) throws Exception {
 
-		super(parent, name, 0755, "");
+		super(parent, name, 0777, "");
 
 	}
 
