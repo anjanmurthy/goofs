@@ -1,4 +1,4 @@
-#labels Featured,Phase-Deploy
+#labels Phase-Deploy
 = goofs-0.7.2 is available =
 
 goofs-0.7.2 adds support for google docs retrieval and update.  This comes shortly after a long awaited fix for [http://code.google.com/p/gdata-issues/issues/detail?id=70 issue70] was committed with documentation.  Please see the documents section for more details.
