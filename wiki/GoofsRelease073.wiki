@@ -95,6 +95,11 @@ add goofs-0.7.3 to your PATH
 
 = advanced configuration (optional) =
 
+Consider encrypting your home directory to safeguard your login information in
+in .goofs.properties.  You can find information on how to do that at 
+http://www.linux-mag.com/cache/7568/1.html.  Future versions of goofs will allow
+one to customize the location of the .goofs.properties file.
+
 You can customize some of the properties used throughout the application by overriding values in your *~/.goofs.properties* file.  You can turn services off completely by setting the enabled property to false.  You can also provide your own strings for the names of some of the stock directories for a service.  Finally you can set the interval at which folders are synchronized with the server (measured in milliseconds).  The defaults values are shown below. 
 
 {{{
