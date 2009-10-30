@@ -1,12 +1,18 @@
 package goofs;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 public class GoofsProperties {
 
 	protected Properties props;
+
+	protected List<String> languages = new ArrayList<String>();
 
 	public static final GoofsProperties INSTANCE = new GoofsProperties();
 
@@ -31,6 +37,20 @@ public class GoofsProperties {
 			e.printStackTrace();
 		}
 
+		try {
+			BufferedReader languageReader = new BufferedReader(
+					new InputStreamReader(getClass().getClassLoader()
+							.getResourceAsStream("translate.properties")));
+			String lang = languageReader.readLine();
+			while (lang != null) {
+				languages.add(lang.trim());
+				lang = languageReader.readLine();
+			}
+		} catch (Exception e) {
+
+			e.printStackTrace();
+		}
+
 	}
 
 	protected Properties getProps() {
@@ -43,6 +63,10 @@ public class GoofsProperties {
 
 	public String getProperty(String key) {
 		return props.getProperty(key);
+	}
+
+	public List<String> getLanguages() {
+		return languages;
 	}
 
 }

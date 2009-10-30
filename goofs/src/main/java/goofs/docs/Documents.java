@@ -4,6 +4,7 @@ import goofs.GoofsProperties;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -423,28 +424,56 @@ public class Documents implements IDocuments {
 			File contents, String folderId, T newDocument) throws Exception {
 
 		newDocument.setFile(contents, getMediaType(name).getMimeType());
-
 		int dindex = name.lastIndexOf(".");
 		if (dindex != -1) {
-
 			newDocument.setTitle(new PlainTextConstruct(name.substring(0,
 					dindex)));
-
 		} else {
-
 			newDocument.setTitle(new PlainTextConstruct(name));
 		}
+		boolean translating = false;
+		StringBuilder uri = new StringBuilder(
+				"http://docs.google.com/feeds/default/private/full");
+		int undindex = newDocument.getTitle().getPlainText().lastIndexOf('_');
+		if (undindex != -1) {
+			String lang = newDocument.getTitle().getPlainText().substring(
+					undindex + 1);
+			if (GoofsProperties.INSTANCE.getLanguages().contains(lang)) {
+				uri.append("/?targetLanguage=").append(lang);
+				translating = true;
+			}
 
-		T created = getRealService().insert(
-				new URL("http://docs.google.com/feeds/default/private/full"),
+		}
+		T created = getRealService().insert(new URL(uri.toString()),
 				newDocument);
-
 		if (folderId != null) {
 			addDocumentToFolder(folderId, created);
 		}
 
-		return created;
+		if (translating) {
+			InputStream translatedInputStream = getDocumentContents(created,
+					name.substring(dindex+1));
+			updateLocalContent(contents, translatedInputStream);
 
+		}
+		return created;
+	}
+
+	protected void updateLocalContent(File file, InputStream is)
+			throws Exception {
+		FileOutputStream fos = new FileOutputStream(file);
+		try {
+			byte[] buff = new byte[1024];
+			int bytesRead = 0;
+
+			while ((bytesRead = is.read(buff)) != -1) {
+				fos.write(buff, 0, bytesRead);
+
+			}
+		} finally {
+			fos.close();
+			is.close();
+		}
 	}
 
 	public boolean isWPDocument(String fileName) {
