@@ -12,7 +12,6 @@ import com.google.gdata.client.Query;
 import com.google.gdata.client.photos.PicasawebService;
 import com.google.gdata.data.PlainTextConstruct;
 import com.google.gdata.data.media.MediaFileSource;
-import com.google.gdata.data.media.MediaMultipart;
 import com.google.gdata.data.media.MediaSource;
 import com.google.gdata.data.photos.AlbumEntry;
 import com.google.gdata.data.photos.AlbumFeed;
@@ -38,8 +37,6 @@ public class Picasa implements IPicasa {
 
 	public Picasa(String userName, String password)
 			throws AuthenticationException {
-
-		MediaMultipart.loadMimeMappings();
 
 		realService = new PicasawebService(APP_NAME);
 		realService.setUserCredentials(userName, password);

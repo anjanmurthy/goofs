@@ -44,5 +44,8 @@
 	<classpathentry kind="lib" path="lib/mail.jar"/>
 	<classpathentry kind="lib" path="lib/gdata-docs-3.0.jar"/>
 	<classpathentry kind="lib" path="lib/gdata-docs-meta-3.0.jar"/>
+	<classpathentry kind="lib" path="lib/gdata-sites-2.0.jar"/>
+	<classpathentry kind="lib" path="lib/gdata-sites-meta-2.0.jar"/>
+	<classpathentry kind="lib" path="lib/google-collect-1.0-rc2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
