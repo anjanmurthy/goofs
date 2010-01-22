@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -412,18 +413,44 @@ public class Documents implements IDocuments {
 		MediaType m = null;
 		fileName = fileName.toUpperCase();
 		int dindex = fileName.lastIndexOf(".");
-		if (dindex != -1) {
-			m = MediaType.fromFileName(fileName.substring(dindex + 1));
-		} else {
-			m = MediaType.fromFileName(fileName);
+		try {
+			if (dindex != -1) {
+				m = MediaType.fromFileName(fileName.substring(dindex + 1));
+			} else {
+				m = MediaType.fromFileName(fileName);
+			}
+		} catch (Throwable e) {
 		}
 		return m;
 	}
 
 	protected <T extends DocumentListEntry> T createDocument(String name,
 			File contents, String folderId, T newDocument) throws Exception {
+		MediaType mediaType = getMediaType(name);
+		setDocumentFile(name, contents, newDocument, mediaType);
+		setDocumentTitle(name, newDocument);
+		URL url = buildCreateUrl(newDocument, mediaType);
+		T created = getRealService().insert(url, newDocument);
+		if (folderId != null) {
+			addDocumentToFolder(folderId, created);
+		}
+		optionallyTranslateDocument(name, contents, url, created);
+		return created;
+	}
 
-		newDocument.setFile(contents, getMediaType(name).getMimeType());
+	private <T extends DocumentListEntry> void optionallyTranslateDocument(String name, File contents,
+			URL url, T created) throws Exception {
+		boolean translating = url.toString().contains("targetLanguage=");
+		if (translating) {
+			int dindex = name.lastIndexOf(".");
+			InputStream translatedInputStream = getDocumentContents(created,
+					name.substring(dindex + 1));
+			updateLocalContent(contents, translatedInputStream);
+
+		}
+	}
+
+	private <T extends DocumentListEntry> void setDocumentTitle(String name, T newDocument) {
 		int dindex = name.lastIndexOf(".");
 		if (dindex != -1) {
 			newDocument.setTitle(new PlainTextConstruct(name.substring(0,
@@ -431,32 +458,41 @@ public class Documents implements IDocuments {
 		} else {
 			newDocument.setTitle(new PlainTextConstruct(name));
 		}
-		boolean translating = false;
+	}
+
+	private <T extends DocumentListEntry> void setDocumentFile(String name, File contents, T newDocument,
+			MediaType mediaType) {
+		if (mediaType != null) {
+			newDocument.setFile(contents, mediaType.getMimeType());
+		} else {
+			newDocument.setFile(contents, detectMimeType(name));
+		}
+	}
+
+	private <T extends DocumentListEntry> URL buildCreateUrl(T newDocument, MediaType mediaType)
+			throws MalformedURLException {
 		StringBuilder uri = new StringBuilder(
 				"http://docs.google.com/feeds/default/private/full");
-		int undindex = newDocument.getTitle().getPlainText().lastIndexOf('_');
-		if (undindex != -1) {
-			String lang = newDocument.getTitle().getPlainText().substring(
-					undindex + 1);
-			if (GoofsProperties.INSTANCE.getLanguages().contains(lang)) {
-				uri.append("/?targetLanguage=").append(lang);
-				translating = true;
+		if (mediaType == null) {
+			uri.append("/?convert=false");
+		} else {
+			int undindex = newDocument.getTitle().getPlainText().lastIndexOf(
+					'_');
+			if (undindex != -1) {
+				String lang = newDocument.getTitle().getPlainText().substring(
+						undindex + 1);
+				if (GoofsProperties.INSTANCE.getLanguages().contains(lang)) {
+					uri.append("/?targetLanguage=").append(lang);
+				}
 			}
-
 		}
-		T created = getRealService().insert(new URL(uri.toString()),
-				newDocument);
-		if (folderId != null) {
-			addDocumentToFolder(folderId, created);
-		}
+		URL url = new URL(uri.toString());
+		return url;
+	}
 
-		if (translating) {
-			InputStream translatedInputStream = getDocumentContents(created,
-					name.substring(dindex+1));
-			updateLocalContent(contents, translatedInputStream);
+	private String detectMimeType(String name) {
 
-		}
-		return created;
+		return "application/zip";
 	}
 
 	protected void updateLocalContent(File file, InputStream is)
@@ -563,6 +599,14 @@ public class Documents implements IDocuments {
 
 	}
 
+	public DocumentListEntry createAny(String name, File contents,
+			String folderName) throws Exception {
+
+		DocumentListEntry newDocument = new DocumentListEntry();
+
+		return createDocument(name, contents, folderName, newDocument);
+	}
+
 	public InputStream getDocumentContents(String docId, String fileExtension)
 			throws Exception {
 
@@ -601,6 +645,8 @@ public class Documents implements IDocuments {
 					+ DOWNLOAD_PRESENTATION_FORMATS.get(ext));
 
 		} else if (isPdf(e) && PDF_DEFAULT_EXT.equals(ext)) {
+			link.setHref(((MediaContent) e.getContent()).getUri());
+		} else {
 			link.setHref(((MediaContent) e.getContent()).getUri());
 		}
 		return link;

@@ -80,6 +80,9 @@ public interface IDocuments extends GoofsService {
 
 	public abstract PresentationEntry createPresentation(String name,
 			File contents, String folderName) throws Exception;
+	
+	public abstract DocumentListEntry createAny(String name, File contents,
+			String folderName) throws Exception;
 
 	public abstract void updateDocumentContent(String id, String fileName,
 			File contents) throws Exception;
