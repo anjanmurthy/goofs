@@ -21,8 +21,9 @@ public class DocsFile extends DiskFile implements Identifiable {
 
 		String ext = getDocuments().getDefaultExtension(doc);
 
-		setName(getName() + "." + ext);
-
+		if (ext != null) {
+			setName(getName() + "." + ext);
+		}
 		try {
 
 			setContent(getDocuments().getDocumentContents(doc, ext));
@@ -127,7 +128,19 @@ public class DocsFile extends DiskFile implements Identifiable {
 
 				else {
 
-					return Errno.EROFS;
+					DocumentListEntry any = getDocuments().createAny(getName(),
+							getDisk(), null);
+
+					setDocId(any.getSelfLink().getHref());
+
+					Dir parent = getParent();
+					if (parent instanceof DocsFolderDir) {
+
+						getDocuments().addDocumentToFolder(
+								((DocsFolderDir) parent).getFolderId(),
+								getDocId());
+
+					}
 
 				}
 
@@ -141,7 +154,7 @@ public class DocsFile extends DiskFile implements Identifiable {
 			}
 
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 
 			return Errno.EROFS;
@@ -173,7 +186,7 @@ public class DocsFile extends DiskFile implements Identifiable {
 			remove();
 
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 
 			return Errno.EROFS;
@@ -222,7 +235,7 @@ public class DocsFile extends DiskFile implements Identifiable {
 			}
 
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 
 			return Errno.EROFS;
