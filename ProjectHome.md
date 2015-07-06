@@ -1,0 +1,3 @@
+goofs is filesystem in userspace, based on [fuse](http://fuse.sourceforge.net/), which aims to expose Google services such as picasa images, contacts, blogs, documents, spreadsheets, presentations, calendars, etc.  It is written using the java binding for fuse, [fuse-j](http://sourceforge.net/projects/fuse-j), together with the [gdata-java-client](http://code.google.com/p/gdata-java-client/).
+
+**Note** this is not an official Google project.
